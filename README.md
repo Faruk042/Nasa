@@ -117,11 +117,37 @@ flowchart LR
 
 ---
 
-## ▸ Kurulum ve Çalıştırma / Quick Start
+## ▸ Kurulumsuz Doğrudan GitHub Üzerinde Çalıştırma & Kurulum Rehberi / Quick Start
 
-### Seçenek A: Kurulumsuz Sunucusuz Web Sürümü (GitHub Pages)
-Tarayıcınızdan doğrudan açın: **[https://faruk042.github.io/Nasa/](https://faruk042.github.io/Nasa/)**  
-*(veya yerel olarak [`web_serverless/`](./web_serverless/) dizinini herhangi bir statik barındırma servisine yükleyin).*
+### Seçenek A: Hiçbir Dosya İndirmeden Doğrudan GitHub Üzerinde Çalıştırma (Zero-Install GitHub Pages)
+
+Projeyi bilgisayarınıza Python, kütüphane veya `.exe` indirmeden ve **hiçbir API anahtarı girmeden** saniyeler içinde doğrudan tarayıcınızda çalıştırmak için:
+
+1. **Tek Tıkla Canlı Uygulamayı Açın:**
+   * Bu sayfanın en üstündeki mavi **`Canlı Sunucusuz Web Paneli — GitHub Pages Live`** rozetine tıklayın,
+   * Veya GitHub depo sayfasının sağ üst köşesindeki **About (Hakkında)** bölümünde yer alan web bağlantısına tıklayın,
+   * Ya da doğrudan şu adresi açın: **[https://faruk042.github.io/Nasa/](https://faruk042.github.io/Nasa/)** *(Masaüstü, dizüstü, tablet ve mobil tarayıcılarda doğrudan açılır).*
+2. **Tarayıcı İçinde Adım Adım Hızlı Deneyim (60 Saniye):**
+   * **Dil Seçimi:** Sağ üstteki **`TR / EN`** düğmesiyle tüm arayüzü, denklemleri ve raporları anında Türkçe veya İngilizceye çevirin.
+   * **Otonom Tanıtım:** Üst alt-çubuktaki **`▸ Rehberli Jüri Turu`** düğmesine basarak `0G ISS Safir Küre` -> `Görünmez Soğuk Alev` -> `Artemis Ay Gezgini` -> `EVA Uzay Giysisi (%100 O₂)` senaryolarını canlı anlatımla otomatik izleyin.
+   * **3B Oda & Denklemler (`01`):** Sol menüden yakıt/malzeme, yerçekimi (`0G` – `1G`), oksijen (`%8` – `%100`) ve fan akış hızını değiştirin; 3B WebGL alev geometrisinin, `ISS R²` uçuş doğrulama noktalarının, boyutsuz taşınım tablosunun ve **ECLSS Yaşam Destek Saatinin** anlık güncellenmesini inceleyin.
+   * **15 NASA PSI Matrisi (`02`):** Donanım raflarına (`CIR`, `MSG`, `Cygnus`, `DAFT`) göre filtreleme yapın, deney içi varyasyonları açın veya birden fazla deneyi seçip **`⌖ Seçilenleri Kıyasla`** ile karşılaştırın.
+   * **İzole Dosya/Görsel Analizi & Kanıt Konsolu (`03` & `04`):** Kendi bilgisayarınızdan bir alev fotoğrafı (`.png/.jpg`) veya veri tablosu (`.csv/.txt`) seçin (dosyanız hiçbir sunucuya yüklenmez, doğrudan tarayıcı RAM'inde işlenir) ve **`04 // Kanıt Sentezi & Karar Konsolu`** sekmesinde hazır mühendislik protokolleriyle NTRS atıflı analiz üretin.
+   * **Veri ve Rapor İndirme:** Sağ üstteki **`◫ CSV İndir`**, **`◫ JSON İndir`** ve **`◫ Rapor (.MD)`** düğmeleriyle öngörücü veri setini ve teknik raporu bilgisayarınıza indirin.
+3. **Kendi GitHub Hesabınızda (Fork) Yayınlamak İsterseniz:**
+   * Sağ üstten **Fork** düğmesine basın -> kendi deponuzda **Settings -> Pages -> Source: Deploy from a branch -> Branch: `gh-pages` (`/root`)** seçip **Save** deyin (`web_serverless/` paketi `gh-pages` dalında hazır bulunmaktadır).
+
+#### Sunucusuz GitHub Pages Sürümü vs. Masaüstü Sürümü Karşılaştırması
+
+| Özellik / Yetenek | Kurulumsuz GitHub Pages (`gh-pages`) | Tam Masaüstü Sürümü (`main` / `Nasa_4.exe`) |
+| :--- | :--- | :--- |
+| **3B WebGL Yanma Odası, 8 Görev Senaryosu & Rehberli Tur** | ● Tam Aktif (Tarayıcı RAM'inde) | ● Tam Aktif |
+| **Boyutsuz Denklemler (`d²`, `B_oq`, `Sh`, `Da`), `ISS R²` & ECLSS Saati** | ● Tam Aktif | ● Tam Aktif |
+| **15 NASA PSI Sıralama, Donanım Rafları & Deney İçi Kıyaslama** | ● Tam Aktif | ● Tam Aktif |
+| **Alev Fotoğrafı (`.png/.jpg`) & Veri Dosyası Analizi + `.CSV/.JSON/.MD` Çıktı** | ● Tam Aktif (İstemci-İçi İzole) | ● Tam Aktif (+ Çok Sayfalı PDF Ayrıştırma) |
+| **Kanıt Sentezi & Karar Konsolu (`CON-01..CON-09` Denetimli)** | ● Deterministik Analitik Fizik & NTRS Sentezi | ● Analitik Fizik + **Yerel Çevrimdışı Ollama LLM** + Harici Geçitler |
+
+---
 
 ### Seçenek B: Tam Masaüstü ve Yerel Çevrimdışı Analitik Sürüm (Python / Tek Dosya `.EXE`)
 ```bash
