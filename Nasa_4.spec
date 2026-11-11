@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-ALTAR-NASA: Flame in Freefall (v5.0 Zero-Trust Global Champion Edition) — İzole Tek Dosya (One-File) PyInstaller Yapılandırması.
+ALTAR-NASA: Flame in Freefall (v5.1 Zero-Trust Mission Control Edition) — İzole Tek Dosya (One-File) PyInstaller Yapılandırması.
 - .env, parola veya API anahtarları ASLA pakete dahil edilmez.
 - Yalnızca 127.0.0.1 yerel döngü arayüzünde (CSRF + CSP + SSRF korumalı) çalışır; dış ağlara port açmaz.
 - Masaüstüne tek başına kopyalandığında (_internal klasörü gerektirmeden) %100 bağımsız çalışır.
@@ -15,7 +15,6 @@ added_datas = [
     (str(project_root / "web" / "templates"), "web/templates"),
     (str(project_root / "web" / "static"), "web/static"),
     (str(project_root / "web_serverless"), "web_serverless"),
-    (str(project_root / "GEMINI.md"), "."),
 ]
 
 hidden_imports = [
@@ -87,7 +86,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="Nasa_3",
+    name="Nasa_4",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

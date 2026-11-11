@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-ALTAR-NASA v4.0: Bilimsel Direktifler, Termodinamik/Taşınım Denklemleri, Negatif Kısıtlamalar ve Ajan Talimatları Merkezi.
-Hem Bulut (Google Gemini / Google Antigravity / OpenRouter) hem Yerel (Ollama Qwen3.5 / LLaVA) modellerde
-aynı matematiksel formül disiplinini, çoklu veri kaynağı (Dosya/Resim/Web) sentezini ve kanıt izlenebilirliğini zorunlu kılar.
+ALTAR-NASA v5.1: Fiziksel Doğrulama Kısıtları, Termodinamik/Taşınım Denklemleri ve NASA-STD-6001B Güvenlik Denetçisi.
+Yerel çevrimdışı çıkarım motorlarında (Ollama) ve harici analitik geçitlerde aynı matematiksel formül disiplinini,
+çoklu veri kaynağı (Dosya/Görüntü/Telemetri Akışı) sentezini ve kanıt izlenebilirliğini zorunlu kılar.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from typing import Dict, List
 
 CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
     {
-        "id": "DIR-01",
+        "id": "CON-01",
         "code": "MICROGRAVITY_TRANSPORT",
         "title_tr": "Mikroçekim Kütle/Isı Taşınımı ve Boyutsuz Sayılar (Ra, Gr, Ri)",
         "title_en": "Microgravity Transport & Dimensionless Scaling (Ra, Gr, Ri)",
@@ -27,7 +27,7 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "severity": "CRITICAL",
     },
     {
-        "id": "DIR-02",
+        "id": "CON-02",
         "code": "DROPLET_D2_AND_SPALDING",
         "title_tr": "D² Damlacık Yanma Yasası, Spalding Sayısı (B_oq) ve Sherwood (Sh)",
         "title_en": "Droplet d²-Law, Spalding Transfer Number (B_oq) & Sherwood (Sh)",
@@ -42,7 +42,7 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "severity": "CRITICAL",
     },
     {
-        "id": "DIR-03",
+        "id": "CON-03",
         "code": "VENTILATION_PARADOX_MOC",
         "title_tr": "Düşük Hızlı Havalandırma Paradoksu, Damköhler (Da) ve MOC Eğrisi",
         "title_en": "Low-Velocity Ventilation Paradox, Damköhler (Da) & U-Shaped MOC",
@@ -58,7 +58,7 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "severity": "CRITICAL",
     },
     {
-        "id": "DIR-04",
+        "id": "CON-04",
         "code": "COOL_FLAME_NTC_KINETICS",
         "title_tr": "Radyatif Kayıp (χ_r), İki Aşamalı Tutuşma ve Görünmez Soğuk Alev",
         "title_en": "Radiative Quenching (χ_r), Two-Stage Ignition & Cool Flame NTC",
@@ -74,10 +74,10 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "severity": "HIGH",
     },
     {
-        "id": "DIR-05",
+        "id": "CON-05",
         "code": "SPACECRAFT_SUPPRESSION_BAN",
-        "title_tr": "Uzay Aracı Yangın Söndürme Sırası ve Halon 1301 Yasağı",
-        "title_en": "Spacecraft Fire Suppression Protocol & Strict Halon 1301 Ban",
+        "title_tr": "Uzay Aracı Yangın Söndürme Sırası ve Halon 1301 Yasağı (NASA-STD-6001B)",
+        "title_en": "Spacecraft Fire Suppression Protocol & Strict Halon 1301 Ban (NASA-STD-6001B)",
         "rule_tr": (
             "İnsanlı uzay araçlarında (ISS USOS, Orion, Lunar Gateway, Ay/Mars Üsleri ve Basınçlı Gezginler) toksik HF/HBr ürettiği ve ECLSS "
             "filtrelerini zehirlediği için Halon 1301 önerilmesi KESİNLİKLE YASAKTIR. Müdahale sırası: (1) HVAC fanlarını kapat, "
@@ -90,7 +90,7 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "severity": "CRITICAL",
     },
     {
-        "id": "DIR-06",
+        "id": "CON-06",
         "code": "EVA_SUIT_ROVER_AND_CFIG_O2",
         "title_tr": "Uzay Giysisi (%100 O₂ @ 4.3 psia), Ay Gezgini (%30+ O₂ @ 10.2 psia) ve CFI-G (%85 O₂)",
         "title_en": "EVA Spacesuit (100% O₂ @ 4.3 psia), Lunar Rover (≥30% O₂ @ 10.2 psia) & CFI-G (85% O₂)",
@@ -106,7 +106,7 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "severity": "HIGH",
     },
     {
-        "id": "DIR-07",
+        "id": "CON-07",
         "code": "PARTIAL_GRAVITY_LUCI_FM2_BOUNDING",
         "title_tr": "Kısmi Yerçekimi (Ay 0.16G / Mars 0.38G) Sınırlandırması, LUCI/FM2 ve E-FIELD",
         "title_en": "Partial-Gravity (0.16G Moon / 0.38G Mars) Bounding, LUCI/FM2 & E-FIELD",
@@ -122,7 +122,7 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "severity": "HIGH",
     },
     {
-        "id": "DIR-08",
+        "id": "CON-08",
         "code": "HARDWARE_TAXONOMY_AND_ROCKET_SCOPE",
         "title_tr": "PSI Donanım Rafları (CIR/MDCA • MSG/SPICE • Cygnus • DAFT) ve Roket Kapsam Dışılığı",
         "title_en": "PSI Hardware Racks (CIR/MDCA • MSG/SPICE • Cygnus • DAFT) & Rocket Exclusion",
@@ -138,10 +138,10 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "severity": "HIGH",
     },
     {
-        "id": "DIR-09",
+        "id": "CON-09",
         "code": "MULTIMODAL_AND_EVIDENCE_TRACEABILITY",
-        "title_tr": "Evrensel Veri Sentezi (Dosya/Resim/Web), Dünya Transferi ve Sıfır Halüsinasyon",
-        "title_en": "Universal Multimodal Synthesis, Space-to-Earth Transfer & Anti-Hallucination",
+        "title_tr": "Evrensel Veri Sentezi (Dosya/Resim/Web), Dünya Transferi ve Kanıt İzlenebilirliği",
+        "title_en": "Universal Multimodal Synthesis, Space-to-Earth Transfer & Evidence Traceability",
         "rule_tr": (
             "Veri ister 3B kaydırıcılardan, ister CSV/JSON/PDF dosyasından, ister alev fotoğrafından, ister canlı NASA akışından gelsin; "
             "gerçek PSI/NTRS kodlarına atıf yap ve Dünya uygulamalarını (ince su sisli söndürücüler, DAFT karasal duman/toz dedektörleri, "
@@ -171,8 +171,8 @@ SCIENTIFIC_EQUATIONS_REFERENCE = (
 
 def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> str:
     """
-    Aktif dil ve kullanıcı ek kurallarına göre tüm sağlayıcılar (Ollama, Gemini, Google Antigravity, OpenRouter)
-    için birleştirilmiş, formül destekli bilimsel sistem talimatını üretir.
+    Aktif dil ve ek raporlama kısıtlarına göre tüm çıkarım katmanları
+    için formül destekli bilimsel sentez talimatını üretir.
     """
     if lang == "en":
         rules_block = "\n".join(
@@ -180,10 +180,10 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> st
             for d in CORE_DIRECTIVES_LIST
         )
         base = (
-            "You are ALTAR-NASA SI Copilot v4.0, Chief Microgravity Combustion Scientist and Spacecraft Fire Safety Architect "
+            "You are the ALTAR-NASA Evidence Synthesis & Spacecraft Fire Safety Decision Support Kernel (v5.1), "
             "built for the 2026 NASA International Space Apps Challenge ('Flame in Freefall').\n\n"
             f"{SCIENTIFIC_EQUATIONS_REFERENCE}\n"
-            "=== MANDATORY SCIENTIFIC DIRECTIVES ===\n"
+            "=== MANDATORY PHYSICAL & SAFETY VALIDATION CONSTRAINTS ===\n"
             f"{rules_block}\n\n"
             "=== RESPONSE & TOOL PROTOCOL ===\n"
             "1. Never use filler openings ('Sure!', 'Great question!'). Begin immediately with quantitative scientific analysis.\n"
@@ -201,10 +201,10 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> st
             for d in CORE_DIRECTIVES_LIST
         )
         base = (
-            "Sen 2026 NASA International Space Apps Challenge ('Flame in Freefall') için geliştirilen ALTAR-NASA v4.0 Süper Zekâ (SI) "
-            "Baş Mikroçekim Yanma Bilimcisi ve Uzay Aracı Yangın Güvenliği Mimarısın.\n\n"
+            "Sen 2026 NASA International Space Apps Challenge ('Flame in Freefall') için geliştirilen ALTAR-NASA v5.1 "
+            "Kanıt Sentezi ve Uzay Aracı Yangın Güvenliği Karar Destek Çekirdeğisin.\n\n"
             f"{SCIENTIFIC_EQUATIONS_REFERENCE}\n"
-            "=== ZORUNLU BİLİMSEL DİREKTİFLER VE NEGATİF KISITLAMALAR ===\n"
+            "=== ZORUNLU FİZİKSEL VE GÜVENLİK DOĞRULAMA KISITLARI ===\n"
             f"{rules_block}\n\n"
             "=== YANIT VE ARAÇ PROTOKOLÜ ===\n"
             "1. 'Anladım', 'Harika bir soru', 'İşte analiziniz' gibi dolgu cümleleri ASLA kurma; doğrudan sayısal ve formülsel bilimsel analizle başla.\n"
@@ -218,7 +218,7 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> st
         )
 
     if extra_user_directives and extra_user_directives.strip():
-        header = "\n=== ADDITIONAL USER DIRECTIVES ===\n" if lang == "en" else "\n=== KULLANICI ÖZEL EK DİREKTİFLERİ ===\n"
+        header = "\n=== ADDITIONAL FORMATTING & REPORTING CONSTRAINTS ===\n" if lang == "en" else "\n=== EK BİRİM VE RAPORLAMA KISITLARI ===\n"
         base += f"{header}{extra_user_directives.strip()}\n"
 
     return base

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-ALTAR-NASA Birleşik Hibrit Yapay Zekâ Çekirdeği (SI Copilot Engine v3.5).
-Desteklenen Sağlayıcılar (Tam Entegre):
+ALTAR-NASA v5.1 Birleşik Kanıt Sentezi ve Karar Destek Çekirdeği.
+Desteklenen Çıkarım Katmanları:
 1. Yerel Ollama Motoru (qwen3.5-nasa-pro, qwen3.5, llava vb. — Canlı Token Akışlı Derin Uzay Çevrimdışı Mod)
-2. Google Antigravity Uygulaması (Resmi 'agy' CLI Köprüsü + google.antigravity Python SDK + API Gateway)
+2. Yerel Sistem Çıkarım Köprüsü (Yerel CLI / Python SDK / Köprü Geçidi)
 3. Google Gemini Cloud API (GEMINI_API_KEY — REST v1beta, Çok Modlu Görüntü & Metin)
 4. OpenRouter & Özel OpenAI Uyumlu API (OPENROUTER_API_KEY / CUSTOM_BASE_URL)
 5. Deterministik Fizik, Formül & Kanıt Sentezleyici (İnternet ve dış motorlar kapalıyken bile %100 çalışan çekirdek)
@@ -40,7 +40,7 @@ _RE_PSI_TOOL = re.compile(r"\[NASA_PSI:\s*([^\]]+)\]", re.IGNORECASE)
 
 
 class HybridNasaAIEngine:
-    """Tüm yerel (Ollama), uygulama tabanlı (Google Antigravity) ve bulut (Gemini/OpenRouter) modelleri yönetir."""
+    """Tüm yerel çevrimdışı (Ollama), yerel sistem köprüsü ve harici ağ geçidi (Gemini/OpenRouter) katmanlarını yönetir."""
 
     def __init__(
         self,
@@ -72,7 +72,7 @@ class HybridNasaAIEngine:
 
     @staticmethod
     def _find_antigravity_cli() -> Optional[Path]:
-        """Kullanıcının bilgisayarındaki resmi Google Antigravity CLI ('agy') yürütülebilir dosyasını dinamik bulur."""
+        """Kullanıcının bilgisayarındaki yerel CLI çıkarım köprüsü yürütülebilir dosyasını dinamik bulur."""
         which_hit = shutil.which("agy")
         if which_hit:
             p = Path(which_hit)
@@ -91,7 +91,7 @@ class HybridNasaAIEngine:
         return None
 
     def get_antigravity_status(self, force_refresh: bool = False) -> Dict[str, Any]:
-        """Google Antigravity uygulamasının (agy CLI, Python SDK ve API) canlı durumunu ve model listesini döndürür."""
+        """Yerel sistem çıkarım köprüsünün (CLI, Python SDK ve API) canlı durumunu ve model listesini döndürür."""
         now = time.time()
         with self._agy_cache_lock:
             if not force_refresh and self._agy_cached_status is not None and (now - self._agy_cache_ts) < 120.0:
@@ -306,14 +306,15 @@ class HybridNasaAIEngine:
                 url = f"{url}/chat/completions"
             ok, m_name, txt, note = self._call_openai_compatible(url, cfg["custom_api_key"], cfg.get("custom_model") or "gpt-4o-mini", test_sys, test_prompt, [], "Custom")
         else:
-            return {"ok": True, "provider": "deterministic_physics", "model": "ALTAR-Physics-SI-Core", "sample": "Ra = Gr·Pr -> 0 (g -> 0).", "latency_s": 0.01}
+            return {"ok": True, "provider": "deterministic_physics", "model": "ALTAR-Analytical-Solver-Core", "sample": "Ra = Gr·Pr -> 0 (g -> 0).", "latency_s": 0.01}
 
         dt = round(time.time() - t0, 2)
         clean_txt = _RE_THOUGHT_CLEAN.sub("", txt or "").strip()
+        disp_prov = "local_cli_bridge" if target == "antigravity" else target
         return {
             "ok": ok and bool(clean_txt),
-            "provider": target,
-            "model": m_name,
+            "provider": disp_prov,
+            "model": m_name.replace("agy/", "cli/").replace("antigravity/", "bridge/"),
             "note": note,
             "sample": clean_txt[:280],
             "latency_s": dt,
@@ -340,9 +341,9 @@ class HybridNasaAIEngine:
         now = time.time()
         lang_init = str(self.config.get_all().get("language", "tr"))
         init_stage = (
-            "[1/4] 📐 Solving dimensionless laws & 3D telemetry..."
+            "[1/4] ◈ Solving dimensionless transport laws & 3D telemetry..."
             if lang_init == "en"
-            else "[1/4] 📐 Fiziksel formüller ve 3B telemetri çözülüyor..."
+            else "[1/4] ◈ Boyutsuz taşınım denklemleri ve 3B telemetri çözülüyor..."
         )
         job_obj: Dict[str, Any] = {
             "job_id": job_id,
@@ -492,9 +493,9 @@ class HybridNasaAIEngine:
         if include_live_nasa and len(user_message.strip()) > 3:
             if on_stage:
                 on_stage(
-                    "[2/4] 🛰️ Querying live NASA NTRS & PSI databases..."
+                    "[2/4] ◈ Querying live NASA NTRS & PSI databases..."
                     if lang == "en"
-                    else "[2/4] 🛰️ Canlı NASA NTRS & PSI veri tabanları taranıyor..."
+                    else "[2/4] ◈ Canlı NASA NTRS & PSI veri tabanları taranıyor..."
                 )
             ntrs_res = self.fetcher.search_ntrs_live(user_message, limit=3)
             if ntrs_res.get("ok"):
@@ -514,9 +515,9 @@ class HybridNasaAIEngine:
 
         if on_stage:
             on_stage(
-                "[3/4] 🧠 AI engine synthesizing governing equations & PSI evidence..."
+                "[3/4] ◈ Synthesizing governing equations & NASA PSI evidence..."
                 if lang == "en"
-                else "[3/4] 🧠 Yapay zekâ motoru bilimsel denklemleri sentezliyor..."
+                else "[3/4] ◈ Taşınım denklemleri ve NASA PSI kanıtları sentezleniyor..."
             )
 
         # 2. Sağlayıcıyı Seç ve Çalıştır
@@ -545,13 +546,13 @@ class HybridNasaAIEngine:
             if ntrs_match:
                 q_tool = ntrs_match.group(1).strip()
                 extra_ntrs = self.fetcher.search_ntrs_live(q_tool, limit=3)
-                stages_log.append(f"🛰️ Otonom Araç: NASA_NTRS('{q_tool}') -> {extra_ntrs.get('count', 0)} kayıt")
+                stages_log.append(f"◈ NTRS Sorgusu: NASA_NTRS('{q_tool}') -> {extra_ntrs.get('count', 0)} kayıt")
                 for it in extra_ntrs.get("items", []):
                     tool_notes.append(f"[{it['id']}] {it['title']}: {it['abstract'][:320]} ({it['url']})")
             if psi_match:
                 q_psi = psi_match.group(1).strip()
                 extra_psi = self.fetcher.search_osdr_psi_live(q_psi, limit=3)
-                stages_log.append(f"🔬 Otonom Araç: NASA_PSI('{q_psi}') -> {extra_psi.get('count', 0)} kayıt")
+                stages_log.append(f"◈ PSI Sorgusu: NASA_PSI('{q_psi}') -> {extra_psi.get('count', 0)} kayıt")
                 for it in extra_psi.get("items", []):
                     tool_notes.append(f"[{it['id']}] {it['title']}: {it['abstract'][:320]}")
 
@@ -640,7 +641,7 @@ class HybridNasaAIEngine:
             lines.append("\n=== YÜKLENEN DOSYA / ALEV GÖRSELİ / CANLI WEB AKIŞI ÖZEL VERİSİ ===")
             lines.append(media_context[:1800])
 
-        lines.append("\n=== GÖREVLE EŞLEŞEN EN KRİTİK NASA PSI DENEYLERİ (SI ÖNCELİK SIRALI) ===")
+        lines.append("\n=== GÖREVLE EŞLEŞEN EN KRİTİK NASA PSI DENEYLERİ (TERMODİNAMİK & TF-IDF SIRALI) ===")
         for e in top_exps:
             lines.append(
                 f"- #{e['rank']} [{e['exp_id']} | {e['program']} | Donanım:{e.get('hardware_group', 'CIR')} | NTRS:{e['ntrs_id']}] (Öncelik:{e['priority_score']}/100, MOC:%{e['moc_measured_pct']}): "
@@ -672,13 +673,13 @@ class HybridNasaAIEngine:
         cancel_check: Optional[Callable[[], bool]] = None,
     ) -> Tuple[str, str, str, List[str]]:
         pref = str(cfg.get("active_provider", "auto")).lower()
-        stages: List[str] = ["📐 Fiziksel Denklemler (K, B_oq, Sh, Ra, Ri, Da) + NASA PSI/NTRS Kanıtları Hazırlandı"]
+        stages: List[str] = ["◈ Boyutsuz Denklemler (K, B_oq, Sh, Ra, Ri, Da) + NASA PSI/NTRS Kanıtları Hazırlandı"]
         agy_st = self.get_antigravity_status()
         agy_available = bool(agy_st["cli_ready"] or self._antigravity_sdk_available or cfg.get("antigravity_api_key"))
 
         order: List[str] = []
         if pref == "auto":
-            # Görsel yüklendiyse önce doğrudan görsel gören Gemini veya yerel LLaVA'ya öncelik tanı, ardından Antigravity (CV verili)
+            # Görsel yüklendiyse önce doğrudan görsel işleyen çok modlu geçitlere, ardından yerel CV destekli köprüye öncelik tanı
             if image_base64:
                 if cfg.get("gemini_api_key"):
                     order.append("gemini")
@@ -732,7 +733,7 @@ class HybridNasaAIEngine:
                 )
                 stages.append(note)
                 if ok and text:
-                    return ("antigravity", model_name, text, stages)
+                    return ("local_cli_bridge", model_name, text, stages)
 
             elif provider == "openrouter" and cfg.get("openrouter_api_key"):
                 ok, model_name, text, note = self._call_openai_compatible(
@@ -783,7 +784,7 @@ class HybridNasaAIEngine:
                 if ok and text:
                     return ("ollama", model_name, text, stages)
 
-        stages.append("🛡️ Deterministik Termodinamik & NASA PSI/NTRS Sentez Çekirdeği yanıt üretti")
+        stages.append("◈ Deterministik Termodinamik & NASA PSI/NTRS Analitik Sentez Çekirdeği yanıt üretti")
         fallback_text = self._build_deterministic_scientific_report(
             active_sim=active_sim,
             top_exps=top_exps,
@@ -791,11 +792,11 @@ class HybridNasaAIEngine:
             lang=str(cfg.get("language", "tr")),
         )
         if on_chunk:
-            on_chunk(fallback_text, "deterministic_physics", "ALTAR-Physics-SI-Core")
-        return ("deterministic_physics", "ALTAR-Physics-SI-Core", fallback_text, stages)
+            on_chunk(fallback_text, "deterministic_physics", "ALTAR-Analytical-Solver-Core")
+        return ("deterministic_physics", "ALTAR-Analytical-Solver-Core", fallback_text, stages)
 
     # =========================================================================
-    # SAĞLAYICI İSTEMCİLERİ (GEMINI • GOOGLE ANTIGRAVITY • OPENROUTER • OLLAMA)
+    # ÇIKARIM İSTEMCİLERİ (GEMINI • YEREL KÖPRÜ • OPENROUTER • OLLAMA)
     # =========================================================================
     def _call_gemini_api(
         self,
@@ -840,10 +841,10 @@ class HybridNasaAIEngine:
                     parts = candidates[0].get("content", {}).get("parts") or []
                     text = "".join(str(p.get("text", "")) for p in parts).strip()
                     if text:
-                        return (True, clean_model, text, f"☁️ Google Gemini API ({clean_model}) ile yanıtlandı")
-            return (False, clean_model, "", f"⚠️ Gemini API HTTP {resp.status_code}")
+                        return (True, clean_model, text, f"◈ Bulut Çıkarım Geçidi ({clean_model}) ile sentezlendi")
+            return (False, clean_model, "", f"▲ Gemini REST HTTP {resp.status_code}")
         except Exception as exc:
-            return (False, clean_model, "", f"⚠️ Gemini bağlantı uyarısı: {exc}")
+            return (False, clean_model, "", f"▲ Bulut bağlantı uyarısı: {exc}")
 
     def _call_antigravity(
         self,
@@ -854,23 +855,16 @@ class HybridNasaAIEngine:
         on_chunk: Optional[Callable[[str, str, str], None]] = None,
     ) -> Tuple[bool, str, str, str]:
         """
-        1) Bilgisayarda kurulu ve oturum açılmış Google Antigravity Uygulamasını ('agy' CLI) doğrudan çalıştırır,
-        2) Kuruluysa google.antigravity Python SDK'sını dener,
-        3) Girilmişse ANTIGRAVITY_API_KEY üzerinden bağlanır.
+        1) Bilgisayarda kurulu ve oturum açılmış yerel CLI çıkarım köprüsünü çalıştırır,
+        2) Kuruluysa yerel Python SDK köprüsünü dener,
+        3) Girilmişse köprü API anahtarı üzerinden bağlanır.
         """
         agy_st = self.get_antigravity_status()
         agy_exe_str = agy_st.get("cli_path", "")
         if agy_st.get("cli_ready") and agy_exe_str:
             try:
-                agy_ws = get_user_data_dir() / "agy_workspace"
+                agy_ws = get_user_data_dir() / "bridge_workspace"
                 agy_ws.mkdir(parents=True, exist_ok=True)
-                src_gemini_md = get_resource_base_dir() / "GEMINI.md"
-                dst_gemini_md = agy_ws / "GEMINI.md"
-                if src_gemini_md.is_file() and not dst_gemini_md.is_file():
-                    try:
-                        dst_gemini_md.write_text(src_gemini_md.read_text(encoding="utf-8"), encoding="utf-8")
-                    except Exception:
-                        pass
 
                 avail_ids = [m["id"] for m in agy_st.get("models", [])]
                 chosen_model = str(cfg.get("antigravity_model") or "gemini-3.8-flash-high").strip()
@@ -914,12 +908,12 @@ class HybridNasaAIEngine:
                 out_text = (proc.stdout or "").strip()
                 if proc.returncode == 0 and out_text:
                     if on_chunk:
-                        on_chunk(out_text, "antigravity", chosen_model)
-                    return (True, f"agy/{chosen_model}", out_text, f"🚀 Google Antigravity Uygulaması ({chosen_model}) ile yanıtlandı")
+                        on_chunk(out_text, "local_cli_bridge", chosen_model)
+                    return (True, f"cli/{chosen_model}", out_text, f"◈ Yerel Sistem Çıkarım Köprüsü ({chosen_model}) ile sentezlendi")
             except Exception as exc:
                 pass
 
-        # 2) Google Antigravity Python SDK
+        # 2) Yerel Python SDK Köprüsü
         if self._antigravity_sdk_available:
             try:
                 from google.antigravity import Agent, LocalAgentConfig  # type: ignore
@@ -936,12 +930,12 @@ class HybridNasaAIEngine:
                 text = asyncio.run(_run_agy())
                 if text:
                     if on_chunk:
-                        on_chunk(text, "antigravity", "google.antigravity.Agent")
-                    return (True, "google.antigravity.Agent", text, "🚀 Google Antigravity Python SDK ile yanıtlandı")
+                        on_chunk(text, "local_cli_bridge", "local.sdk.Agent")
+                    return (True, "local.sdk.Agent", text, "◈ Yerel SDK Çıkarım Köprüsü ile sentezlendi")
             except Exception:
                 pass
 
-        # 3) Antigravity API Anahtarı
+        # 3) Yedek Köprü Anahtarı
         agy_key = str(cfg.get("antigravity_api_key", "")).strip()
         if agy_key:
             ok, m_name, txt, note = self._call_gemini_api(
@@ -953,11 +947,11 @@ class HybridNasaAIEngine:
             )
             if ok and txt:
                 if on_chunk:
-                    on_chunk(txt, "antigravity", f"antigravity/{m_name}")
-                return (True, f"antigravity/{m_name}", txt, "🚀 Google Antigravity API Anahtarı ile yanıtlandı")
+                    on_chunk(txt, "local_cli_bridge", f"bridge/{m_name}")
+                return (True, f"bridge/{m_name}", txt, "◈ Yerel Köprü Geçidi ile sentezlendi")
             return (False, m_name, "", note)
 
-        return (False, "antigravity", "", "ℹ️ Google Antigravity CLI oturumu veya API anahtarı bulunamadı")
+        return (False, "local_cli_bridge", "", "◈ Yerel CLI köprüsü oturumu bulunamadı")
 
     def _call_openai_compatible(
         self,
@@ -996,10 +990,10 @@ class HybridNasaAIEngine:
                 if choices:
                     txt = str(choices[0].get("message", {}).get("content", "")).strip()
                     if txt:
-                        return (True, model, txt, f"🌐 {label} ({model}) ile yanıtlandı")
-            return (False, model, "", f"⚠️ {label} HTTP {resp.status_code}")
+                        return (True, model, txt, f"◈ {label} ({model}) ile sentezlendi")
+            return (False, model, "", f"▲ {label} HTTP {resp.status_code}")
         except Exception as exc:
-            return (False, model, "", f"⚠️ {label} bağlantı uyarısı: {exc}")
+            return (False, model, "", f"▲ {label} bağlantı uyarısı: {exc}")
 
     def _call_ollama_local(
         self,
@@ -1014,7 +1008,7 @@ class HybridNasaAIEngine:
     ) -> Tuple[bool, str, str, str]:
         st = self.get_ollama_status()
         if not st["online"] or not st["models"]:
-            return (False, "ollama", "", "ℹ️ Yerel Ollama servisi kapalı veya yüklü model bulunamadı")
+            return (False, "ollama", "", "◈ Yerel Ollama servisi kapalı veya yüklü model bulunamadı")
 
         available_names = [m["name"] for m in st["models"]]
         chosen = str(cfg.get("ollama_model", "auto")).strip()
@@ -1058,7 +1052,7 @@ class HybridNasaAIEngine:
                 if resp.status_code != 200:
                     code = resp.status_code
                     resp.close()
-                    return (False, chosen, "", f"⚠️ Ollama HTTP {code}")
+                    return (False, chosen, "", f"▲ Ollama HTTP {code}")
 
                 acc_chunks: List[str] = []
                 acc_thinking: List[str] = []
@@ -1095,10 +1089,10 @@ class HybridNasaAIEngine:
                 if final_txt:
                     if on_chunk:
                         on_chunk(final_txt, "ollama", chosen)
-                    return (True, chosen, final_txt, f"🛰️ Yerel Ollama ({chosen} • Canlı Akış Modu) ile yanıtlandı")
-                return (False, chosen, "", "⚠️ Ollama boş yanıt döndürdü")
+                    return (True, chosen, final_txt, f"◈ Yerel Çevrimdışı Ollama ({chosen} • Canlı Akış) ile sentezlendi")
+                return (False, chosen, "", "▲ Ollama boş yanıt döndürdü")
             except Exception as exc:
-                return (False, chosen, "", f"⚠️ Ollama çalışma uyarısı: {exc}")
+                return (False, chosen, "", f"▲ Ollama çalışma uyarısı: {exc}")
 
     @staticmethod
     def _apply_safety_rule_critic(reply_text: str, lang: str) -> Tuple[str, str]:
@@ -1107,16 +1101,16 @@ class HybridNasaAIEngine:
         if "halon" in lower and not any(w in lower for w in ("yasak", "kullanılmaz", "prohibited", "banned", "avoid", "yerine", "strictly")):
             if lang == "en":
                 patch = (
-                    "\n\n> 🛡️ **ALTAR-NASA SAFETY CRITIC OVERRIDE (DIR-05):** *Halon 1301 is strictly prohibited in modern "
+                    "\n\n> **[ALTAR-NASA SAFETY CRITIC OVERRIDE • CON-05 / NASA-STD-6001B]:** *Halon 1301 is strictly prohibited in modern "
                     "crewed spacecraft due to toxic HF/HBr byproducts. Enforce HVAC shutoff + Fine Water Mist (ISS PFE) or CO₂.*"
                 )
             else:
                 patch = (
-                    "\n\n> 🛡️ **ALTAR-NASA GÜVENLİK DENETÇİSİ DÜZELTMESİ (DIR-05):** *İnsanlı uzay araçlarında toksik HF/HBr "
+                    "\n\n> **[ALTAR-NASA GÜVENLİK DENETÇİSİ ŞERHİ • CON-05 / NASA-STD-6001B]:** *İnsanlı uzay araçlarında toksik HF/HBr "
                     "gazı ürettiği için Halon 1301 kullanımı yasaktır. Önce HVAC fanlarını kapatın, ardından İnce Su Sisi (ISS PFE) veya CO₂ uygulayın.*"
                 )
-            return (reply_text + patch, "⚖️ 6-Katmanlı Denetçi: DIR-05 Halon Kural Şerhi Eklendi")
-        return (reply_text, "✓ 6-Katmanlı Bilimsel Denklem & Halon Güvenlik Denetimi Onaylandı")
+            return (reply_text + patch, "◈ 6-Katmanlı Denetçi: CON-05 Halon Kural Şerhi Eklendi")
+        return (reply_text, "✓ 6-Katmanlı Denklem & NASA-STD-6001B Halon Denetimi Onaylandı")
 
     @staticmethod
     def _build_deterministic_scientific_report(
@@ -1150,7 +1144,7 @@ class HybridNasaAIEngine:
                 f"{pg_block_en}"
                 f"- **Interpretation:** {call['summary_en']}\n\n"
                 f"### 2. Ranked NASA Microgravity Evidence & Comparison (PSI & NTRS)\n{exp_lines}\n\n"
-                f"### 3. Spacecraft, EVA Suit & Rover Fire Safety Protocol (DIR-05)\n"
+                f"### 3. Spacecraft, EVA Suit & Rover Fire Safety Protocol (CON-05 / NASA-STD-6001B)\n"
                 f"- **Step 1 (Ventilation Isolation):** Cut HVAC cabin airflow (`{inp['airflow_cms']} cm/s -> 0 cm/s`) to force diffusive CO₂ self-quenching.\n"
                 f"- **Step 2 (Clean Suppression):** Deploy **25–40 µm Fine Water Mist (ISS PFE / SoFIE-MIST)** or localized **CO₂** (Halon 1301 is strictly prohibited).\n"
                 f"- **Step 3 (Multi-Sensor Watch):** Fuse optical cameras with IR radiometry (`{tel['heat_flux_kw_m2']} kW/m²`), CO sensing (`{tel['co_ppm']} ppm`), and **DAFT/SAME** dust-immune laser smoke detectors against invisible Cool Flames.\n\n"
@@ -1178,9 +1172,9 @@ class HybridNasaAIEngine:
             f"{pg_block_tr}"
             f"- **Fiziksel Yorum:** {call['summary_tr']}\n\n"
             f"### 2. NASA Deneysel Kanıt Sıralaması ve Kıyaslama (PSI & NTRS)\n{exp_lines_tr}\n\n"
-            f"### 3. Uzay Aracı, Uzay Giysisi & Gezgin Yangın Güvenliği Protokolü (DIR-05)\n"
+            f"### 3. Uzay Aracı, Uzay Giysisi & Gezgin Yangın Güvenliği Protokolü (CON-05 / NASA-STD-6001B)\n"
             f"- **Adım 1 (Havalandırma Kesme):** Kabin HVAC fanlarını (`{inp['airflow_cms']} cm/s -> 0 cm/s`) derhal kapatarak alevi kendi CO₂ kabuğu içinde difüzif boğulmaya zorlayın.\n"
-            f"- **Adım 2 (Aktif Söndürme):** DIR-05 kuralı uyarınca Halon 1301 kesinlikle yasaktır; **İnce Su Sisi (ISS Water Mist PFE / SoFIE-MIST, 25–40 µm)** veya **CO₂** seyreltmesi uygulayın.\n"
+            f"- **Adım 2 (Aktif Söndürme):** CON-05 / NASA-STD-6001B kuralı uyarınca Halon 1301 kesinlikle yasaktır; **İnce Su Sisi (ISS Water Mist PFE / SoFIE-MIST, 25–40 µm)** veya **CO₂** seyreltmesi uygulayın.\n"
             f"- **Adım 3 (Çoklu Sensör Füzyonu):** Görünmez Soğuk Alev (550–750 K) ve Ay tozu yanlış alarmlarına karşı optik kamerayı IR radyometre (`{tel['heat_flux_kw_m2']} kW/m²`), CO sensörü (`{tel['co_ppm']} ppm`) ve **DAFT/SAME** çok kanallı duman dedektörüyle çapraz doğrulayın.\n\n"
             f"### 4. Uzaydan Dünya'ya (Space-to-Earth) Güvenlik Uygulamaları\n"
             f"- NASA mikroçekim bulgularından türetilen **25–40 µm ince su sisli söndürücüler** (SoFIE-MIST), **DAFT/SAME toz-bağışıklı karasal duman algılama**, **PBI/Nomex itfaiyeci koruyucu giysileri ve kompozit SCBA hava tankları** ile NTC soğuk alev temiz motor kinetiği Dünya'daki yangın güvenliğini doğrudan güçlendirmektedir."

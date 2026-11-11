@@ -1017,8 +1017,8 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
 MISSION_PRESETS: List[Dict[str, Any]] = [
     {
         "id": "preset_iss_spherical",
-        "name_tr": "🛰️ ISS FLEX: 0G Küresel Heptan Alevi",
-        "name_en": "🛰️ ISS FLEX: 0G Spherical Heptane Flame",
+        "name_tr": "◈ ISS FLEX: 0G Küresel Heptan Alevi",
+        "name_en": "◈ ISS FLEX: 0G Spherical Heptane Flame",
         "badge": "0G • %21 O₂ • 14.7 psia",
         "params": {
             "fuel_id": "n_heptane",
@@ -1032,8 +1032,8 @@ MISSION_PRESETS: List[Dict[str, Any]] = [
     },
     {
         "id": "preset_cool_flame",
-        "name_tr": "👻 FLEX / CFI: Görünmez Soğuk Alev (550–750 K)",
-        "name_en": "👻 FLEX / CFI: Invisible Cool Flame (550–750 K)",
+        "name_tr": "◈ FLEX / CFI: Görünmez Soğuk Alev (550–750 K)",
+        "name_en": "◈ FLEX / CFI: Invisible Cool Flame (550–750 K)",
         "badge": "0G • %13 O₂ • UV/IR",
         "params": {
             "fuel_id": "n_heptane",
@@ -1047,8 +1047,8 @@ MISSION_PRESETS: List[Dict[str, Any]] = [
     },
     {
         "id": "preset_bass_ventilation",
-        "name_tr": "🌬️ BASS Paradoksu: MSG Düşük Fan Akışı (5 cm/s)",
-        "name_en": "🌬️ BASS Paradox: MSG Low-Flow Wake Flame",
+        "name_tr": "◈ BASS Paradoksu: MSG Düşük Fan Akışı (5 cm/s)",
+        "name_en": "◈ BASS Paradox: MSG Low-Flow Wake Flame",
         "badge": "0G • %16.5 O₂ • 5.5 cm/s",
         "params": {
             "fuel_id": "pmma",
@@ -1062,8 +1062,8 @@ MISSION_PRESETS: List[Dict[str, Any]] = [
     },
     {
         "id": "preset_eva_spacesuit",
-        "name_tr": "👩‍🚀 EVA Uzay Giysisi: Saf Oksijen (4.3 psia / %100 O₂)",
-        "name_en": "👩‍🚀 EVA Spacesuit: Pure Oxygen (4.3 psia / 100% O₂)",
+        "name_tr": "◈ EVA Uzay Giysisi: Saf Oksijen (4.3 psia / %100 O₂)",
+        "name_en": "◈ EVA Spacesuit: Pure Oxygen (4.3 psia / 100% O₂)",
         "badge": "0G • %100 O₂ • 4.3 psia",
         "params": {
             "fuel_id": "nomex",
@@ -1077,8 +1077,8 @@ MISSION_PRESETS: List[Dict[str, Any]] = [
     },
     {
         "id": "preset_lunar_rover",
-        "name_tr": "🚙 Ay Üssü & Basınçlı Rover (0.16G • 10.2 psia • %32 O₂)",
-        "name_en": "🚙 Lunar Base & Pressurized Rover (0.16G • 10.2 psia • 32% O₂)",
+        "name_tr": "◈ Ay Üssü & Basınçlı Rover (0.16G • 10.2 psia • %32 O₂)",
+        "name_en": "◈ Lunar Base & Pressurized Rover (0.16G • 10.2 psia • 32% O₂)",
         "badge": "0.16G • %32 O₂ • LUCI/FM2",
         "params": {
             "fuel_id": "pmma",
@@ -1092,8 +1092,8 @@ MISSION_PRESETS: List[Dict[str, Any]] = [
     },
     {
         "id": "preset_artemis_cabin",
-        "name_tr": "🌕 Saffire-V / Mars Kabini: Keşif (8.2 psia / %34 O₂)",
-        "name_en": "🌕 Saffire-V / Mars Habitat: Exploration (8.2 psia / 34% O₂)",
+        "name_tr": "◈ Saffire-V / Mars Kabini: Keşif (8.2 psia / %34 O₂)",
+        "name_en": "◈ Saffire-V / Mars Habitat: Exploration (8.2 psia / 34% O₂)",
         "badge": "0.38G • %34 O₂ • 8.2 psia",
         "params": {
             "fuel_id": "sibal",
@@ -1107,8 +1107,8 @@ MISSION_PRESETS: List[Dict[str, Any]] = [
     },
     {
         "id": "preset_acme_cfig",
-        "name_tr": "🔵 ACME CFI-G: Küresel Brülör (%85 O₂ Rekor Test)",
-        "name_en": "🔵 ACME CFI-G: Spherical Burner (85% O₂ Peak Test)",
+        "name_tr": "◈ ACME CFI-G: Küresel Brülör (%85 O₂ Rekor Test)",
+        "name_en": "◈ ACME CFI-G: Spherical Burner (85% O₂ Peak Test)",
         "badge": "0G • %85 O₂ • C₃H₈",
         "params": {
             "fuel_id": "propane_cfig",
@@ -1122,8 +1122,8 @@ MISSION_PRESETS: List[Dict[str, Any]] = [
     },
     {
         "id": "preset_earth_1g",
-        "name_tr": "🌍 Dünya (1G) Referans Karşılaştırması",
-        "name_en": "🌍 Earth (1G) Buoyant Reference Plume",
+        "name_tr": "◈ Dünya (1G) Referans Karşılaştırması",
+        "name_en": "◈ Earth (1G) Buoyant Reference Plume",
         "badge": "1G • %21 O₂ • Kaldırma",
         "params": {
             "fuel_id": "n_heptane",
@@ -1139,36 +1139,36 @@ MISSION_PRESETS: List[Dict[str, Any]] = [
 
 SPACE_TO_EARTH_TRANSFERS: List[Dict[str, str]] = [
     {
-        "domain_tr": "🚒 İtfaiyeci Koruyucu Kıyafetleri (PBI/Nomex) & SCBA Solunum Hava Tankları",
-        "domain_en": "🚒 Firefighter Protective Turnout Gear (PBI/Nomex) & SCBA Air Tanks",
+        "domain_tr": "◫ İtfaiyeci Koruyucu Kıyafetleri (PBI/Nomex) & SCBA Solunum Hava Tankları",
+        "domain_en": "◫ Firefighter Protective Turnout Gear (PBI/Nomex) & SCBA Air Tanks",
         "nasa_source": "NASA Apollo / EVA Suit (%100 O₂), BASS-II & SoFIE (NTRS 20210011385)",
         "insight_tr": "Uzay giysileri ve yüksek oksijenli kabinler için geliştirilen PBI/Nomex yanmaz dokuma teknolojileri ile hafif kompozit yaşam destek oksijen tankları, bugün dünyadaki tüm itfaiyecilerin daha hafif SCBA hava tüpleri taşımasını ve yüksek ısıya dayanıklı koruyucu giysilerle korunmasını sağlamaktadır.",
         "insight_en": "NASA EVA suit fire-resistant textiles (PBI/Nomex) and lightweight composite life-support pressure vessels directly enabled modern firefighter protective turnout coats and lighter SCBA breathing air tanks on Earth.",
     },
     {
-        "domain_tr": "🚨 Karasal Akıllı Duman Algılama ve Toz / Yanlış Alarm Ayrımı",
-        "domain_en": "🚨 Terrestrial Smart Smoke Detection & Dust False-Alarm Immunity",
+        "domain_tr": "◫ Karasal Akıllı Duman Algılama ve Toz / Yanlış Alarm Ayrımı",
+        "domain_en": "◫ Terrestrial Smart Smoke Detection & Dust False-Alarm Immunity",
         "nasa_source": "SAME, DAFT & DAFT-2 (NTRS 20120002875)",
         "insight_tr": "ISS'te duman partikülü boyut dağılımını inceleyen SAME ve aynı lazer cihazlarını kabin/Ay tozunu ayırt etmek için kullanan DAFT/DAFT-2 araştırmaları; evlerde, uçak kargo ambarlarında ve madenlerde su buharı/toz kaynaklı yanlış alarmları sıfırlayan çok açılı akıllı duman dedektörlerine dönüştü.",
         "insight_en": "Multi-wavelength aerosol scattering developed in NASA's SAME and DAFT/DAFT-2 investigations powers modern terrestrial smoke detectors that distinguish real sub-micron pyrolysis smoke from dust and steam.",
     },
     {
-        "domain_tr": "💧 İnce Su Sisli Söndürücüler (Water Mist) & EV Batarya / Temiz Oda Güvenliği",
-        "domain_en": "💧 Fine Water Mist Extinguishers & EV Battery / Cleanroom Protection",
+        "domain_tr": "◫ İnce Su Sisli Söndürücüler (Water Mist) & EV Batarya / Temiz Oda Güvenliği",
+        "domain_en": "◫ Fine Water Mist Extinguishers & EV Battery / Cleanroom Protection",
         "nasa_source": "ISS Water Mist PFE, SoFIE-MIST & Saffire-IV (NTRS 20220002714)",
         "insight_tr": "ISS'te zehirli Halon'un yerini almak üzere geliştirilen 20–50 µm ince su sisli söndürücüler ve anlık HVAC kesme protokolleri; bugün Dünya'da veri merkezlerinde, müzelerde, denizaltılarda ve elektrikli araç batarya depolarında elektroniklere zarar vermeden yangın söndürmektedir.",
         "insight_en": "Sub-50 µm fine water mist extinguishers developed for the ISS replace ozone-depleting Halon in terrestrial data centers, museums, submarines, and lithium-ion battery facilities.",
     },
     {
-        "domain_tr": "🚗 Yüksek Verimli Motorlar ve HCCI Soğuk Alev Yanması",
-        "domain_en": "🚗 Ultra-Lean HCCI Engines & Low-Temperature Cool-Flame Kinetics",
+        "domain_tr": "◫ Yüksek Verimli Motorlar ve HCCI Soğuk Alev Yanması",
+        "domain_en": "◫ Ultra-Lean HCCI Engines & Low-Temperature Cool-Flame Kinetics",
         "nasa_source": "FLEX, FLEX-2, CFI & ACME CFI-G (NTRS 20150023456)",
         "insight_tr": "ISS'te kaldırma kuvveti olmadan izole edilen 550-750 K Soğuk Alev (NTC) kimyası, Dünya'daki otomobil ve uçak motorlarında vuruntuyu (knock) önleyip yakıt tüketimini ve NOx emisyonunu %20-30 azaltan kinetik modellerin temelini oluşturdu.",
         "insight_en": "Isolated cool-flame NTC kinetics from ISS FLEX, CFI, and CFI-G experiments calibrated chemical mechanisms for cleaner, knock-free HCCI engines on Earth.",
     },
     {
-        "domain_tr": "🏥 Hiperbarik ve Oksijen Zenginleştirilmiş Yoğun Bakım Üniteleri",
-        "domain_en": "🏥 Oxygen-Enriched ICU & Hyperbaric Medical Chambers",
+        "domain_tr": "◫ Hiperbarik ve Oksijen Zenginleştirilmiş Yoğun Bakım Üniteleri",
+        "domain_en": "◫ Oxygen-Enriched ICU & Hyperbaric Medical Chambers",
         "nasa_source": "Saffire-V (%34 O₂) & ACME CFI-G (%85 O₂)",
         "insight_tr": "Ay üsleri (%30–34 O₂), uzay giysileri (%100 O₂) ve CFI-G (%85 O₂) için ölçülen tutuşma sınırları, hastanelerdeki hiperbarik oksijen kabinleri ve yoğun bakım solunum ünitelerinde statik kıvılcım yangınlarını önleyen tıbbi standartları belirlemektedir.",
         "insight_en": "High-oxygen flammability boundaries from Saffire-V, EVA suit testing, and ACME CFI-G guide fire-safe material standards in hospital ICUs and hyperbaric chambers.",

@@ -1,5 +1,5 @@
 # ============================================================================
-# ALTAR-NASA v5.0 — Zero-Trust Güvenlik ve Derleme Hariç Tutma Kuralları
+# ALTAR-NASA v5.1 — Zero-Trust Güvenlik ve Derleme Hariç Tutma Kuralları
 # ============================================================================
 
 # Sırlar, API Anahtarları ve Yerel Kullanıcı Yapılandırması (ASLA Git'e Giremez)
@@ -10,6 +10,16 @@ config.local.json
 *secret*
 *.pem
 *.key
+
+# Yerel Geliştirici Çalışma Alanı Yönergeleri ve Eski Derleme Profilleri (Yerelde Korunur, Depoya Yüklenmez)
+GEMINI.md
+AGENTS.md
+.agents/
+Nasa.spec
+Nasa_2.spec
+Nasa_3.spec
+verify_*.py
+capture_*.py
 
 # Python Önbellek ve Derleme Çıktıları
 __pycache__/

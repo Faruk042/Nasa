@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-ALTAR-NASA v5.0 — Seçenek 1: %100 İzole Sunucusuz Statik Web Paketi Üreticisi (build_serverless_web.py).
+ALTAR-NASA v5.1 — Seçenek 1: %100 İzole Sunucusuz Statik Web Paketi Üreticisi (build_serverless_web.py).
 - Arka planda hiçbir Python/Node sunucusu veya açık port barındırmaz (Sıfır Saldırı Yüzeyi).
 - GitHub Pages / Cloudflare Pages veya doğrudan yerel statik klasör olarak çalışır.
 - Fizik motoru, ISS R² doğrulaması, ECLSS yaşam saati, 15 PSI sıralama matrisi, istemci tarafı görüntü/veri analizi
-  ve NTRS atıflı SI Copilot tamamen kullanıcının kendi tarayıcısında (RAM içinde) çalışır.
+  ve NTRS atıflı Kanıt Sentezi Konsolu tamamen kullanıcının kendi tarayıcısında (RAM içinde) çalışır.
 - Hiçbir API anahtarı veya .env verisi pakete gömülmez.
 """
 
@@ -30,10 +30,10 @@ OUT_DIR = PROJECT_ROOT / "web_serverless"
 
 
 SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================================================
- * ALTAR-NASA • Flame in Freefall v5.0 — Serverless Zero-Trust Browser Kernel
+ * ALTAR-NASA • Flame in Freefall v5.1 — Serverless Zero-Trust Browser Kernel
  * Seçenek 1 (Statik Web Paketi): Sıfır Arka Plan Sunucusu • Sıfır Açık Port • %100 İzole
  * Tüm termodinamik denklemler, ISS R²/RMSE doğrulaması, ECLSS saati, PSI sıralaması ve
- * SI Copilot doğrudan tarayıcı belleğinde (client-side) çalışır.
+ * Kanıt Sentezi Konsolu doğrudan tarayıcı belleğinde (client-side) çalışır.
  * ============================================================================ */
 (function () {
     "use strict";
@@ -354,8 +354,8 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             rmse: rmse,
             d2_points: d2Pts,
             moc_points: mocPts,
-            benchmark_tr: `🔬 NASA PSI Uçuş Doğrulaması (${campShort}): R² = ${rSq.toFixed(3)} • RMSE = ${rmse.toFixed(3)}`,
-            benchmark_en: `🔬 NASA PSI Flight Validation (${campShort}): R² = ${rSq.toFixed(3)} • RMSE = ${rmse.toFixed(3)}`,
+            benchmark_tr: `◆ NASA PSI Uçuş Doğrulaması (${campShort}): R² = ${rSq.toFixed(3)} • RMSE = ${rmse.toFixed(3)}`,
+            benchmark_en: `◆ NASA PSI Flight Validation (${campShort}): R² = ${rSq.toFixed(3)} • RMSE = ${rmse.toFixed(3)}`,
         };
 
         // ECLSS Kabin / Gezgin / EVA Saati
@@ -377,8 +377,8 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
                 co_at_response_ppm: 18.0,
                 peak_temp_rise_c: 0.4,
                 severity: "SAFE",
-                badge_tr: "🟢 SÖNÜMLENMİŞ / GÜVENLİ KABİN",
-                badge_en: "🟢 EXTINGUISHED / SAFE HABITAT",
+                badge_tr: "● SÖNÜMLENMİŞ / GÜVENLİ KABİN",
+                badge_en: "● EXTINGUISHED / SAFE HABITAT",
                 summary_tr: `${hab.name_tr} içinde aktif ekzotermik yanma bulunmuyor (MOC sınırı altında veya üfleme sönmesi). Kabin CO seviyesi bazal düzeyde (~18 ppm) kararlıdır.`,
                 summary_en: `No sustained combustion in ${hab.name_en} (quenched below MOC or blowoff). Cabin CO remains at baseline (~18 ppm).`,
                 milestones: [
@@ -417,8 +417,8 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
                 co_at_response_ppm: coAtResp,
                 peak_temp_rise_c: peakDt,
                 severity: sev,
-                badge_tr: sev === "CRITICAL" ? "🔴 KRİTİK YAŞAM DESTEK AŞIMI" : (sev === "WARNING" ? "🟠 DİKKAT: HIZLI MÜDAHALE GEREKLİ" : "🟢 KONTROLLÜ BASTIRMA PENCERESİ"),
-                badge_en: sev === "CRITICAL" ? "🔴 CRITICAL ECLSS / SMAC BREACH" : (sev === "WARNING" ? "🟠 WARNING: RAPID ACTION REQUIRED" : "🟢 CONTROLLED SUPPRESSION WINDOW"),
+                badge_tr: sev === "CRITICAL" ? "▲ KRİTİK YAŞAM DESTEK AŞIMI" : (sev === "WARNING" ? "◆ DİKKAT: HIZLI MÜDAHALE GEREKLİ" : "● KONTROLLÜ BASTIRMA PENCERESİ"),
+                badge_en: sev === "CRITICAL" ? "▲ CRITICAL ECLSS / SMAC BREACH" : (sev === "WARNING" ? "◆ WARNING: RAPID ACTION REQUIRED" : "● CONTROLLED SUPPRESSION WINDOW"),
                 summary_tr: `**${hab.name_tr}:** Alarm \`t = ${tAlarm} s\` anında tetiklendi. NASA 1-Saatlik Acil SMAC CO sınırı (\`125 ppm\`) \`t = ${tSmac} s\` içinde aşılır. Seçilen senaryoda (\`t = ${tInt} s\`) kabin CO düzeyi **\`${coAtResp} ppm\`** ve yerel ısınma **\`+${peakDt} °C\`** olur.`,
                 summary_en: `**${hab.name_en}:** Alarm triggered at \`t = ${tAlarm} s\`. NASA 1-hr Emergency SMAC CO limit (\`125 ppm\`) reached in \`t = ${tSmac} s\`. At intervention (\`t = ${tInt} s\`), cabin CO hits **\`${coAtResp} ppm\`** with **\`+${peakDt} °C\`** local ΔT.`,
                 milestones: [
@@ -439,18 +439,18 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             moc_current_est: mocCurrent,
             moc_1g_bound: moc1g,
             tr: isPartial
-                ? `🌗 **NASA PSI Kısmi Yerçekimi Veri Şeffaflığı (${gravityG.toFixed(2)}G):** NASA PSI'da LUCI & FM2 Ay verileri beklenirken **0G sınırı (%${moc0g})** ile **1G sınırı (%${moc1g})** ara yerçekimini sınırlar (\`Tahmini MOC ≈ %${mocCurrent}\`).`
+                ? `◈ **NASA PSI Kısmi Yerçekimi Veri Şeffaflığı (${gravityG.toFixed(2)}G):** NASA PSI'da LUCI & FM2 Ay verileri beklenirken **0G sınırı (%${moc0g})** ile **1G sınırı (%${moc1g})** ara yerçekimini sınırlar (\`Tahmini MOC ≈ %${mocCurrent}\`).`
                 : isEva
-                ? `👩‍🚀 **EVA Uzay Giysisi Saf Oksijen Rejimi (${pressurePsia.toFixed(1)} psia / %${oxygenPct.toFixed(0)} O₂):** N₂ ısıl balastı sıfırlandığı için tutuşma enerjisi dramatik biçimde düşer!`
+                ? `◈ **EVA Uzay Giysisi Saf Oksijen Rejimi (${pressurePsia.toFixed(1)} psia / %${oxygenPct.toFixed(0)} O₂):** N₂ ısıl balastı sıfırlandığı için tutuşma enerjisi dramatik biçimde düşer!`
                 : isLunarRover
-                ? `🚙 **Ay Üssü & Basınçlı Gezgin Atmosferi (${pressurePsia.toFixed(1)} psia / %${oxygenPct.toFixed(0)} O₂):** EVA ön-soluma süresini azaltan zenginleştirilmiş O₂ atmosferi yanıcılığı artırır.`
+                ? `◈ **Ay Üssü & Basınçlı Gezgin Atmosferi (${pressurePsia.toFixed(1)} psia / %${oxygenPct.toFixed(0)} O₂):** EVA ön-soluma süresini azaltan zenginleştirilmiş O₂ atmosferi yanıcılığı artırır.`
                 : "",
             en: isPartial
-                ? `🌗 **NASA PSI Partial-Gravity Transparency (${gravityG.toFixed(2)}G):** Bounded between **0G (${moc0g}%)** and **1G (${moc1g}%)** (\`Est. MOC ≈ ${mocCurrent}%\`) awaiting LUCI & FM2 lunar datasets.`
+                ? `◈ **NASA PSI Partial-Gravity Transparency (${gravityG.toFixed(2)}G):** Bounded between **0G (${moc0g}%)** and **1G (${moc1g}%)** (\`Est. MOC ≈ ${mocCurrent}%\`) awaiting LUCI & FM2 lunar datasets.`
                 : isEva
-                ? `👩‍🚀 **EVA Spacesuit Pure-O₂ Regime (${pressurePsia.toFixed(1)} psia / ${oxygenPct.toFixed(0)}% O₂):** Zero N₂ thermal ballast dramatically accelerates flame spread.`
+                ? `◈ **EVA Spacesuit Pure-O₂ Regime (${pressurePsia.toFixed(1)} psia / ${oxygenPct.toFixed(0)}% O₂):** Zero N₂ thermal ballast dramatically accelerates flame spread.`
                 : isLunarRover
-                ? `🚙 **Lunar Base & Pressurized Rover (${pressurePsia.toFixed(1)} psia / ${oxygenPct.toFixed(0)}% O₂):** Elevated O₂ fraction increases material flammability.`
+                ? `◈ **Lunar Base & Pressurized Rover (${pressurePsia.toFixed(1)} psia / ${oxygenPct.toFixed(0)}% O₂):** Elevated O₂ fraction increases material flammability.`
                 : "",
         };
 
@@ -474,20 +474,20 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
                 summary_en: `Gravity (${gravityG.toFixed(2)}G) stretches the flame into a convective plume with luminous soot.`,
             },
             COOL_FLAME_NTC: {
-                badge_tr: "⚠️ GÖRÜNMEZ SOĞUK ALEV (COOL FLAME • UV/IR MODU)",
-                badge_en: "⚠️ INVISIBLE COOL FLAME (NTC REGIME • UV/IR VIEW)",
+                badge_tr: "▲ GÖRÜNMEZ SOĞUK ALEV (COOL FLAME • UV/IR MODU)",
+                badge_en: "▲ INVISIBLE COOL FLAME (NTC REGIME • UV/IR VIEW)",
                 summary_tr: `Radyatif ısı kaybı sıcak alevi söndürdü ancak ${flameTempK.toFixed(0)} K görünmez Soğuk Alev (FLEX/CFI) CO üretmeye devam ediyor!`,
                 summary_en: `Radiative loss quenched the hot flame, yet ${flameTempK.toFixed(0)} K invisible Cool Flame chemistry persists!`,
             },
             BLOWOFF_EXTINGUISHED: {
-                badge_tr: "💨 YÜKSEK HIZLI ÜFLEME SÖNMESİ (BLOWOFF)",
-                badge_en: "💨 CONVECTIVE BLOWOFF EXTINCTION",
+                badge_tr: "◆ YÜKSEK HIZLI ÜFLEME SÖNMESİ (BLOWOFF)",
+                badge_en: "◆ CONVECTIVE BLOWOFF EXTINCTION",
                 summary_tr: `Akış hızı (${airflowCms.toFixed(1)} cm/s) Damköhler sınırını (Da < 1) aşarak alevi üfleyip söndürdü.`,
                 summary_en: `Airflow (${airflowCms.toFixed(1)} cm/s) exceeded Damköhler residence threshold (Da < 1).`,
             },
             QUENCHED_EXTINGUISHED: {
-                badge_tr: `❄️ OKSİJEN / RADYATİF SÖNÜMLENME (MOC < %${mocCurrent})`,
-                badge_en: `❄️ DIFFUSIVE / RADIATIVE QUENCHING (O₂ < ${mocCurrent}%)`,
+                badge_tr: `◆ OKSİJEN / RADYATİF SÖNÜMLENME (MOC < %${mocCurrent})`,
+                badge_en: `◆ DIFFUSIVE / RADIATIVE QUENCHING (O₂ < ${mocCurrent}%)`,
                 summary_tr: `Mevcut O₂ (%${oxygenPct.toFixed(1)}) MOC sınırının (%${mocCurrent}) altında kaldığı için alev kendi kendine söndü.`,
                 summary_en: `Ambient O₂ (${oxygenPct.toFixed(1)}%) is below MOC (${mocCurrent}%); flame self-extinguished.`,
             },
@@ -534,8 +534,8 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         ];
 
         const instantAiSummary = {
-            tr: `📐 **Anlık Bilimsel Formül Sentezi (${fuel.formula}):** \`P_O2 = ${po2Psia.toFixed(2)} psia\`, \`B_oq = ${spaldingB.toFixed(2)}\`, \`Sh = ${shConv.toFixed(2)}\`, \`Da = ${damkohlerDa.toFixed(2)}\` ve ISS uçuş doğrulaması \`R² = ${rSq}\`. Rejim **${regime}** (Risk: **${riskScore}/100**). İlk müdahale: HVAC fanlarını kapatıp Halon kullanmadan İnce Su Sisi (SoFIE-MIST) uygulayın.`,
-            en: `📐 **Live Formula Synthesis (${fuel.formula}):** \`P_O2 = ${po2Psia.toFixed(2)} psia\`, \`B_oq = ${spaldingB.toFixed(2)}\`, \`Sh = ${shConv.toFixed(2)}\`, \`Da = ${damkohlerDa.toFixed(2)}\`, ISS validation \`R² = ${rSq}\`. Regime **${regime}** (Risk: **${riskScore}/100**). Action: Immediate HVAC shutoff + Fine Water Mist (No Halon).`,
+            tr: `◈ **Anlık Bilimsel Formül Sentezi (${fuel.formula}):** \`P_O2 = ${po2Psia.toFixed(2)} psia\`, \`B_oq = ${spaldingB.toFixed(2)}\`, \`Sh = ${shConv.toFixed(2)}\`, \`Da = ${damkohlerDa.toFixed(2)}\` ve ISS uçuş doğrulaması \`R² = ${rSq}\`. Rejim **${regime}** (Risk: **${riskScore}/100**). İlk müdahale: HVAC fanlarını kapatıp Halon kullanmadan İnce Su Sisi (SoFIE-MIST) uygulayın.`,
+            en: `◈ **Live Formula Synthesis (${fuel.formula}):** \`P_O2 = ${po2Psia.toFixed(2)} psia\`, \`B_oq = ${spaldingB.toFixed(2)}\`, \`Sh = ${shConv.toFixed(2)}\`, \`Da = ${damkohlerDa.toFixed(2)}\`, ISS validation \`R² = ${rSq}\`. Regime **${regime}** (Risk: **${riskScore}/100**). Action: Immediate HVAC shutoff + Fine Water Mist (No Halon).`,
         };
 
         return {
@@ -651,8 +651,8 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             compared_count: selected.length,
             experiments: selected,
             lowest_moc_program: lowestMoc.program,
-            synthesis_tr: `⚖️ **Soruşturmalar Arası Benzerlik & Farklılık Sentezi (${selected.length} NASA PSI Kaydı • ${facs.join(" vs. ")}):** En düşük oksijen sınırına sahip deney **%${lowestMoc.moc_measured_pct} MOC** ile **${lowestMoc.program}**; en yüksek test oksijenine çıkan ise **%${highestO2.oxygen_pct} O₂** ile **${highestO2.program}** kaydıdır. ${coolExps.length ? `**${coolExps.join(", ")}** kayıtlarında görünmez Soğuk Alev gözlemlendiğinden UV/IR + CO sensör füzyonu şarttır.` : "HVAC kesme ve SoFIE-MIST ince su sisi birincil Halon-dışı müdahaledir."}`,
-            synthesis_en: `⚖️ **Cross-Investigation Synthesis (${selected.length} NASA PSI Records • ${facs.join(" vs. ")}):** **${lowestMoc.program}** exhibits the lowest MOC (**${lowestMoc.moc_measured_pct}% O₂**), while **${highestO2.program}** spans up to **${highestO2.oxygen_pct}% O₂**. ${coolExps.length ? `Cool Flame persistence in **${coolExps.join(", ")}** requires UV/IR + CO multi-sensor fusion.` : "Immediate HVAC shutoff and SoFIE-MIST water mist remain universal countermeasures."}`,
+            synthesis_tr: `◈ **Soruşturmalar Arası Benzerlik & Farklılık Sentezi (${selected.length} NASA PSI Kaydı • ${facs.join(" vs. ")}):** En düşük oksijen sınırına sahip deney **%${lowestMoc.moc_measured_pct} MOC** ile **${lowestMoc.program}**; en yüksek test oksijenine çıkan ise **%${highestO2.oxygen_pct} O₂** ile **${highestO2.program}** kaydıdır. ${coolExps.length ? `**${coolExps.join(", ")}** kayıtlarında görünmez Soğuk Alev gözlemlendiğinden UV/IR + CO sensör füzyonu şarttır.` : "HVAC kesme ve SoFIE-MIST ince su sisi birincil Halon-dışı müdahaledir."}`,
+            synthesis_en: `◈ **Cross-Investigation Synthesis (${selected.length} NASA PSI Records • ${facs.join(" vs. ")}):** **${lowestMoc.program}** exhibits the lowest MOC (**${lowestMoc.moc_measured_pct}% O₂**), while **${highestO2.program}** spans up to **${highestO2.oxygen_pct}% O₂**. ${coolExps.length ? `Cool Flame persistence in **${coolExps.join(", ")}** requires UV/IR + CO multi-sensor fusion.` : "Immediate HVAC shutoff and SoFIE-MIST water mist remain universal countermeasures."}`,
         };
     }
 
@@ -749,7 +749,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
                 metrics: { detected_regime_tr: regLabel },
                 extracted_sim_params: extracted,
                 simulation: sim,
-                summary_tr: `🖼️ **İstemci-İçi İzole Piksel Analizi (${name}):** Kemilüminesans mavi oranı \`%${((blueCnt / totalPx) * 100).toFixed(1)}\`, kurum/sıcak ışıma \`%${((warmCnt / totalPx) * 100).toFixed(1)}\` -> **${regLabel}** tespit edildi (Dosya tarayıcı dışına çıkmadı).`,
+                summary_tr: `◫ **İstemci-İçi İzole Piksel Analizi (${name}):** Kemilüminesans mavi oranı \`%${((blueCnt / totalPx) * 100).toFixed(1)}\`, kurum/sıcak ışıma \`%${((warmCnt / totalPx) * 100).toFixed(1)}\` -> **${regLabel}** tespit edildi (Dosya tarayıcı dışına çıkmadı).`,
             };
         }
 
@@ -775,7 +775,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             chunks: Math.max(1, Math.ceil(text.length / 800)),
             extracted_sim_params: extracted,
             simulation: sim,
-            summary_tr: `📄 **İstemci-İçi İzole Veri Çözümleme (${name}):** Tarayıcı belleğinde işlendi -> O₂ \`%${extracted.oxygen_pct}\`, Basınç \`${extracted.pressure_psia} psia\`, Akış \`${extracted.airflow_cms} cm/s\`.`,
+            summary_tr: `◫ **İstemci-İçi İzole Veri Çözümleme (${name}):** Tarayıcı belleğinde işlendi -> O₂ \`%${extracted.oxygen_pct}\`, Basınç \`${extracted.pressure_psia} psia\`, Akış \`${extracted.airflow_cms} cm/s\`.`,
         };
     }
 
@@ -831,7 +831,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
                 `- **ISS Uçuş Telemetrisi Doğrulaması:** **${fv.campaign}** uçuş noktalarıyla \`R² = ${fv.r_squared}\` ve \`RMSE = ${fv.rmse}\` uyumu doğrulandı.`,
                 mediaCtx ? `- **Ekli Dosya / Görsel / Web Bağlamı:** ${mediaCtx}` : ``,
                 ``,
-                `## 2. SI Öncelik Sıralı NASA PSI Soruşturmaları ve NTRS Kanıtları`,
+                `## 2. Termodinamik & TF-IDF Sıralı NASA PSI Soruşturmaları ve NTRS Kanıtları`,
                 expLinesTr,
                 ``,
                 `## 3. ECLSS Yaşam Destek Saati ve Uzay Aracı Müdahale Protokolü`,
@@ -865,7 +865,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
 
         if (path === "/api/bootstrap") {
             return makeJsonResponse({
-                version: "5.0.0-serverless",
+                version: "5.1.0-serverless",
                 presets: MISSION_PRESETS,
                 directives: DIRECTIVES,
                 earth_transfers: EARTH_TRANSFERS,
@@ -985,11 +985,11 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             const built = buildDeterministicSiReply(jsonBody.message, jsonBody.sim_params, jsonBody.media_context, runtimeConfig.language);
             chatJobs.set(jobId, {
                 status: "done",
-                provider: "Browser Zero-Trust SI Core",
-                model: "Analytical Physics + 15 PSI NTRS Synthesis",
+                provider: "Browser Analytical Solver",
+                model: "d² / B_oq / Sh + 15 PSI NTRS",
                 reply: built.reply,
                 citations: built.citations,
-                stages: ["[4/4] Zero-Trust Browser SI Synthesis Ready"],
+                stages: ["[4/4] Zero-Trust Browser Evidence Synthesis Ready"],
             });
             return makeJsonResponse({ ok: true, job_id: jobId });
         }
@@ -1040,14 +1040,14 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         if (path === "/api/providers/test") {
             return makeJsonResponse({
                 ok: true,
-                provider: "Zero-Trust Browser SI Physics Core",
-                model: "v5.0 Serverless Engine",
+                provider: "Browser Analytical Physics Solver",
+                model: "v5.1 Serverless Kernel",
                 latency_s: 0.01,
                 sample: "0G küresel difüzyon denklemleri (d² yasası, Spalding B_oq, ISS R² doğrulaması) ve 15 PSI bilgi tabanı %100 sunucusuz izole modda aktif.",
             });
         }
         if (path === "/api/ollama/pull" || path === "/api/ollama/unload") {
-            return makeJsonResponse({ ok: false, unloaded: 0, error: "Yerel Ollama yönetimi masaüstü Nasa_3.exe uygulamasında aktiftir." });
+            return makeJsonResponse({ ok: false, unloaded: 0, error: "Yerel Ollama yönetimi masaüstü Nasa_4.exe uygulamasında aktiftir." });
         }
 
         return makeJsonResponse({ ok: false, error: `Unsupported serverless endpoint: ${path}` }, 404);
@@ -1056,21 +1056,21 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
 """
 
 
-README_STATIC_DEPLOY = """# 🛡️ ALTAR-NASA • Flame in Freefall (v5.0) — Seçenek 1: %100 İzole Sunucusuz Statik Web Paketi
+README_STATIC_DEPLOY = """# ◈ ALTAR-NASA • Flame in Freefall (v5.1) — Seçenek 1: %100 İzole Sunucusuz Statik Web Paketi
 
 Bu klasör (`web_serverless/`), **Seçenek 1 (Sunucusuz Statik Web Paketi / Serverless Static Web Bundle)** mimarisiyle üretilmiştir.
 
-## 🔒 Siber Güvenlik ve İzolasyon Garantileri
+## ◈ Siber Güvenlik ve İzolasyon Garantileri
 1. **Sıfır Arka Plan Sunucusu & Sıfır Açık Port:** Bu pakette çalışan hiçbir Python, Node.js veya veritabanı sunucusu yoktur; dış dünyadan bilgisayarınıza herhangi bir ağ portu açılmaz.
 2. **Sıfır Gömülü API Anahtarı / Sır:** Kodların içinde hiçbir `.env`, parola veya API anahtarı bulunmaz.
 3. **Sıkı Content-Security-Policy (CSP):** `index.html` içerisindeki CSP başlığı `object-src 'none'`, `base-uri 'self'` ve yalnızca resmi NASA açık bilim uçlarına (`https://ntrs.nasa.gov`, `https://osdr.nasa.gov`) salt-okunur erişime izin verir.
-4. **%100 Tarayıcı-İçi Hesaplama:** 3B WebGL yanma odası, `d²` yasası, ISS uçuş doğrulaması (`R²` / `RMSE`), ECLSS yaşam saati, 15 PSI deney sıralaması, dosya/görsel piksel analizi ve SI Copilot tamamen ziyaretçinin kendi tarayıcı RAM'inde izole çalışır.
+4. **%100 Tarayıcı-İçi Hesaplama:** 3B WebGL yanma odası, `d²` yasası, ISS uçuş doğrulaması (`R²` / `RMSE`), ECLSS yaşam saati, 15 PSI deney sıralaması, dosya/görsel piksel analizi ve Kanıt Sentezi Konsolu tamamen ziyaretçinin kendi tarayıcı RAM'inde izole çalışır.
 
-## 🚀 GitHub Pages veya Cloudflare Pages'e Ücretsiz Yükleme (2 Dakika)
-1. GitHub'da yeni ve boş bir depo (repository) oluşturun (ör. `altar-nasa-flame-in-freefall`).
+## ▸ GitHub Pages veya Cloudflare Pages'e Ücretsiz Yükleme (2 Dakika)
+1. GitHub'da yeni ve boş bir depo (repository) oluşturun (ör. `Nasa`).
 2. **Yalnızca bu `web_serverless/` klasörünün içindeki dosyaları** (`index.html`, `css/`, `js/`, `nasa_flame.ico`) deponun kök dizinine yükleyin.
-3. GitHub depo ayarlarından **Settings -> Pages -> Deploy from a branch (`main` / `/root`)** seçeneğini kaydedin.
-4. Yarışma başvuru formuna oluşan `https://<kullanici-adiniz>.github.io/altar-nasa-flame-in-freefall/` bağlantısını ekleyin!
+3. GitHub depo ayarlarından **Settings -> Pages -> Deploy from a branch (`gh-pages` / `/root`)** seçeneğini kaydedin.
+4. Yarışma başvuru formuna oluşan `https://faruk042.github.io/Nasa/` bağlantısını ekleyin.
 """
 
 
@@ -1130,7 +1130,7 @@ def build_bundle() -> None:
         'src="/static/js/app_controller.js"',
         'src="./js/serverless_kernel.js"></script>\n    <script src="./js/app_controller.js"',
     )
-    out_html = out_html.replace("🔒 127.0.0.1 Zero-Trust İzole", "🛡️ %100 Sunucusuz Statik İzole")
+    out_html = out_html.replace("◈ 127.0.0.1 Zero-Trust İzole", "◈ %100 Sunucusuz Statik İzole")
     (OUT_DIR / "index.html").write_text(out_html, encoding="utf-8")
 
     # 4. Dağıtım kılavuzunu yaz ve Jekyll işlemesini devre dışı bırakan .nojekyll ekle

@@ -1,96 +1,97 @@
-# 🚀 ALTAR-NASA • Flame in Freefall (v5.0 — Zero-Trust Global Edition)
+# ◈ ALTAR-NASA • Flame in Freefall (v5.1 — Zero-Trust Mission Control Edition)
 
 <p align="center">
-  <a href="https://faruk042.github.io/Nasa/"><img src="https://img.shields.io/badge/%F0%9F%8C%90_Canl%C4%B1_Sunucusuz_Web_Paneli-GitHub_Pages_Live-0284c7?style=for-the-badge" alt="Live Serverless Web App" /></a>
+  <a href="https://faruk042.github.io/Nasa/"><img src="https://img.shields.io/badge/Canl%C4%B1_Sunucusuz_Web_Paneli-GitHub_Pages_Live-0284c7?style=for-the-badge" alt="Live Serverless Web App" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-10b981?style=for-the-badge" alt="Apache 2.0 License" /></a>
   <img src="https://img.shields.io/badge/Security-127.0.0.1_Zero--Trust_%26_Serverless_CSP-f59e0b?style=for-the-badge" alt="Zero-Trust Isolated" />
   <img src="https://img.shields.io/badge/NASA_Space_Apps-Flame_in_Freefall-6366f1?style=for-the-badge" alt="NASA Space Apps Challenge" />
 </p>
 
-> **🌐 Kurulumsuz Canlı Sunucusuz Web Uygulaması (GitHub Pages):** **[https://faruk042.github.io/Nasa/](https://faruk042.github.io/Nasa/)**  
-> *(Arka plan sunucusu ve açık port içermez; 3B WebGL yanma odası, termodinamik denklemler, ISS uçuş doğrulaması, ECLSS yaşam saati, 15 NASA PSI sıralama matrisi ve SI Copilot doğrudan tarayıcı belleğinde %100 izole çalışır.)*
+> **▸ Kurulumsuz Canlı Sunucusuz Web Uygulaması (GitHub Pages):** **[https://faruk042.github.io/Nasa/](https://faruk042.github.io/Nasa/)**  
+> *(Arka plan sunucusu ve açık port içermez; 3B WebGL yanma odası dijital ikizi, boyutsuz taşınım denklemleri, ISS uçuş doğrulaması, ECLSS yaşam destek saati, 15 NASA PSI sıralama matrisi ve Kanıt Sentezi Konsolu doğrudan tarayıcı belleğinde %100 izole çalışır.)*
 
 ---
 
-## 🛰️ Proje Özeti / Executive Summary
+## ◈ Proje Özeti / Executive Summary
 
-**ALTAR-NASA: Flame in Freefall (v5.0)**, Uluslararası Uzay İstasyonu (**ISS**), **Cygnus** yörünge araçları, **Artemis** Ay üsleri, basınçlı gezginler (**Lunar Rover**) ve **EVA uzay giysileri** için NASA'nın **Physical Sciences Informatics (PSI)** ve **Technical Reports Server (NTRS)** veritabanlarındaki mikroçekim yanma araştırmalarını **özetleyen, öncelik sırasına koyan, karşılaştıran, 3 boyutlu WebGL dijital ikiziyle simüle eden ve öngörücü veri setleri üreten** hibrit Süper Zekâ (SI/AI) karar destek platformudur.
+**ALTAR-NASA: Flame in Freefall (v5.1)**, Uluslararası Uzay İstasyonu (**ISS**), **Cygnus** yörünge araçları, **Artemis** Ay üsleri, basınçlı gezginler (**Lunar Rover**) ve **EVA uzay giysileri** için NASA'nın **Physical Sciences Informatics (PSI)** ve **Technical Reports Server (NTRS)** veri tabanlarındaki mikroçekim yanma araştırmalarını **özetleyen, termodinamik yakınlık ve TF-IDF ile öncelik sırasına koyan, soruşturmalar arası karşılaştıran, 3 boyutlu WebGL dijital ikiziyle simüle eden ve öngörücü veri setleri üreten** fizik-temelli analitik karar destek platformudur.
 
 Bu depo **iki tam sürümü bir arada** barındırır:
-1. **🖥️ Tam Masaüstü & Yerel/Bulut Hibrit AI Sürümü ([`main_nasa.py`](./main_nasa.py) & [`core/`](./core/)):** Yerel **Ollama** modelleri (derin uzay çevrimdışı otonomi), **Google Antigravity**, **Google Gemini API**, **OpenRouter**, canlı web kazıyıcı, çok modlu görsel/PDF işleyici ve `127.0.0.1` Zero-Trust siber güvenlik kalkanıyla çalışır; [`Nasa_3.spec`](./Nasa_3.spec) ile tek dosya `.exe` olarak derlenebilir.
-2. **🌐 %100 İzole Sunucusuz Statik Web Paketi ([`web_serverless/`](./web_serverless/)):** GitHub Pages üzerinde hiçbir arka plan sunucusu olmadan doğrudan çalışan, sıkı `Content-Security-Policy (CSP)` korumalı istemci-içi sürüm ([`build_serverless_web.py`](./build_serverless_web.py) ile otomatik üretilir).
+1. **◈ Tam Masaüstü & Yerel Çevrimdışı Analitik Sürüm ([`main_nasa.py`](./main_nasa.py) & [`core/`](./core/)):** Deterministik analitik fizik çözücüsü (`d²`, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`), derin uzay çevrimdışı otonomi için yerel **Ollama** çıkarım motoru, canlı NTRS/OSDR telemetri akışı, çok modlu görsel/PDF spektral çözümleyici ve `127.0.0.1` Zero-Trust siber güvenlik kalkanıyla çalışır; [`Nasa_4.spec`](./Nasa_4.spec) ile tek dosya `.exe` olarak derlenebilir.
+2. **◫ %100 İzole Sunucusuz Statik Web Paketi ([`web_serverless/`](./web_serverless/)):** GitHub Pages üzerinde hiçbir arka plan sunucusu olmadan doğrudan çalışan, sıkı `Content-Security-Policy (CSP)` korumalı istemci-içi sürüm ([`build_serverless_web.py`](./build_serverless_web.py) ile otomatik üretilir).
 
 ---
 
-## 🖼️ Uygulama Arayüzü ve Özellik Rehberi / Visual Feature Walkthrough
+## ◫ Uygulama Arayüzü ve Özellik Rehberi / Mission Control Walkthrough
 
-### 1️⃣ 3B ISS CIR Yanma Odası Dijital İkizi, ISS Uçuş Doğrulaması (`R²`) ve MOC Haritası
+### 01 // 3B ISS CIR Yanma Odası Dijital İkizi, ISS Uçuş Doğrulaması (`R²`) ve MOC Haritası
 ![3B ISS Yanma Odası Dijital İkizi ve ISS R² Doğrulaması](./docs/screenshots/01_3d_digital_twin_0g_sphere.png)
 
 * **3B Hacimsel WebGL Sahnesi:** `0G` safir-mavi küresel kemilüminesans (`CH*/OH*`), `0G` düşük hızlı havalandırma kuyruk alevi (`2–10 cm/s`), `550–780 K` görünmez **Soğuk Alev (Cool Flame / NTC)** ve `0.16G Ay / 0.38G Mars / 1G Dünya` kaldırma kuvvetli alev rejimlerini sıvı damlacık, katı polimer çubuk, kumaş plaka ve küresel gözenekli brülör geometrileriyle gerçek zamanlı modeller.
 * **◆ Gerçek ISS Uçuş Telemetrisi Katmanı (`R²` & `RMSE`):** Sağdaki tutuşabilirlik haritası ve alttaki `0–30 sn` çoklu sensör grafiği üzerine gerçek NASA GRC (`FLEX`, `FLEX-2`, `BASS-II`, `Saffire-IV`, `ACME CFI-G`) uçuş ölçüm noktalarını hata çubuklarıyla bindirir ve canlı model uyumunu (`R² > 0.98`) doğrular.
-* **👥 Hedef Kitle Modu & Öngörücü Veri Ayıklama:** Üst kontrol şeridinden *Araştırmacı & Profesör*, *Lisans Öğrencisi* veya *Uçuş Güvenlik Mühendisi* odak modları seçilebilir; tek tıkla **`.CSV`**, **`.JSON`** ve **`.MD`** bilimsel çıktılar indirilebilir.
+* **◈ Hedef Kitle Modu & Öngörücü Veri Ayıklama:** Üst kontrol şeridinden *Araştırmacı & Profesör*, *Lisans Öğrencisi* veya *Uçuş Güvenlik Mühendisi* odak modları seçilebilir; tek tıkla **`.CSV`**, **`.JSON`** ve **`.MD`** bilimsel çıktılar indirilebilir.
 
 ---
 
-### 2️⃣ Canlı Boyutsuz Denklemler, ECLSS Yaşam Destek Saati ve Rehberli Jüri Turu
+### 01B // Canlı Boyutsuz Denklemler, ECLSS Yaşam Destek Saati ve Rehberli Jüri Turu
 ![Canlı Fiziksel Denklemler, ECLSS Yaşam Destek Saati ve Rehberli Jüri Turu](./docs/screenshots/02_formulas_eclss_clock_and_tour.png)
 
-* **📐 Anlık Boyutsuz Taşınım ve Termodinamik Tablosu:** Her kaydırıcı veya veri değişiminde `d²` yanma sabiti (`K`), Spalding kütle transfer sayısı (`B_oq`), Sherwood (`Sh`), Reynolds (`Re`), Grashof (`Gr`), Rayleigh (`Ra`), Richardson (`Ri`), Damköhler (`Da`) ve radyatif kayıp kesri (`χ_r`) anında yeniden hesaplanır.
-* **⏱️ ECLSS Mürettebat Yaşam Destek Saati:** `ISS Modülü (120 m³)`, `Artemis Ay Üssü (45 m³)`, `Basınçlı Ay Gezgini (14 m³)` ve `EVA Uzay Giysisi (0.18 m³ • 4.3 psia %100 O₂)` hacimlerinde sensör alarm anını, NASA 1-Saatlik Acil **`125 ppm CO SMAC`** zehirlilik süresini ve `+10 sn / +30 sn / +60 sn` müdahale gecikmelerindeki kabin ısınmasını (`ΔT`) simüle eder.
-* **🌗 Kısmi Yerçekimi (`LUCI` & `FM2`) Şeffaflığı:** Ay (`0.16G`) ve Mars (`0.38G`) seçimlerinde NASA PSI'daki mevcut veri boşluğunu şeffafça bildirir ve `0G–1G` MOC sınırlandırma eğrileriyle güvenli zarfı çizer.
+* **◈ Anlık Boyutsuz Taşınım ve Termodinamik Tablosu:** Her kaydırıcı veya veri değişiminde `d²` yanma sabiti (`K`), Spalding kütle transfer sayısı (`B_oq`), Sherwood (`Sh`), Reynolds (`Re`), Grashof (`Gr`), Rayleigh (`Ra`), Richardson (`Ri`), Damköhler (`Da`) ve radyatif kayıp kesri (`χ_r`) anında yeniden hesaplanır.
+* **◈ ECLSS Mürettebat Yaşam Destek Saati:** `ISS Modülü (120 m³)`, `Artemis Ay Üssü (45 m³)`, `Basınçlı Ay Gezgini (14 m³)` ve `EVA Uzay Giysisi (0.18 m³ • 4.3 psia %100 O₂)` hacimlerinde sensör alarm anını, NASA 1-Saatlik Acil **`125 ppm CO SMAC`** zehirlilik süresini ve `+10 sn / +30 sn / +60 sn` müdahale gecikmelerindeki kabin ısınmasını (`ΔT`) simüle eder.
+* **◈ Kısmi Yerçekimi (`LUCI` & `FM2`) Şeffaflığı:** Ay (`0.16G`) ve Mars (`0.38G`) seçimlerinde NASA PSI'daki mevcut veri boşluğunu şeffafça bildirir ve `0G–1G` MOC sınırlandırma eğrileriyle güvenli zarfı çizer.
 
 ---
 
-### 3️⃣ 15 NASA PSI Soruşturması Sıralama Matrisi, Donanım Rafları ve Dünya'ya Teknoloji Transferi
+### 02 // 15 NASA PSI Soruşturması Sıralama Matrisi, Donanım Rafları ve Dünya'ya Teknoloji Transferi
 ![15 NASA PSI Sıralama Matrisi ve Uzay Donanım Rafları](./docs/screenshots/03_psi_ranking_and_hardware_racks.png)
 
-* **🛠️ Uzay Donanım Raf Filtresi:** **ISS CIR / MDCA & ACME**, **ISS MSG Fan Akış Kanalı** (`SPICE`, `BASS`, `SLISE`), **Cygnus Otonom Aracı** (`Saffire I/IV/V`) ve **Kabin & DAFT** (lazerli duman vs. Ay tozu ayrımı) donanımlarını tek tıkla filtreler.
-* **🔬 Soruşturma İçi Test Varyasyonları (`Intra-Run Matrix`):** Aynı NASA deneyi içindeki farklı test koşullarının (*sabit tutulan vs. değiştirilen parametreler ve sonuçları*) yan yana analizini ve **Uzaydan Dünya'ya 5 yangın güvenliği transferini** (itfaiyeci PBI/Nomex giysileri, SCBA tüpleri, EV batarya ince su sisi, akıllı toz-ayrımlı duman dedektörleri) sunar.
+* **⌖ Uzay Donanım Raf Filtresi:** **ISS CIR / MDCA & ACME**, **ISS MSG Fan Akış Kanalı** (`SPICE`, `BASS`, `SLISE`), **Cygnus Otonom Aracı** (`Saffire I/IV/V`) ve **Kabin & DAFT** (lazerli duman vs. Ay tozu ayrımı) donanımlarını tek tıkla filtreler.
+* **◆ Soruşturma İçi Test Varyasyonları (`Intra-Run Matrix`):** Aynı NASA deneyi içindeki farklı test koşullarının (*sabit tutulan vs. değiştirilen parametreler ve sonuçları*) yan yana analizini ve **Uzaydan Dünya'ya 5 yangın güvenliği transferini** (itfaiyeci PBI/Nomex giysileri, SCBA tüpleri, EV batarya ince su sisi, akıllı toz-ayrımlı duman dedektörleri) sunar.
 
 ---
 
-### 4️⃣ Sürekli Canlı NASA NTRS/OSDR Web Akışı, Görsel/Dosya İşleyici ve Vektör RAG
-![Canlı NASA Web Akışı, Görsel Analizi ve Vektör RAG Hafızası](./docs/screenshots/04_live_nasa_stream_and_rag.png)
+### 03 // Sürekli Canlı NASA NTRS/OSDR Telemetri Akışı, Görsel/Dosya Çözümleyici ve Vektör RAG
+![Canlı NASA Telemetri Akışı, Görsel Analizi ve Vektör RAG Hafızası](./docs/screenshots/04_live_nasa_stream_and_rag.png)
 
-* **🔄 Otonom Canlı Veri Akışı:** Resmi `NASA NTRS` ve `NASA OSDR/PSI` uç noktalarından periyodik veri çekerek çıkarılan oksijen, basınç ve akış hızlarını doğrudan 3B yanma odasına ve formül tablolarına senkronize eder.
-* **🖼️ Çok Modlu Alev Fotoğrafı & Veri Dosyası Çözümleyici:** Yüklenen `.png/.jpg` alev görsellerinden kemilüminesans/kurum/soğuk-alev spektrumunu; `.csv/.pdf/.json/.txt` belgelerinden ise deney parametrelerini çıkarıp TF-IDF kosinüs benzerlikli RAG hafızasına indeksler.
-
----
-
-### 5️⃣ Hibrit SI Copilot: Kanıt İzlenebilir Bilimsel Sentez ve `NASA-STD-6001B` Halon Denetçisi
-![Hibrit SI Copilot Bilimsel Karar Destek Analizi](./docs/screenshots/05_hybrid_si_copilot_analysis.png)
-
-* **🧠 Nöro-Sembolik Karar Destek:** Aktif 3B simülasyon telemetrisini, boyutsuz denklemleri ve en alakalı NASA PSI makalelerini birleştirerek tıklanabilir **NTRS kaynak rozetleriyle** yanıt üretir.
-* **🛡️ Zorunlu Halon 1301 Yasağı:** Toksik `HF/HBr` gazlarıyla ECLSS yaşam destek filtrelerini zehirleyen Halon 1301 önerilerini 6-katmanlı denetçiyle engeller; daima **(1) HVAC Fan Kesme (`U → 0 cm/s`) → (2) Güç İzolasyonu → (3) `25–40 µm` İnce Su Sisi (`SoFIE-MIST`) / `CO₂`** protokolünü uygular.
+* **▸ Otonom Canlı Telemetri Akışı:** Resmi `NASA NTRS` ve `NASA OSDR/PSI` uç noktalarından periyodik veri çekerek çıkarılan oksijen, basınç ve akış hızlarını doğrudan 3B yanma odasına ve formül tablolarına senkronize eder.
+* **◫ Çok Modlu Alev Fotoğrafı & Veri Dosyası Çözümleyici:** Yüklenen `.png/.jpg` alev görsellerinden kemilüminesans/kurum/soğuk-alev spektrumunu; `.csv/.pdf/.json/.txt` belgelerinden ise deney parametrelerini çıkarıp TF-IDF kosinüs benzerlikli RAG hafızasına indeksler.
 
 ---
 
-### 6️⃣ Hibrit AI Motor Yönetimi (Yerel Ollama • Antigravity • Gemini) ve Bilimsel Direktifler
-![Hibrit Yapay Zeka Motor Ayarları ve Bilimsel Direktifler](./docs/screenshots/06_engines_antigravity_directives.png)
+### 04 // Kanıt Sentezi & Karar Konsolu (`NASA-STD-6001B` Denetçisi)
+![Kanıt Sentezi ve Karar Konsolu](./docs/screenshots/05_evidence_synthesis_console.png)
 
-* **🔌 Çoklu Motor Mimarisi:** Derin uzay iletişim gecikmelerine uygun **%100 çevrimdışı Yerel Ollama** modelleri, masaüstü **Google Antigravity (`agy` CLI)**, **Google Gemini API**, **OpenRouter** ve internet yokken bile kesintisiz çalışan **Yerleşik Deterministik Fizik SI Çekirdeği** tek merkezden yönetilir ve canlı gecikme testiyle doğrulanır.
+* **◈ Kanıt İzlenebilir Karar Sentezi:** Aktif 3B simülasyon telemetrisini, boyutsuz denklemleri ve en alakalı NASA PSI makalelerini birleştirerek tıklanabilir **NTRS kaynak rozetleriyle** yapılandırılmış 4 bölümlü mühendislik raporu üretir.
+* **▲ Zorunlu Halon 1301 Yasağı (`CON-05`):** Toksik `HF/HBr` gazlarıyla ECLSS yaşam destek filtrelerini zehirleyen Halon 1301 önerilerini 6-katmanlı güvenlik denetçisiyle engeller; daima **(1) HVAC Fan Kesme (`U -> 0 cm/s`) -> (2) Güç İzolasyonu -> (3) `25–40 µm` İnce Su Sisi (`SoFIE-MIST`) / `CO₂`** protokolünü uygular.
 
 ---
 
-## 🏗️ Sistem Mimarisi ve Siber Güvenlik Kalkanı / Zero-Trust Architecture
+### 05 // Sistem Kalibrasyonu, Sayısal Çözücü Çekirdeği & Fiziksel Doğrulama Kısıtları (`CON-01..CON-09`)
+![Sistem Kalibrasyonu ve Fiziksel Doğrulama Kısıtları](./docs/screenshots/06_calibration_and_constraints.png)
+
+* **◈ Fiziksel Doğrulama Kısıtları Matrisi (`CON-01` – `CON-09`):** Mikroçekim taşınımı, `d²` yasası, havalandırma paradoksu, görünmez Soğuk Alev NTC kinetiği, `NASA-STD-6001B` söndürme protokolü, EVA/Ay gezgini atmosferleri ve `LUCI/FM2` kısmi yerçekimi sınırlandırma kuralları yerleşik olarak zorlanır.
+* **⌖ Derin Uzay Çevrimdışı Çıkarım:** Yerleşik deterministik analitik çözücü ve yerel **Ollama** çevrimdışı dil modelleriyle dış ağ bağlantısı olmadan tam kapasite çalışır; isteğe bağlı harici bulut ağ geçitleri varsayılan olarak kapalı bir akordeon panel altında izole tutulur.
+
+---
+
+## ◈ Sistem Mimarisi ve Siber Güvenlik Kalkanı / Zero-Trust Architecture
 
 ```mermaid
 flowchart LR
-    subgraph Client["🖥️ 3B WebGL & Çoklu Sensör Arayüzü (TR / EN)"]
+    subgraph Client["3B WebGL & Çoklu Sensör Arayüzü (TR / EN)"]
         UI["Three.js CIR Odası + MOC & D² Grafikleri + ECLSS Saati"]
-        Export["📊 CSV / JSON / .MD Rapor Çıktısı"]
+        Export["CSV / JSON / .MD Teknik Rapor Çıktısı"]
     end
 
-    subgraph Security["🔒 Zero-Trust İzolasyon Katmanı"]
+    subgraph Security["Zero-Trust İzolasyon Katmanı"]
         Guard["127.0.0.1 Loopback Kilidi + 192-bit CSRF + Sıkı CSP + SSRF Engeli"]
-        StaticMode["🛡️ web_serverless/ (Sıfır Sunucu • GitHub Pages Modu)"]
+        StaticMode["web_serverless/ (Sıfır Sunucu • GitHub Pages Modu)"]
     end
 
-    subgraph Core["📐 Bilimsel Çekirdek & NASA Veri Katmanı"]
+    subgraph Core["Analitik Çözücü & NASA Veri Katmanı"]
         Phys["physics_engine.py (d², B_oq, Sh, Ra, Da, χ_r, ISS R²)"]
         Rank["ranking_engine.py (15 NASA PSI + NTRS Vektör RAG)"]
-        AI["ai_engine.py (Ollama / Antigravity / Gemini + Halon Denetçisi)"]
+        Synth["ai_engine.py (Analitik Çözücü + Yerel Ollama + CON-05 Denetçisi)"]
     end
 
     UI <--> Guard <--> Core
@@ -103,7 +104,7 @@ flowchart LR
 
 ---
 
-## 📐 Çözülen Temel Fiziksel Denklemler / Governing Equations
+## ◈ Çözülen Temel Fiziksel Denklemler / Governing Equations
 
 | Fiziksel Yasa / Boyutsuz Sayı | Matematiksel İfade | Uzay Yangın Güvenliği Karşılığı |
 | :--- | :--- | :--- |
@@ -116,13 +117,13 @@ flowchart LR
 
 ---
 
-## ⚡ Kurulum ve Çalıştırma / Quick Start
+## ▸ Kurulum ve Çalıştırma / Quick Start
 
 ### Seçenek A: Kurulumsuz Sunucusuz Web Sürümü (GitHub Pages)
 Tarayıcınızdan doğrudan açın: **[https://faruk042.github.io/Nasa/](https://faruk042.github.io/Nasa/)**  
 *(veya yerel olarak [`web_serverless/`](./web_serverless/) dizinini herhangi bir statik barındırma servisine yükleyin).*
 
-### Seçenek B: Tam Masaüstü ve Hibrit AI Sürümü (Python / Tek Dosya `.EXE`)
+### Seçenek B: Tam Masaüstü ve Yerel Çevrimdışı Analitik Sürüm (Python / Tek Dosya `.EXE`)
 ```bash
 git clone https://github.com/Faruk042/Nasa.git
 cd Nasa
@@ -136,18 +137,18 @@ python main_nasa.py
 ```
 
 * **Sunucusuz Statik Paketi Yeniden Üretmek İçin:** `python build_serverless_web.py`
-* **Tek Dosya Bağımsız `Nasa_3.exe` Derlemek İçin:** `pyinstaller --noconfirm --clean Nasa_3.spec`
+* **Tek Dosya Bağımsız `Nasa_4.exe` Derlemek İçin:** `pyinstaller --noconfirm --clean Nasa_4.spec`
 
 ---
 
-## 📚 Resmi NASA Veri Kaynakları / Official Open-Science References
+## ◈ Resmi NASA Veri Kaynakları / Official Open-Science References
 * **NASA Physical Sciences Informatics (PSI):** `FLEX`, `FLEX-2`, `CFI`, `ACME (E-FIELD, BRE, CFI-G)`, `SoFIE (GEL & MIST)`, `BASS`, `BASS-II`, `SPICE`, `SLISE`, `Saffire (I–VI)`, `SAME / DAFT / DAFT-2`
 * **NASA Technical Reports Server (NTRS):** Doğrudan API entegrasyonu ve doğrulanmış atıf bağlantıları (`https://ntrs.nasa.gov`)
 * **NASA Open Science Data Repository (OSDR)** & **NASA-STD-6001B** *(Flammability, Offgassing, and Compatibility Requirements)*
 
 ---
 
-## 📄 Lisans / License
+## ◫ Lisans / License
 
 Bu proje **Apache License 2.0** kapsamında lisanslanmıştır — tüm detaylar için [`LICENSE`](./LICENSE) dosyasına bakınız.  
 Copyright © 2026 **Faruk Emir Bilgin**.

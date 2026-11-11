@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ALTAR-NASA: Flame in Freefall (v5.0 Global Champion & Zero-Trust Isolated Edition) — Ana Yerel Sunucu & Başlatıcı.
+ALTAR-NASA: Flame in Freefall (v5.1 Mission Control & Zero-Trust Isolated Edition) — Ana Yerel Sunucu & Başlatıcı.
 2026 NASA International Space Apps Challenge ("Flame in Freefall") için geliştirilmiştir.
 Güvenlik Mimarisi:
 - Salt 127.0.0.1 Loopback Soket İzolasyonu (0.0.0.0 / Dış Ağ Dinlemesi Kesinlikle Kapalı)
@@ -97,7 +97,7 @@ def create_nasa_web_app() -> Flask:
         return jsonify({
             "status": "ok",
             "app": "ALTAR-NASA Flame in Freefall",
-            "version": "5.0.0",
+            "version": "5.1.0",
             "isolation_mode": "127.0.0.1_zero_trust_loopback",
             "csrf_enforced": True,
             "cors_wildcard": False,
@@ -228,7 +228,7 @@ def create_nasa_web_app() -> Flask:
         notes_list = parsed.get("extraction_notes") or []
         fields_list = parsed.get("extracted_fields") or []
         summary_tr = (
-            f"📄 **Veri Dosyası Analizi ({fname} • {parsed.get('pages', 1)} sayfa, {parsed.get('char_count', 0)} karakter):**\n"
+            f"◈ **Veri Dosyası Analizi ({fname} • {parsed.get('pages', 1)} sayfa, {parsed.get('char_count', 0)} karakter):**\n"
             f"- **Otomatik Saptanan Alanlar:** `{', '.join(fields_list) if fields_list else 'Standart Mikroçekim Profili'}`\n"
             + (f"- **Ölçüm Notları:** {'; '.join(notes_list)}\n" if notes_list else "")
             + f"- **3B Simülasyona Aktarılan Koşullar:** Yakıt `{sim_params.get('fuel_id')}`, Yerçekimi `{sim_params.get('gravity_g')}G`, O₂ `%{sim_params.get('oxygen_pct')}`, Basınç `{sim_params.get('pressure_psia')} psia`, Akış `{sim_params.get('airflow_cms')} cm/s`.\n"
@@ -297,7 +297,7 @@ def create_nasa_web_app() -> Flask:
         return jsonify({"ok": True, "results": results})
 
     # =========================================================================
-    # HİBRİT SI COPILOT (ASENKRON STREAMING + SENKRON FALLBACK)
+    # KANIT SENTEZİ VE KARAR KONSOLU (ASENKRON STREAMING + SENKRON FALLBACK)
     # =========================================================================
     @app.route("/api/chat/start", methods=["POST"])
     def api_chat_start():
@@ -340,7 +340,7 @@ def create_nasa_web_app() -> Flask:
         return jsonify(res)
 
     # =========================================================================
-    # YAPILANDIRMA, OLLAMA, GOOGLE ANTIGRAVITY VE BAĞLANTI TESTİ
+    # SİSTEM KALİBRASYONU, OLLAMA, YEREL KÖPRÜ VE BAĞLANTI TESTİ
     # =========================================================================
     @app.route("/api/config", methods=["POST"])
     def api_save_config():
@@ -390,7 +390,7 @@ def _check_existing_altar_nasa(port: int) -> bool:
                 data = _json.loads(resp.read().decode("utf-8"))
                 return (
                     data.get("app") == "ALTAR-NASA Flame in Freefall"
-                    and data.get("version") == "5.0.0"
+                    and str(data.get("version", "")).startswith("5.")
                 )
     except Exception:
         pass
@@ -440,7 +440,7 @@ def _locate_serverless_web_dir() -> Path | None:
     candidates = [
         Path(sys.executable).resolve().parent / "web_serverless",
         get_resource_base_dir() / "web_serverless",
-        Path(r"e:\Gemini API\Nasa\web_serverless"),
+        Path(__file__).resolve().parent / "web_serverless",
         Path.cwd() / "web_serverless",
     ]
     for cand in candidates:
@@ -477,7 +477,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
     import tkinter as tk
 
     root = tk.Tk()
-    root.title("ALTAR-NASA v5.0 • İzole Görev Kontrol Sunucusu (Zero-Trust)")
+    root.title("ALTAR-NASA v5.1 • İzole Görev Kontrol Sunucusu (Zero-Trust)")
     serverless_dir = _locate_serverless_web_dir()
     root.geometry("500x315" if serverless_dir else "500x280")
     root.resizable(False, False)
@@ -492,7 +492,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     header = tk.Label(
         root,
-        text="🛡️ ALTAR-NASA: Flame in Freefall v5.0",
+        text="◈ ALTAR-NASA: Flame in Freefall v5.1",
         font=("Segoe UI", 13, "bold"),
         fg="#f8fafc",
         bg="#070e1c",
@@ -501,7 +501,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     sub = tk.Label(
         root,
-        text=f"🔒 Tam İzole 127.0.0.1 Kalkanı Aktif (CSRF + CSP + SSRF Korumalı)\nAdres: {url}",
+        text=f"[ZERO-TRUST 127.0.0.1 İZOLE • CSRF + CSP + SSRF AKTİF]\nAdres: {url}",
         font=("Consolas", 9),
         fg="#38bdf8",
         bg="#070e1c",
@@ -511,7 +511,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     hint = tk.Label(
         root,
-        text="💡 Dış ağlara port açılmaz (0.0.0.0 kapalı). 'X' tuşu bu pencereyi görev çubuğuna küçültür.",
+        text="Dış ağlara port açılmaz (0.0.0.0 kapalı). 'X' tuşu bu pencereyi görev çubuğuna küçültür.",
         font=("Segoe UI", 8),
         fg="#94a3b8",
         bg="#070e1c",
@@ -523,7 +523,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     btn_app = tk.Button(
         btn_frame,
-        text="🖥️  3B Web Panelini Uygulama Modunda Aç",
+        text="▸  3B Görev Kontrol Panelini Uygulama Modunda Aç",
         command=lambda: open_in_app_window(url),
         font=("Segoe UI", 10, "bold"),
         bg="#0284c7",
@@ -541,7 +541,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     btn_browser = tk.Button(
         row2,
-        text="🌐 Varsayılan Tarayıcıda Aç",
+        text="◫ Varsayılan Tarayıcıda Aç",
         command=lambda: webbrowser.open(url),
         font=("Segoe UI", 9, "bold"),
         bg="#152340",
@@ -557,11 +557,11 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
     def _copy_url() -> None:
         root.clipboard_clear()
         root.clipboard_append(url)
-        sub.configure(text=f"✅ Adres Panoya Kopyalandı!\nAdres: {url}")
+        sub.configure(text=f"[ADRES PANOYA KOPYALANDI]\nAdres: {url}")
 
     btn_copy = tk.Button(
         row2,
-        text="📋 Adresi Kopyala",
+        text="⌖ Adresi Kopyala",
         command=_copy_url,
         font=("Segoe UI", 9, "bold"),
         bg="#152340",
@@ -583,7 +583,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
         btn_srvless = tk.Button(
             btn_frame,
-            text="📦 Sunucusuz Statik Web Paketini Aç (GitHub/Cloudflare Pages)",
+            text="◈ Sunucusuz Statik Web Paketini Aç (GitHub/Cloudflare Pages)",
             command=_open_serverless_folder,
             font=("Segoe UI", 8, "bold"),
             bg="#0f2942",
@@ -597,7 +597,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
         btn_srvless.pack(fill="x", pady=3)
 
     def _minimize_to_taskbar() -> None:
-        sub.configure(text=f"🔒 İzole Sunucu Görev Çubuğunda Korunuyor\nAdres: {url}")
+        sub.configure(text=f"[İZOLE SUNUCU GÖREV ÇUBUĞUNDA KORUNUYOR]\nAdres: {url}")
         root.iconify()
 
     def _clean_exit() -> None:
@@ -816,7 +816,7 @@ def run_self_test() -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="ALTAR-NASA: Flame in Freefall Web Platform v5.0 (Zero-Trust Isolated)")
+    parser = argparse.ArgumentParser(description="ALTAR-NASA: Flame in Freefall Web Platform v5.1 (Zero-Trust Isolated)")
     parser.add_argument("--headless", action="store_true", help="Run isolated loopback web server without Tk window")
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8765)), help="Local loopback HTTP port")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Locked to 127.0.0.1 for Zero-Trust isolation")

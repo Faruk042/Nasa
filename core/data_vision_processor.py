@@ -121,7 +121,7 @@ def analyze_flame_image_bytes(raw_bytes: bytes, filename: str = "flame.jpg") -> 
         }
 
         summary_tr = (
-            f"🖼️ **Görsel Spektral & Morfolojik Analiz ({filename} • {orig_w}×{orig_h}px):**\n"
+            f"◈ **Görsel Spektral & Morfolojik Analiz ({filename} • {orig_w}×{orig_h}px):**\n"
             f"- **Tespit Edilen Geometrik Rejim:** {detected_regime_tr}\n"
             f"- **CH*/OH* Mavi Kemilüminesans Oranı:** `%{blue_chemilum_ratio * 100:.1f}` | **Kurum (Soot) Sıcak Işıma İndeksi:** `{soot_warm_ratio:.2f}`\n"
             f"- **Çıkarılan 3B Simülasyon Parametreleri:** Yerçekimi `{inferred_gravity}G`, Oksijen `%{inferred_o2}`, Akış `{inferred_airflow} cm/s`, Yakıt `{inferred_fuel}`, Çap `{inferred_d0} mm`."
