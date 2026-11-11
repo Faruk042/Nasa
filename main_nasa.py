@@ -206,6 +206,7 @@ def create_nasa_web_app() -> Flask:
                 "chunks": chunks,
                 "metrics": img_res["metrics"],
                 "summary_tr": img_res["summary_tr"],
+                "summary_en": img_res.get("summary_en") or img_res["summary_tr"],
                 "image_base64": img_res["image_base64"],
                 "extracted_sim_params": sim_params,
                 "simulation": sim_state,
@@ -234,6 +235,12 @@ def create_nasa_web_app() -> Flask:
             + f"- **3B Simülasyona Aktarılan Koşullar:** Yakıt `{sim_params.get('fuel_id')}`, Yerçekimi `{sim_params.get('gravity_g')}G`, O₂ `%{sim_params.get('oxygen_pct')}`, Basınç `{sim_params.get('pressure_psia')} psia`, Akış `{sim_params.get('airflow_cms')} cm/s`.\n"
             + f"- **Belge Özeti (İlk Kesit):** {(parsed.get('content') or '')[:420]}..."
         )
+        summary_en = (
+            f"◈ **Dataset & Document Analysis ({fname} • {parsed.get('pages', 1)} page(s), {parsed.get('char_count', 0)} chars):**\n"
+            f"- **Detected Fields:** `{', '.join(fields_list) if fields_list else 'Standard Microgravity Profile'}`\n"
+            + f"- **3D Chamber Conditions Applied:** Fuel `{sim_params.get('fuel_id')}`, Gravity `{sim_params.get('gravity_g')}G`, O₂ `{sim_params.get('oxygen_pct')}%`, Pressure `{sim_params.get('pressure_psia')} psia`, Airflow `{sim_params.get('airflow_cms')} cm/s`.\n"
+            + f"- **Document Excerpt:** {(parsed.get('content') or '')[:420]}..."
+        )
         return jsonify({
             "ok": True,
             "media_type": "document",
@@ -243,6 +250,7 @@ def create_nasa_web_app() -> Flask:
             "extracted_fields": fields_list,
             "extraction_notes": notes_list,
             "summary_tr": summary_tr,
+            "summary_en": summary_en,
             "extracted_sim_params": sim_params,
             "simulation": sim_state,
             "ranked_experiments": ranked["ranked_experiments"][:5],

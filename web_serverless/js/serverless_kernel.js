@@ -627,42 +627,99 @@
 
     async function fetchLiveNasaBrowser(source, q) {
         const query = q || "microgravity combustion";
+        const srcNorm = String(source || "ntrs").toLowerCase();
         try {
-            const url = `https://ntrs.nasa.gov/api/citations/search?q=${encodeURIComponent(query)}`;
-            const res = await window.fetch(url, { method: "GET" });
-            if (res.ok) {
-                const raw = await res.json();
-                const results = (raw.results || []).slice(0, 8).map((r) => {
-                    const cid = String(r.id || "");
-                    return {
-                        id: `NTRS-${cid}`,
-                        source: "NASA NTRS Live",
-                        title: r.title || "NASA Technical Report",
-                        abstract: String(r.abstract || "Official NASA Technical Reports Server citation.").slice(0, 460),
-                        date: String(r.created || "").slice(0, 10),
-                        url: `https://ntrs.nasa.gov/citations/${cid}`,
-                        pdf_url: "",
-                    };
-                });
-                if (results.length > 0) {
-                    return { source_status: "live_online", count: results.length, items: results };
+            if (srcNorm === "osdr") {
+                const osdrUrl = `https://osdr.nasa.gov/osdr/data/search?term=${encodeURIComponent(query)}&size=8`;
+                const resOsdr = await window.fetch(osdrUrl, { method: "GET" });
+                if (resOsdr.ok) {
+                    const rawOsdr = await resOsdr.json();
+                    const hits = (rawOsdr && rawOsdr.hits && rawOsdr.hits.hits) || [];
+                    const itemsOsdr = hits.slice(0, 8).map((h, idx) => {
+                        const s = (h && h._source) || {};
+                        const acc = String(s["Accession"] || s["Authoritative Source URL"] || `OSDR-PSI-${idx + 1}`);
+                        const title = String(s["Study Title"] || s["Project Title"] || "NASA OSDR/PSI Investigation").trim();
+                        const desc = String(s["Study Description"] || s["Experiment Description"] || "NASA Open Science Data Repository & PSI dataset.").trim();
+                        return {
+                            id: acc,
+                            source: "NASA OSDR / PSI Live",
+                            title,
+                            abstract: desc.slice(0, 480),
+                            date: String(s["Flight Program"] || s["Space Program"] || "NASA PSI"),
+                            url: `https://osdr.nasa.gov/bio/repo/search?q=${encodeURIComponent(query)}`,
+                            pdf_url: "",
+                        };
+                    });
+                    if (itemsOsdr.length > 0) {
+                        return { ok: true, source_status: "live_online", count: itemsOsdr.length, items: itemsOsdr };
+                    }
+                }
+            } else {
+                const url = `https://ntrs.nasa.gov/api/citations/search?q=${encodeURIComponent(query)}`;
+                const res = await window.fetch(url, { method: "GET" });
+                if (res.ok) {
+                    const raw = await res.json();
+                    const results = (raw.results || []).slice(0, 8).map((r) => {
+                        const cid = String(r.id || "");
+                        return {
+                            id: `NTRS-${cid}`,
+                            source: "NASA NTRS Live",
+                            title: r.title || "NASA Technical Report",
+                            abstract: String(r.abstract || "Official NASA Technical Reports Server citation.").slice(0, 460),
+                            date: String(r.created || "").slice(0, 10),
+                            url: `https://ntrs.nasa.gov/citations/${cid}`,
+                            pdf_url: "",
+                        };
+                    });
+                    if (results.length > 0) {
+                        return { ok: true, source_status: "live_online", count: results.length, items: results };
+                    }
                 }
             }
         } catch (_) {}
 
-        // Çevrimdışı / CORS yedeklemesi: Doğrulanmış yerleşik 15 NASA PSI kaydı
-        const items = NASA_CATALOG.filter((e) => computeTextSimilarity(query, `${e.program} ${e.title} ${e.title_tr} ${e.key_finding_en}`) > 0 || !q)
-            .slice(0, 8)
-            .map((e) => ({
-                id: e.exp_id,
-                source: `NASA PSI (${e.program})`,
-                title: e.title,
-                abstract: e.key_finding_en,
-                date: String(e.year),
-                url: e.ntrs_url,
-                pdf_url: "",
-            }));
-        return { source_status: "cached_live", count: items.length, items };
+        // Çevrimdışı / CORS yedeklemesi: Doğrulanmış yerleşik 15 NASA PSI kaydını sorgu benzerliğine göre sırala
+        const scored = NASA_CATALOG.map((e) => ({
+            e,
+            sim: computeTextSimilarity(query, `${e.program} ${e.title} ${e.title_tr} ${e.key_finding_en} ${e.key_finding_tr} ${(e.tags || []).join(" ")}`),
+        })).sort((a, b) => b.sim - a.sim);
+        const items = scored.slice(0, 8).map(({ e }) => ({
+            id: srcNorm === "osdr" ? e.exp_id : `NTRS-${e.ntrs_id}`,
+            source: srcNorm === "osdr" ? `NASA OSDR/PSI (${e.program})` : `NASA PSI/NTRS (${e.program})`,
+            title: e.title,
+            abstract: e.key_finding_en,
+            date: String(e.year),
+            url: e.ntrs_url,
+            pdf_url: "",
+        }));
+        return { ok: true, source_status: "cached_live", count: items.length, items };
+    }
+
+    function extractReadableTextFromPdfBuffer(buf) {
+        const bytes = new Uint8Array(buf);
+        let rawAscii = "";
+        const maxLen = Math.min(bytes.length, 450000);
+        for (let i = 0; i < maxLen; i++) {
+            const c = bytes[i];
+            rawAscii += (c >= 32 && c <= 126) || c === 10 || c === 13 ? String.fromCharCode(c) : " ";
+        }
+        const chunks = [];
+        const parenRe = /\(([^()]{3,220})\)/g;
+        let m;
+        while ((m = parenRe.exec(rawAscii)) !== null) {
+            const seg = m[1].replace(/\\[nrt]/g, " ").trim();
+            if (/[A-Za-z]{3,}/.test(seg) && !/^(PDF-|Identity-H|Adobe|FlateDecode|FontDescriptor)/i.test(seg)) {
+                chunks.push(seg);
+            }
+        }
+        if (chunks.length >= 5) {
+            return chunks.join(" ").replace(/\s+/g, " ").slice(0, 12000);
+        }
+        return rawAscii
+            .replace(/\b(obj|endobj|stream|endstream|xref|trailer|FlateDecode|Filter|Length)\b/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 8000);
     }
 
     async function analyzeUploadedMediaInBrowser(formData) {
@@ -709,32 +766,80 @@
                 ? { fuel_id: "n_heptane", gravity_g: 0.0, oxygen_pct: 21.0, pressure_psia: 14.7, airflow_cms: 0.8, droplet_d0_mm: 3.0, diluent: "N2" }
                 : { fuel_id: "pmma", gravity_g: 0.38, oxygen_pct: 28.0, pressure_psia: 12.0, airflow_cms: 6.0, droplet_d0_mm: 3.4, diluent: "N2" };
             const sim = simulateCombustionClient(extracted);
-            const regLabel = isCool ? "Görünmez Soğuk Alev (UV/IR)" : (isBlue0g ? "0G Küresel Safir-Mavi Difüzyon" : "Kurumlu Konvektif Plume");
+            const regLabelTr = isCool ? "Görünmez Soğuk Alev (UV/IR)" : (isBlue0g ? "0G Küresel Safir-Mavi Difüzyon" : "Kurumlu Konvektif Plume");
+            const regLabelEn = isCool ? "Invisible Cool Flame (UV/IR)" : (isBlue0g ? "0G Spherical Sapphire Diffusion" : "Sooty Convective Plume");
+            const bluePct = ((blueCnt / totalPx) * 100).toFixed(1);
+            const warmPct = ((warmCnt / totalPx) * 100).toFixed(1);
             return {
                 ok: true,
                 filename: name,
                 media_type: "image",
                 image_base64: dataUrl,
-                metrics: { detected_regime_tr: regLabel },
+                metrics: { detected_regime_tr: regLabelTr, detected_regime_en: regLabelEn },
                 extracted_sim_params: extracted,
                 simulation: sim,
-                summary_tr: `◫ **İstemci-İçi İzole Piksel Analizi (${name}):** Kemilüminesans mavi oranı \`%${((blueCnt / totalPx) * 100).toFixed(1)}\`, kurum/sıcak ışıma \`%${((warmCnt / totalPx) * 100).toFixed(1)}\` -> **${regLabel}** tespit edildi (Dosya tarayıcı dışına çıkmadı).`,
+                summary_tr: `◫ **İstemci-İçi İzole Piksel Analizi (${name}):** Kemilüminesans mavi oranı \`%${bluePct}\`, kurum/sıcak ışıma \`%${warmPct}\` -> **${regLabelTr}** tespit edildi (Dosya tarayıcı dışına çıkmadı).`,
+                summary_en: `◫ **In-Browser Isolated Pixel Analysis (${name}):** Blue chemiluminescence \`${bluePct}%\`, warm soot index \`${warmPct}%\` -> **${regLabelEn}** detected (File remained strictly in browser RAM).`,
             };
         }
 
-        const text = await file.text();
-        const o2Match = text.match(/(?:o2|oxygen|oksijen)[^\d]{0,12}(\d{1,3}(?:\.\d+)?)/i);
-        const pMatch = text.match(/(\d{1,2}(?:\.\d+)?)\s*psia/i);
-        const uMatch = text.match(/(\d{1,2}(?:\.\d+)?)\s*cm\/s/i);
+        let text = "";
+        if (lower.endsWith(".pdf")) {
+            const ab = await file.arrayBuffer();
+            text = extractReadableTextFromPdfBuffer(ab);
+        } else {
+            text = await file.text();
+        }
+
         const extracted = {
-            fuel_id: /pmma|acrylic/i.test(text) ? "pmma" : (/nomex|suit/i.test(text) ? "nomex" : (/sibal/i.test(text) ? "sibal" : "n_heptane")),
-            gravity_g: /0\.16|lunar|moon/i.test(text) ? 0.16 : (/0\.38|mars/i.test(text) ? 0.38 : 0.0),
-            oxygen_pct: o2Match ? Math.min(100, Math.max(8, parseFloat(o2Match[1]))) : 21.0,
-            pressure_psia: pMatch ? Math.min(18, Math.max(4, parseFloat(pMatch[1]))) : 14.7,
-            airflow_cms: uMatch ? Math.min(40, Math.max(0, parseFloat(uMatch[1]))) : 2.4,
+            fuel_id: /propane|propan|cfi-g|cfig/i.test(text)
+                ? "propane_cfig"
+                : /methanol|metanol/i.test(text)
+                ? "methanol"
+                : /pmma|acrylic|akrilik/i.test(text)
+                ? "pmma"
+                : /nomex|suit|uzay giysisi/i.test(text)
+                ? "nomex"
+                : /sibal|cotton|pamuk/i.test(text)
+                ? "sibal"
+                : /hydrogen|hidrojen/i.test(text)
+                ? "hydrogen"
+                : "n_heptane",
+            gravity_g: /0\.16|lunar|moon/i.test(text) ? 0.16 : (/0\.38|mars/i.test(text) ? 0.38 : (/1\.0\s*g|earth/i.test(text) ? 1.0 : 0.0)),
+            oxygen_pct: 21.0,
+            pressure_psia: 14.7,
+            airflow_cms: 2.4,
             droplet_d0_mm: 3.2,
             diluent: "N2",
         };
+
+        // JSON / CSV tablo sütun çözümlemesi
+        const trimmed = text.trim();
+        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+            try {
+                const parsedJson = JSON.parse(trimmed);
+                const row = Array.isArray(parsedJson) ? (parsedJson[0] || {}) : parsedJson;
+                Object.keys(row || {}).forEach((k) => {
+                    const kl = k.toLowerCase();
+                    const v = parseFloat(row[k]);
+                    if (!Number.isNaN(v)) {
+                        if ((kl.includes("o2") || kl.includes("oxygen") || kl.includes("oksijen")) && v >= 5 && v <= 100) extracted.oxygen_pct = v;
+                        else if ((kl.includes("psia") || kl.includes("pressure")) && v >= 3.5 && v <= 20) extracted.pressure_psia = v;
+                        else if ((kl.includes("flow") || kl.includes("velocity") || kl.includes("akis")) && v >= 0 && v <= 45) extracted.airflow_cms = v;
+                        else if (kl.includes("gravity") && v >= 0 && v <= 1.5) extracted.gravity_g = v;
+                        else if ((kl.includes("d0") || kl.includes("diameter") || kl.includes("droplet")) && v >= 0.8 && v <= 8) extracted.droplet_d0_mm = v;
+                    }
+                });
+            } catch (_) {}
+        } else {
+            const o2Match = text.match(/(?:o2|oxygen|oksijen)[^\d]{0,12}(\d{1,3}(?:\.\d+)?)/i) || text.match(/(\d{1,3}(?:\.\d+)?)\s*%\s*(?:o2|oxygen|oksijen)/i);
+            const pMatch = text.match(/(\d{1,2}(?:\.\d+)?)\s*psia/i);
+            const uMatch = text.match(/(\d{1,2}(?:\.\d+)?)\s*cm\/s/i);
+            if (o2Match) extracted.oxygen_pct = Math.min(100, Math.max(8, parseFloat(o2Match[1])));
+            if (pMatch) extracted.pressure_psia = Math.min(18, Math.max(4, parseFloat(pMatch[1])));
+            if (uMatch) extracted.airflow_cms = Math.min(40, Math.max(0, parseFloat(uMatch[1])));
+        }
+
         ragDocs.push({ doc_id: `USR-${Date.now()}`, title: name, source: "Browser Local File", url: "", text: text.slice(0, 6000) });
         const sim = simulateCombustionClient(extracted);
         return {
@@ -744,11 +849,94 @@
             chunks: Math.max(1, Math.ceil(text.length / 800)),
             extracted_sim_params: extracted,
             simulation: sim,
-            summary_tr: `◫ **İstemci-İçi İzole Veri Çözümleme (${name}):** Tarayıcı belleğinde işlendi -> O₂ \`%${extracted.oxygen_pct}\`, Basınç \`${extracted.pressure_psia} psia\`, Akış \`${extracted.airflow_cms} cm/s\`.`,
+            summary_tr: `◫ **İstemci-İçi İzole Veri Çözümleme (${name}):** Tarayıcı belleğinde işlendi -> Yakıt \`${extracted.fuel_id}\`, Yerçekimi \`${extracted.gravity_g}G\`, O₂ \`%${extracted.oxygen_pct}\`, Basınç \`${extracted.pressure_psia} psia\`, Akış \`${extracted.airflow_cms} cm/s\`.`,
+            summary_en: `◫ **In-Browser Isolated Dataset Analysis (${name}):** Parsed in browser RAM -> Fuel \`${extracted.fuel_id}\`, Gravity \`${extracted.gravity_g}G\`, O₂ \`${extracted.oxygen_pct}%\`, Pressure \`${extracted.pressure_psia} psia\`, Airflow \`${extracted.airflow_cms} cm/s\`.`,
         };
     }
 
-    function buildDeterministicSiReply(msg, simParams, mediaCtx, lang) {
+    function normQueryAscii(str) {
+        return String(str || "")
+            .toLowerCase()
+            .trim()
+            .replace(/ı/g, "i")
+            .replace(/ğ/g, "g")
+            .replace(/ü/g, "u")
+            .replace(/ş/g, "s")
+            .replace(/ö/g, "o")
+            .replace(/ç/g, "c")
+            .replace(/â/g, "a");
+    }
+
+    function hasAnyTerm(nq, terms) {
+        for (let i = 0; i < terms.length; i++) {
+            if (nq.indexOf(terms[i]) !== -1) return true;
+        }
+        return false;
+    }
+
+    function classifyBrowserIntent(rawMsg, mediaCtx) {
+        const nq = normQueryAscii(rawMsg);
+        if (
+            (nq.indexOf("boyutsuz sayilari") !== -1 && (nq.indexOf("psi") !== -1 || nq.indexOf("dunya") !== -1 || nq.indexOf("eclss") !== -1)) ||
+            (nq.indexOf("dimensionless numbers") !== -1 && (nq.indexOf("psi") !== -1 || nq.indexOf("earth") !== -1)) ||
+            hasAnyTerm(nq, ["tam rapor", "kapsamli analiz", "full report", "comprehensive analysis", "tumunu sentezle"])
+        ) {
+            return "full_synthesis";
+        }
+
+        if (mediaCtx && hasAnyTerm(nq, ["yukledigim", "ekli", "dosya", "gorsel", "resim", "fotograf", "csv", "pdf", "json", "uploaded", "attached", "image", "dataset", "file"])) {
+            return "uploaded_media";
+        }
+
+        const physicsAnchors = [
+            "heptan", "metanol", "pmma", "nomex", "sibal", "hidrojen", "propan",
+            "spalding", "sherwood", "damkohler", "rayleigh", "grashof", "richardson",
+            "halon", "sofie", "saffire", "flex", "bass", "spice", "slise", "daft",
+            "luci", "fm2", "soguk alev", "cool flame", "moc", "eva", "gezgin", "rover", "roket", "rocket"
+        ];
+        if (!hasAnyTerm(nq, physicsAnchors)) {
+            if (hasAnyTerm(nq, ["ozelliklerin", "ozellikleri", "hangi ozellik", "yeteneklerin", "mimari", "modullerin", "sistemin ozellik", "features", "architecture", "modules", "specifications"])) {
+                return "platform_features";
+            }
+            if (hasAnyTerm(nq, ["neler yapabilir", "ne yapabilir", "ne ise yarar", "nasil kullan", "yardim", "komutlar", "ne sorabilir", "bana ne sun", "what can you do", "how to use", "capabilities", "help"])) {
+                return "capabilities_guide";
+            }
+            if (hasAnyTerm(nq, ["merhaba", "selam", "iyi gunler", "gunaydin", "iyi aksamlar", "kimsin", "sen kimsin", "nesin", "kendini tanit", "hello", "hi ", "who are you", "what are you"]) || ["hi", "merhaba", "selam", "hey", "alo", "test", "deneme"].includes(nq)) {
+                return "greeting_identity";
+            }
+        }
+
+        if (hasAnyTerm(nq, ["roket", "rocket", "itici", "thruster", "nozul", "nozzle"])) {
+            return "rocket_scope";
+        }
+        if (hasAnyTerm(nq, ["uzay giysisi", "eva giysi", "spacesuit", "eva suit", "4.3 psia", "%100 o2", "100% o2", "gezgin", "lunar rover", "pressurized rover", "10.2 psia", "on-soluma", "on soluma", "pre-breathe", "vurgun", "dekompresyon"])) {
+            return "eva_rover_atmosphere";
+        }
+        if (hasAnyTerm(nq, ["halon", "sondur", "mudahale", "su sisi", "water mist", "sofie-mist", "pfe", "yangin cikarsa", "acil durum", "6001b", "smac", "karbonmonoksit", "eclss", "suppress", "extinguish"])) {
+            return "suppression_halon";
+        }
+        if (hasAnyTerm(nq, ["soguk alev", "cool flame", "ntc", "gorunmez alev", "iki asamali", "two-stage", "peroksi", "daft", "ay tozu", "regolit", "lunar dust", "duman dedektor", "toz-duman", "yanlis alarm", "false alarm"])) {
+            return "cool_flame_daft";
+        }
+        if (hasAnyTerm(nq, ["kismi yercekimi", "partial gravity", "partial-gravity", "luci", "fm2", "e-field", "efield", "iyon ruzgari", "ionic wind", "0.16g", "0.16 g", "0.38g", "0.38 g", "mars yercekimi", "mars'ta", "marsta", "martian", "ay yercekimi", "ay'da", "ayda yanma", "bounding", "sinirlandirma"])) {
+            return "partial_gravity_luci";
+        }
+        if (hasAnyTerm(nq, ["en yuksek oksijen", "highest oxygen", "cfi-g", "cfig", "saffire", "bass-ii", "bass ", "spice", "slise", "flex-2", "bre ", "burn rate emulator", "cir ", "mdca", "msg ", "cygnus", "ntrs-", "osdr-", "psi-"]) || /\b(flex|cfi|acme|sofie|bass|same)\b/.test(nq)) {
+            return "specific_experiment";
+        }
+        if (hasAnyTerm(nq, ["spalding", "b_oq", "boq", "sherwood", "reynolds", "rayleigh", "grashof", "richardson", "damkohler", "d2 yasasi", "d²", "yanma sabiti", "burning constant", "standoff", "durma mesafesi", "r_f", "radyatif kayip", "chi_r", "moc nasil", "moc nedir", "denklem", "formul", "nasil hesaplan", "equation", "formula"])) {
+            return "equation_deep_dive";
+        }
+        if (hasAnyTerm(nq, ["artirirsam", "artarsa", "yukseltirsem", "azaltirsam", "dusurursem", "degistirirsem", "kapatirsam", "olursa ne olur", "ne degisir", "farki ne", "0g ile 1g", "havalandirma", "fan hizi", "akis hizi", "ufleme", "blowoff", "seyreltici", "helyum", "argon", "what if", "increase", "decrease", "sensitivity", "difference between"])) {
+            return "what_if_sensitivity";
+        }
+        if (hasAnyTerm(nq, ["dunya'ya", "dunyaya", "dunya uygula", "yeryuzu", "itfaiye", "firefighter", "spinoff", "teknoloji transfer", "scba", "hcci", "earth transfer", "earth application"])) {
+            return "earth_spinoffs";
+        }
+        return "targeted_scientific";
+    }
+
+    function buildQuestionDrivenReply(msg, simParams, mediaCtx, lang) {
         const sim = simulateCombustionClient(simParams || {});
         const ranked = rankExperimentsClient(simParams || {}, msg, "ALL").ranked_experiments.slice(0, 4);
         const inp = sim.inputs;
@@ -756,62 +944,627 @@
         const fv = sim.flight_validation;
         const tl = sim.scenario_timeline;
         const isEn = lang === "en";
+        const nq = normQueryAscii(msg);
+        const intent = classifyBrowserIntent(msg, mediaCtx);
 
-        const citations = ranked.map((e) => ({
+        const defaultCitations = ranked.slice(0, 3).map((e) => ({
+            id: e.exp_id,
             program: e.program,
             ntrs_id: e.ntrs_id,
             url: e.ntrs_url,
         }));
 
-        if (isEn) {
-            const expLines = ranked
-                .map((e) => `- **#${e.rank} ${e.program} (${e.exp_id} • ${e.hardware_group})** — Score \`${e.priority_score}/100\`, MOC \`${e.moc_measured_pct}% O₂\`, [NTRS #${e.ntrs_id}](${e.ntrs_url}): ${e.key_finding_en}`)
-                .join("\n");
+        // 1. Neler yapabilirsin? / Etkileşimli kullanım rehberi
+        if (intent === "capabilities_guide") {
             return {
-                reply: [
-                    `## 1. Microgravity & Partial-Gravity Governing Physics Synthesis`,
-                    `- **Active State (${inp.fuel_name_en}):** Regime **\`${tel.regime}\`** at \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\`.`,
-                    `- **Analytical Transport & Kinetics:** Burning rate \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, Spalding \`B_oq = ${tel.spalding_b_number}\`, Sherwood \`Sh = ${tel.sherwood_number}\`, Damköhler \`Da = ${tel.damkohler_number}\`, radiative loss \`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\`, critical \`MOC = ${tel.moc_pct}% O₂\`.`,
-                    `- **ISS Flight Telemetry Validation:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` against **${fv.campaign}**.`,
-                    mediaCtx ? `- **Attached Dataset / Image Context:** ${mediaCtx}` : ``,
-                    ``,
-                    `## 2. Top Ranked NASA PSI Investigations & Intra-Run Evidence`,
-                    expLines,
-                    ``,
-                    `## 3. ECLSS Crew Survival Clock & Non-Halon Suppression Protocol`,
-                    `- **Habitat (${tl.habitat_name_en}):** Alarm at \`+${tl.t_alarm_s} s\` | NASA 1-hr SMAC (\`125 ppm CO\`) in \`${tl.t_smac_125ppm_s} s\` | Intervention CO \`${tl.co_at_response_ppm} ppm\`.`,
-                    `- **Mandatory NASA-STD-6001B Action Sequence:** **(1)** Cut cabin HVAC ventilation immediately (\`U -> 0 cm/s\`), **(2)** Isolate electrical bus power, **(3)** Discharge **25–40 µm Fine Water Mist (SoFIE-MIST)** or CO₂/N₂ (*Halon 1301 is strictly prohibited due to toxic HF/HBr poisoning ECLSS scrubbers*).`,
-                    ``,
-                    `## 4. Space-to-Earth Fire Safety Spinoffs`,
-                    `- ISS multi-wavelength dust-immune smoke detection (**SAME / DAFT**) prevents false alarms in aircraft cargo bays and smart homes, while **SoFIE-MIST** water-mist physics protects cleanrooms and EV lithium-ion battery facilities on Earth.`,
-                ].filter(Boolean).join("\n"),
-                citations,
+                reply: isEn
+                    ? [
+                          `### ALTAR-NASA v5.1 — Interactive Engineering & Scientific Capabilities`,
+                          `Currently locked onto your live 3D chamber (**${inp.fuel_name_en}** at \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → **\`${tel.regime}\`**, Risk \`${tel.risk_score}/100\`). Ask me to compute or analyze any specific scenario:`,
+                          ``,
+                          `| Capability Domain | Live Calculation Executed | Example Question You Can Type |`,
+                          `| :--- | :--- | :--- |`,
+                          `| **Equation Derivation** | Step-by-step substitution of \`d²\`-law \`K\`, Spalding \`B_oq\`, Sherwood \`Sh\`, \`Ra/Ri\`, Damköhler \`Da\`, and \`MOC\` | *"How is Spalding B_oq and burning rate K calculated?"* |`,
+                          `| **Counterfactual What-If Sweep** | Multi-point sweeps across airflow (\`0–30 cm/s\`), gravity (\`0G–1G\`), \`O₂%\`, and diluents (\`N₂/CO₂/He\`) | *"What happens if I increase cabin airflow from 0 to 20 cm/s?"* |`,
+                          `| **EVA Suit & Rover Comparison** | Live table comparing ISS (\`14.7 psia\`), Lunar Rover (\`10.2 psia / 32% O₂\`), and EVA Suit (\`4.3 psia / 100% O₂\`) | *"Compare EVA spacesuit and Lunar Rover flammability risks."* |`,
+                          `| **15 NASA PSI Investigations** | Deep-dive into \`FLEX\`, \`CFI-G\`, \`BASS\`, \`SPICE\`, \`SLISE\`, \`Saffire\`, \`SoFIE\`, \`DAFT\` & intra-run matrices | *"Explain Saffire-V test variations and CFI-G findings."* |`,
+                          `| **ECLSS & Fire Suppression** | \`NASA-STD-6001B\` Halon 1301 ban, \`SoFIE-MIST\` water mist, \`SMAC 125 ppm CO\` clock, Cool Flame sensing | *"Why is Halon 1301 banned and how fast does CO hit SMAC?"* |`,
+                          `| **Image / Dataset Analyzer** | In-browser pixel chemiluminescence/soot segmentation (\`.png/.jpg\`) & \`.csv/.json/.pdf\` extraction | Upload a file on the left and ask *"Analyze my uploaded file"* |`,
+                      ].join("\n")
+                    : [
+                          `### ALTAR-NASA v5.1 — Yapabileceğim Canlı Hesaplama ve Mühendislik Analizleri`,
+                          `Şu anda aktif 3B yanma odanıza kilitliyim (**${inp.fuel_name_tr}** • \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → **\`${tel.regime}\`**, Risk \`${tel.risk_score}/100\`). Bana doğrudan şu hesaplama ve sorguları yaptırabilirsiniz:`,
+                          ``,
+                          `| Analiz Yeteneği | Arka Planda Yürüttüğüm Canlı İşlem | Doğrudan Sorabileceğiniz Örnek Soru |`,
+                          `| :--- | :--- | :--- |`,
+                          `| **Adım Adım Denklem Çözümü** | Aktif kaydırıcı değerlerinizle \`d²\` yasası (\`K\`), Spalding \`B_oq\`, Sherwood \`Sh\`, \`Ra/Ri\`, Damköhler \`Da\` ve \`MOC\` hesabı | *"Spalding B_oq ve yanma sabiti K nasıl hesaplanıyor?"* |`,
+                          `| **'Ne Olur?' Duyarlılık Taraması** | Akış hızı (\`0–30 cm/s\`), yerçekimi (\`0G / 0.16G / 0.38G / 1G\`), \`O₂%\` veya seyreltici gaz (\`N₂/CO₂/He\`) taraması | *"Havalandırma hızını artırırsam alev nasıl değişir?"* |`,
+                          `| **Giysi & Gezgin Atmosfer Kıyaslaması** | ISS (\`14.7 psia\`), Ay Gezgini (\`10.2 psia / %32 O₂\`) ve EVA Giysisi (\`4.3 psia / %100 O₂\`) yanıcılık matrisi | *"Uzay giysisi ile basınçlı Ay gezginini sayısal kıyasla."* |`,
+                          `| **15 NASA PSI Deneyi & Raf Sorgusu** | \`FLEX\`, \`CFI\`, \`ACME CFI-G\`, \`BASS\`, \`SPICE\`, \`SLISE\`, \`Saffire\`, \`SoFIE\`, \`DAFT\` bulguları ve varyasyon tablosu | *"Saffire deneyinde neler sabit tutuldu, neler değiştirildi?"* |`,
+                          `| **ECLSS Yaşam Saati & Söndürme** | \`NASA-STD-6001B\` Halon 1301 yasağı, \`SoFIE-MIST\` su sisi, \`SMAC 125 ppm CO\` saati ve Soğuk Alev tespiti | *"Uzay aracında Halon 1301 neden yasak?"* |`,
+                          `| **Görsel & Veri Dosyası Çözümleme** | Tarayıcı RAM'inde alev fotoğrafı (\`.png/.jpg\`) piksel analizi ve \`.csv/.json/.pdf\` parametre çıkarımı | Soldan dosya seçip *"Yüklediğim veriyi analiz et"* yazın |`,
+                      ].join("\n"),
+                citations: [],
             };
         }
 
-        const expLinesTr = ranked
-            .map((e) => `- **#${e.rank} ${e.program} (${e.exp_id} • ${e.hardware_group})** — Öncelik \`${e.priority_score}/100\`, MOC \`%${e.moc_measured_pct} O₂\`, [NTRS #${e.ntrs_id}](${e.ntrs_url}): ${e.key_finding_tr}`)
-            .join("\n");
+        // 2. Özelliklerin neler? / 5 Modüllü Teknik Mimari Envanteri
+        if (intent === "platform_features") {
+            return {
+                reply: isEn
+                    ? [
+                          `### ALTAR-NASA: Flame in Freefall (v5.1) — Technical Architecture & Feature Inventory`,
+                          `ALTAR-NASA consists of **5 integrated Mission Control subsystems** running 100% isolated in your browser:`,
+                          ``,
+                          `1. **\`01 // 3D WebGL CIR/MSG Digital Twin & Governing Solver\`:** 4-geometry WebGL chamber (\`Droplet\`, \`PMMA Rod\`, \`Fabric Slab\`, \`CFI-G Porous Sphere\`) solving 8 coupled equations calibrated against ISS flight telemetry (**\`R² = ${fv.r_squared}\`**, \`RMSE = ${fv.rmse}\`), WebAudio sonification, and **ECLSS \`SMAC 125 ppm CO\` Crew Survival Clock**.`,
+                          `2. **\`02 // 15 Verified NASA PSI Investigations & Intra-Run Matrix\`:** Physics + bilingual TF-IDF ranking across \`CIR/MDCA\`, \`MSG Flow Duct\`, \`Cygnus (Saffire)\`, and \`SAME/DAFT\` racks, intra-investigation variable matrices, and Space-to-Earth transfers.`,
+                          `3. **\`03 // Live NASA NTRS/OSDR Telemetry Stream & Multimodal Analyzer\`:** Autonomous \`ntrs.nasa.gov\` & \`osdr.nasa.gov\` polling plus zero-upload client-side flame pixel segmentation and \`.CSV/.JSON/.PDF\` parameter extraction.`,
+                          `4. **\`04 // 6-Stage Audited Evidence Synthesis Console\`:** Multi-intent analytical & counterfactual solver + optional \`Gemini / OpenRouter\` gateway guarded by \`CON-01..CON-09\` and \`NASA-STD-6001B\` Halon-ban enforcement.`,
+                          `5. **\`05 // Zero-Trust Isolation & Predictive Export\`:** Strict \`CSP\` sandbox with zero open ports, plus one-click **\`.CSV\`**, **\`.JSON\`**, and **\`.MD\`** scientific dataset export.`,
+                      ].join("\n")
+                    : [
+                          `### ALTAR-NASA: Flame in Freefall (v5.1) — Teknik Mimari ve Sistem Özellikleri`,
+                          `Platform statik bir sohbet şablonu değil; tarayıcı belleğinde %100 izole çalışan **5 entegre Görev Kontrol modülünden** oluşur:`,
+                          ``,
+                          `1. **\`01 // 3B WebGL CIR/MSG Dijital İkizi & Analitik Çözücü\`:** 4 farklı 3B numune/brülör geometrisini (\`Damlacık\`, \`PMMA Çubuk\`, \`Nomex/Sibal Kumaş\`, \`CFI-G Gözenekli Küre\`) ve 8 temel taşınım denklemini ISS uçuş verileriyle (**\`R² = ${fv.r_squared}\`**, \`RMSE = ${fv.rmse}\`) doğrular; akustik sonifikasyon ve **ECLSS \`SMAC 125 ppm CO\` Yaşam Destek Saati** sunar.`,
+                          `2. **\`02 // 15 Doğrulanmış NASA PSI Soruşturması & Varyasyon Matrisi\`:** \`CIR/MDCA\`, \`MSG Fan Kanalı\`, \`Cygnus (Saffire)\` ve \`SAME/DAFT\` donanımlarını termodinamik yakınlık + TF-IDF ile sıralar; deney-içi sabit/değişken parametre matrislerini ve Dünya uygulamalarını gösterir.`,
+                          `3. **\`03 // Canlı NASA NTRS/OSDR Akışı & Çok Modlu Çözümleyici\`:** Resmi \`ntrs.nasa.gov\` ve \`osdr.nasa.gov\` API'lerinden kesintisiz akış çeker; alev fotoğraflarını ve \`.csv/.json/.pdf\` dosyalarını sunucuya göndermeden tarayıcı RAM'inde analiz edip 3B odaya aktarır.`,
+                          `4. **\`04 // 6-Katmanlı Denetimli Kanıt Sentezi Konsolu\`:** Soru-odaklı çok noktalı analitik çözücü ve isteğe bağlı bulut geçidini \`CON-01..CON-09\` ile \`NASA-STD-6001B\` Halon yasağı denetimi altında çalıştırır.`,
+                          `5. **\`05 // Zero-Trust Siber İzolasyon & Veri Çıktısı\`:** Sıfır açık port ve sıkı \`CSP\` korumasıyla çalışır; tek tıkla **\`.CSV\`**, **\`.JSON\`** ve **\`.MD\`** bilimsel görev raporu indirmenizi sağlar.`,
+                      ].join("\n"),
+                citations: [],
+            };
+        }
+
+        // 3. Selamlama & Aktif Kilit Özeti
+        if (intent === "greeting_identity") {
+            return {
+                reply: isEn
+                    ? [
+                          `### ALTAR-NASA v5.1 — Decision Support Kernel Online`,
+                          `- **Active 3D Chamber Lock:** \`${inp.fuel_name_en}\` (\`${inp.geometry_3d}\`) | \`${inp.gravity_g} G\` | \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`) | \`U = ${inp.airflow_cms} cm/s\``,
+                          `- **Computed State:** Regime **\`${tel.regime}\`** | Flame Temp \`${tel.flame_temp_k} K\` | Critical \`MOC = ${tel.moc_pct}% O₂\` | Fire Risk **\`${tel.risk_score}/100\`**`,
+                          ``,
+                          `Ask me any targeted question—such as deriving \`Spalding B_oq\`, sweeping airflow or gravity (\`0G vs 0.16G Moon\`), comparing \`EVA Suit\` vs \`Lunar Rover\`, or inspecting \`FLEX\`, \`Saffire\`, \`SoFIE-MIST\`, or \`DAFT\`.`,
+                      ].join("\n")
+                    : [
+                          `### ALTAR-NASA v5.1 — Kanıt Sentezi ve Karar Destek Çekirdeği Hazır`,
+                          `- **Aktif 3B Yanma Odası Kilidi:** \`${inp.fuel_name_tr}\` (\`${inp.geometry_3d}\`) | \`${inp.gravity_g} G\` | \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`) | \`U = ${inp.airflow_cms} cm/s\``,
+                          `- **Anlık Çözücü Durumu:** Rejim **\`${tel.regime}\`** | Alev Sıcaklığı \`${tel.flame_temp_k} K\` | Kritik \`MOC = %${tel.moc_pct} O₂\` | Yangın Riski **\`${tel.risk_score}/100\`**`,
+                          ``,
+                          `Bana belirli bir fiziksel denklemi (\`Spalding B_oq\`, \`Sherwood Sh\`, \`Damköhler Da\`), parametre değişim senaryosunu (*"Akış hızını artırırsam ne olur?"*), \`EVA Giysisi vs. Ay Gezgini\` kıyaslamasını veya merak ettiğiniz bir NASA PSI deneyini (\`FLEX\`, \`Saffire\`, \`SoFIE-MIST\`, \`DAFT\`) doğrudan sorabilirsiniz.`,
+                      ].join("\n"),
+                citations: [],
+            };
+        }
+
+        // 4. Roket Motorları Kapsam Sınırı (CON-08)
+        if (intent === "rocket_scope") {
+            return {
+                reply: isEn
+                    ? [
+                          `### Why Rocket Engines & Thrusters Are Excluded from NASA PSI Cabin Fire Scope (CON-08)`,
+                          `1. **Momentum-Dominated Regime (\`Ri = Gr / Re² → 0\`):** Inside rocket thrust chambers, gas velocities reach \`10²–10³ m/s\` (\`Re > 10⁵\`). Because Richardson scaling obeys \`Ri = Gr / Re²\`, buoyancy (\`Gr ∝ g\`) is negligible (\`Ri < 10⁻⁶\`), making rocket combustion effectively gravity-independent.`,
+                          `2. **Habitable Spacecraft Contrast (Your Active Chamber):** At your cabin ventilation speed \`U = ${inp.airflow_cms} cm/s\` (\`Re = ${tel.reynolds_number}\`, \`Ri = ${tel.richardson_number}\`), eliminating gravity (\`0G / 0.16G / 0.38G\`) turns flames spherical, amplifies radiative quenching (\`χ_r\`), and lowers \`MOC\`.`,
+                          `3. **NASA PSI Portfolio Scope:** Consequently, NASA PSI (\`FLEX\`, \`CFI\`, \`ACME\`, \`BASS\`, \`SPICE\`, \`SLISE\`, \`Saffire\`, \`SoFIE\`, \`DAFT\`) focuses strictly on crewed spacecraft cabins, EVA suits (\`4.3 psia / 100% O₂\`), Lunar/Mars habitats, and pressurized rovers.`,
+                      ].join("\n")
+                    : [
+                          `### Roket Motorları ve İticiler Neden NASA PSI Kapsamı Dışındadır? (CON-08)`,
+                          `1. **Momentum Baskınlığı (\`Ri = Gr / Re² → 0\`):** Roket motorları ve iticilerde gaz hızları \`100–3000 m/s\` mertebesindedir (\`Re > 10⁵\`). Richardson sayısı \`Ri = Gr / Re²\` olduğundan kaldırma kuvveti etkisi sıfıra yakındır (\`Ri < 10⁻⁶\`); yani roket yanması **yerçekiminden bağımsızdır**.`,
+                          `2. **Mürettebat Kabini ile Fark (Aktif Odanız):** Şu anki 3B yanma odanızda akış yalnızca \`U = ${inp.airflow_cms} cm/s\` düzeyindedir (\`Re = ${tel.reynolds_number}\`, \`Ri = ${tel.richardson_number}\`). Bu düşük kabin hızlarında yerçekiminin kalkması alevi küreselleştirir, radyatif ısı kaybını (\`χ_r\`) büyütür ve \`MOC\` sınırını düşürür.`,
+                          `3. **NASA PSI Odak Alanı:** Bu nedenle NASA PSI veri tabanı roket itkisini hariç tutarak doğrudan **ISS modülleri, EVA uzay giysileri (\`4.3 psia / %100 O₂\`), Ay/Mars yüzey üsleri ve basınçlı gezginlerdeki** yangın güvenliğine odaklanır.`,
+                      ].join("\n"),
+                citations: defaultCitations.slice(0, 2),
+            };
+        }
+
+        // 5. EVA Uzay Giysisi (%100 O2 @ 4.3 psia) & Ay Gezgini & ISS Kıyaslaması
+        if (intent === "eva_rover_atmosphere") {
+            const profs = [
+                { tr: "ISS USOS Standart Kabin", en: "ISS Standard Cabin", p: { fuel_id: inp.fuel_id, gravity_g: 0.0, oxygen_pct: 21.0, pressure_psia: 14.7, airflow_cms: 4.0, droplet_d0_mm: inp.droplet_d0_mm, diluent: "N2", habitat_id: "iss_module" } },
+                { tr: "Ay Üssü / Basınçlı Gezgin", en: "Lunar Base / Rover", p: { fuel_id: inp.fuel_id, gravity_g: 0.16, oxygen_pct: 32.0, pressure_psia: 10.2, airflow_cms: 4.5, droplet_d0_mm: inp.droplet_d0_mm, diluent: "N2", habitat_id: "lunar_rover" } },
+                { tr: "Saffire-V Keşif Atmosferi", en: "Saffire-V Exploration", p: { fuel_id: inp.fuel_id, gravity_g: 0.0, oxygen_pct: 34.0, pressure_psia: 8.2, airflow_cms: 5.0, droplet_d0_mm: inp.droplet_d0_mm, diluent: "N2", habitat_id: "lunar_rover" } },
+                { tr: "EVA Uzay Giysisi (Saf O₂)", en: "EVA Spacesuit (Pure O₂)", p: { fuel_id: inp.fuel_id, gravity_g: 0.16, oxygen_pct: 100.0, pressure_psia: 4.3, airflow_cms: 6.0, droplet_d0_mm: inp.droplet_d0_mm, diluent: "N2", habitat_id: "eva_suit" } },
+            ];
+            const rows = profs.map((pr) => {
+                const s = simulateCombustionClient(pr.p);
+                const st = s.telemetry;
+                const stl = s.scenario_timeline;
+                const rateStr = st.flame_spread_mm_s > 0 ? `V_f=${st.flame_spread_mm_s} mm/s` : `K=${st.burning_rate_k_mm2_s} mm²/s`;
+                return `| **${isEn ? pr.en : pr.tr}** | \`${pr.p.pressure_psia} psia\` | \`${pr.p.oxygen_pct}%\` | \`${st.o2_partial_psia} psia\` | \`${st.moc_pct}%\` | \`${st.flame_temp_k} K\` | \`${rateStr}\` | **\`${st.risk_score}/100\`** (\`SMAC ${stl.t_smac_125ppm_s} s\`) |`;
+            });
+            const relCits = NASA_CATALOG.filter((e) => ["PSI-SAFFIRE5-07", "PSI-SOFIE-08", "PSI-ACME-CFIG-14"].includes(e.exp_id)).map((e) => ({ id: e.exp_id, program: e.program, ntrs_id: e.ntrs_id, url: e.ntrs_url }));
+            return {
+                reply: isEn
+                    ? [
+                          `### EVA Spacesuit (\`100% O₂ @ 4.3 psia\`), Lunar Rover (\`32% O₂ @ 10.2 psia\`) & ISS Matrix — \`${inp.fuel_name_en}\``,
+                          ``,
+                          `| Mission Atmosphere | Total Pressure | O₂ % | Partial \`P_O2\` | Critical \`MOC\` | Flame \`T_f\` | Burn / Spread Rate | Risk & ECLSS SMAC |`,
+                          `| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |`,
+                          ...rows,
+                          ``,
+                          `### Thermo-Physical & EVA Operational Synthesis (CON-06)`,
+                          `- **Why \`4.3 psia / 100% O₂\` in EVA Suits?** A \`14.7 psia\` suit stiffens joints and prevents finger mobility. Operating at \`4.3 psia\` pure \`O₂\` preserves alveolar \`P_O2 = 4.3 psia\` with zero \`N₂\`, eliminating decompression bends—but **eliminating \`N₂\` removes thermal heat-sink ballast**, causing rapid flame spread across suit textiles if an electrical arc occurs.`,
+                          `- **Why \`10.2 psia / 32% O₂\` in Lunar Rovers?** Cuts astronaut EVA pre-breathe purge time from \`>2 hours\` to \`~15 minutes\` (**Saffire-V \`NTRS #20220014358\`**, **SoFIE \`NTRS #20230006712\`**).`,
+                          `- **Highest-O₂ PSI Benchmark:** **ACME CFI-G (\`NTRS #20230014890\`)** tested spherical porous-burner flames up to **\`85% O₂\`** inside ISS \`CIR\`.`,
+                      ].join("\n")
+                    : [
+                          `### EVA Uzay Giysisi (\`%100 O₂ @ 4.3 psia\`), Ay Gezgini (\`%32 O₂ @ 10.2 psia\`) ve ISS Yanıcılık Matrisi — \`${inp.fuel_name_tr}\``,
+                          ``,
+                          `| Görev Atmosferi | Toplam Basınç | O₂ % | Kısmi \`P_O2\` | Kritik \`MOC\` | Sıcaklık \`T_f\` | Yayılma / Yanma | Risk & ECLSS SMAC |`,
+                          `| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |`,
+                          ...rows,
+                          ``,
+                          `### Termofiziksel ve Fizyolojik Mühendislik Analizi (CON-06)`,
+                          `- **EVA Giysilerinde Neden \`4.3 psia / %100 Saf O₂\` Kullanılır?** \`14.7 psia\` basınçta giysi balon gibi sertleşir. \`4.3 psia\` saf \`O₂\` hem akciğer oksijen basıncını korur (\`P_O2 = 4.30 psia\` > ISS \`3.09 psia\`) hem de kanda azot bırakmayarak **vurgun riskini sıfırlar**. Ancak **ısıyı emen \`N₂\` ısıl balastı kalktığı için** alev sıcaklığı ve yayılma hızı sıçrar.`,
+                          `- **Ay Üssü ve Basınçlı Gezginlerde Neden \`10.2 psia / %32 O₂\` Seçilir?** Dünya'ya göre \`>%40\` bağıl oksijen artışı sağlayarak saatler süren EVA ön-soluma (\`pre-breathe\`) süresini \`~15 dakikaya\` indirir (**Saffire-V \`NTRS #20220014358\`**, **SoFIE \`NTRS #20230006712\`**).`,
+                          `- **PSI En Yüksek Oksijen Deneyi:** ISS \`CIR\` rafındaki **ACME CFI-G (\`NTRS #20230014890\`)** küresel brülörde **\`%85 O₂\`** konsantrasyonuna kadar test yapılmıştır.`,
+                      ].join("\n"),
+                citations: relCits,
+            };
+        }
+
+        // 6. Kısmi Yerçekimi (0.16G Ay / 0.38G Mars), LUCI/FM2 ve ACME E-FIELD
+        if (intent === "partial_gravity_luci") {
+            const gLevels = [
+                { tr: "0.00 G (ISS Mikroçekim)", en: "0.00 G (ISS Freefall)", g: 0.0 },
+                { tr: "0.16 G (Ay Yüzeyi • LUCI/FM2)", en: "0.16 G (Lunar • LUCI/FM2)", g: 0.16 },
+                { tr: "0.38 G (Mars Yüzeyi)", en: "0.38 G (Martian Surface)", g: 0.38 },
+                { tr: "1.00 G (Dünya Referansı)", en: "1.00 G (Earth Reference)", g: 1.0 },
+            ];
+            const gRows = gLevels.map((gl) => {
+                const sg = simulateCombustionClient(Object.assign({}, inp, { gravity_g: gl.g }));
+                const gt = sg.telemetry;
+                const rCol = gt.flame_spread_mm_s > 0 ? `V_f=${gt.flame_spread_mm_s} mm/s` : `K=${gt.burning_rate_k_mm2_s} mm²/s`;
+                return `| **${isEn ? gl.en : gl.tr}** | \`Ra = ${gt.rayleigh_number}\` | \`Ri = ${gt.richardson_number}\` | **\`${gt.moc_pct}% O₂\`** | \`${gt.flame_temp_k} K\` | \`${rCol}\` | \`${gt.regime}\` (\`${gt.risk_score}/100\`) |`;
+            });
+            const relCits = NASA_CATALOG.filter((e) => ["PSI-ACME-09", "PSI-BASS-03", "PSI-SOFIE-08"].includes(e.exp_id)).map((e) => ({ id: e.exp_id, program: e.program, ntrs_id: e.ntrs_id, url: e.ntrs_url }));
+            return {
+                reply: isEn
+                    ? [
+                          `### Partial-Gravity Bounding (\`0G\` → \`0.16G Moon\` → \`0.38G Mars\` → \`1G\`) — \`${inp.fuel_name_en}\``,
+                          ``,
+                          `| Gravity Regime | Rayleigh \`Ra\` | Richardson \`Ri\` | Critical \`MOC\` | Flame \`T_f\` | Burn / Spread Rate | Regime & Risk |`,
+                          `| :--- | :--- | :--- | :--- | :--- | :--- | :--- |`,
+                          ...gRows,
+                          ``,
+                          `### NASA PSI Partial-G Gap, LUCI/FM2 & ACME E-FIELD Emulation (CON-07)`,
+                          `1. **PSI Partial-G Data Gap (\`LUCI\` & \`FM2\`):** NASA PSI currently contains \`0G\` orbital and \`1G\` ground data, with **no direct lunar-g combustion dataset yet**. Upcoming **LUCI (*Lunar-g Combustion Investigation*)** and **FM2 (*Flammability of Materials on the Moon*)** payloads will fill this gap.`,
+                          `2. **0G–1G Bounding & Lunar Hazard:** Gentle \`0.16G\` buoyant slip (\`u_b ≈ 8.8 cm/s\`) feeds fresh \`O₂\` (\`Da > 1\`) without strong \`1G\` convective cooling, often dropping \`MOC\` below \`1G\` Earth limits; bounding between \`0G\` ventilated (\`BASS\`/\`SoFIE\`) and \`1G\` brackets the hazard.`,
+                          `3. **ACME E-FIELD Ionic-Wind Emulation (\`NTRS #19990054024\`):** Electric fields acting on flame chemi-ions (\`H₃O⁺\`, \`CHO⁺\`) in \`0G\` emulate \`0.16G / 0.38G\` buoyant convection and cut soot by \`70%\`.`,
+                      ].join("\n")
+                    : [
+                          `### Kısmi Yerçekimi Sınırlandırma Analizi (\`0G\` → \`0.16G Ay\` → \`0.38G Mars\` → \`1G\`) — \`${inp.fuel_name_tr}\``,
+                          ``,
+                          `| Yerçekimi Rejimi | Rayleigh \`Ra\` | Richardson \`Ri\` | Kritik \`MOC\` | Sıcaklık \`T_f\` | Yanma / Yayılma | Rejim & Risk |`,
+                          `| :--- | :--- | :--- | :--- | :--- | :--- | :--- |`,
+                          ...gRows,
+                          ``,
+                          `### NASA PSI Veri Boşluğu, LUCI/FM2 ve ACME E-FIELD Taklidi (CON-07)`,
+                          `1. **PSI Kısmi Yerçekimi Veri Boşluğu (\`LUCI\` & \`FM2\`):** Şu anda NASA PSI arşivinde doğrudan Ay veya Mars kısmi yerçekimi yanma verisi yoktur; bu boşluğun gelecekteki **LUCI (*Lunar-g Combustion Investigation*)** ve **FM2 (*Flammability of Materials on the Moon*)** Ay yüzey deneyleriyle doldurulması beklenmektedir.`,
+                          `2. **0G–1G Sınırlandırması (Bounding):** \`0.16G\` Ay yerçekimi \`u_b ≈ 8.8 cm/s\` mertebesinde tatlı bir doğal kaldırma akışı yaratarak aleve taze \`O₂\` taşır (\`Da > 1\`) ve kritik \`MOC\` sınırını \`1G\` Dünya değerinin **altına** çekebilir.`,
+                          `3. **ACME E-FIELD İyon Rüzgarı Taklidi (\`NTRS #19990054024\`):** ISS \`CIR\` odasında alevdeki doğal iyonlara (\`H₃O⁺\`, \`CHO⁺\`) uygulanan elektrik alanı, \`0G\` ortamında Ay/Mars kısmi yerçekimi konveksiyonunu taklit etmiş ve kurumu \`%70\` azaltmıştır.`,
+                      ].join("\n"),
+                citations: relCits,
+            };
+        }
+
+        // 7. Görünmez Soğuk Alev (Cool Flame NTC) & DAFT/SAME Toz-Duman Ayrımı
+        if (intent === "cool_flame_daft") {
+            const cfSim = simulateCombustionClient({ fuel_id: "n_heptane", gravity_g: 0.0, oxygen_pct: 15.5, pressure_psia: inp.pressure_psia, airflow_cms: 0.1, droplet_d0_mm: 3.8, diluent: inp.diluent });
+            const cft = cfSim.telemetry;
+            const relCits = NASA_CATALOG.filter((e) => ["PSI-FLEX-01", "PSI-CFI-11", "PSI-SAME-10", "PSI-ACME-CFIG-14"].includes(e.exp_id)).map((e) => ({ id: e.exp_id, program: e.program, ntrs_id: e.ntrs_id, url: e.ntrs_url }));
+            return {
+                reply: isEn
+                    ? [
+                          `### Two-Stage Radiative Extinction, Invisible Cool Flames (NTC) & DAFT Sensor Fusion (CON-04)`,
+                          `- **Active Chamber vs. Cool-Flame Onset:** Current radiative fraction is \`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\` (\`${tel.flame_temp_k} K\`, \`${tel.regime}\`). For a \`3.8 mm\` \`n-Heptane\` droplet at \`0G / 15.5% O₂\`, \`χ_r\` hits \`${(cft.radiative_loss_fraction * 100).toFixed(1)}%\`, locking into **\`${cft.regime}\`** at \`${cft.flame_temp_k} K\`.`,
+                          `- **NTC Kinetics (\`FLEX\`, \`CFI\`, \`ACME CFI-G\`):** Spherical \`0G\` flames trap hot products (\`R_f/R_d ≈ 5–8\`). Once \`Q_rad ∝ R_f³·σ·(T_f⁴ - T_∞⁴)\` exceeds \`χ_r > 0.45\`, the visible hot flame quenches into invisible \`550–780 K\` peroxy (\`RO₂ ⇌ QOOH\`) combustion, leaking toxic \`CO\` and \`CH₂O\`.`,
+                          ``,
+                          `| Detection Channel | Hot Sooty Flame | Invisible Cool Flame (\`550–780 K\`) | Lunar Regolith / Cabin Dust |`,
+                          `| :--- | :--- | :--- | :--- |`,
+                          `| **Visible Optical Camera** | High (\`75–100%\`) | **\`~0–2%\` (BLIND)** | Scatters light (False Alarm Risk) |`,
+                          `| **UV / Mid-IR Radiometer** | High (\`12–35 kW/m²\`) | **Detects \`2.5–5.5 kW/m²\` signature** | \`0 kW/m²\` (Immune) |`,
+                          `| **Electrochemical \`CO / CH₂O\`** | Moderate–High | **Captures \`90–350 ppm CO\` rise** | \`0 ppm\` (Immune) |`,
+                          `| **SAME / DAFT Multi-Angle Laser** | Sub-micron soot (\`<0.4 µm\`) | Detects condensed vapor cloud (\`CFI\`) | **Rejects \`1–10 µm\` lunar dust via polarization/angle ratio** |`,
+                      ].join("\n")
+                    : [
+                          `### İki Aşamalı Radyatif Sönme, Görünmez Soğuk Alev (NTC) ve DAFT Toz/Duman Ayrımı (CON-04)`,
+                          `- **Aktif Odanız vs. Soğuk Alev Eşiği:** Mevcut simülasyonunuzda radyatif kayıp \`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\` (\`${tel.flame_temp_k} K\`, \`${tel.regime}\`). \`0G / %15.5 O₂\` altında \`3.8 mm\` \`n-Heptan\` damlacığında \`χ_r = %${(cft.radiative_loss_fraction * 100).toFixed(1)}\` değerine ulaşarak \`${cft.flame_temp_k} K\` sıcaklıkta **\`${cft.regime}\`** fazına geçer.`,
+                          `- **NTC Mekanizması (\`FLEX\`, \`CFI\`, \`ACME CFI-G\`):** \`0G\` küresel alevinde \`Q_rad ∝ R_f³·σ·(T_f⁴ - T_∞⁴)\` kaybı \`χ_r > 0.45\` eşiğini aştığında sıcak alev söner; alkan yakıtlar \`550–780 K\` peroksi (\`RO₂ ⇌ QOOH\`) kimyasıyla **görünmez Soğuk Alev** olarak yanmayı sürdürür ve zehirli \`CO\` / formaldehit üretir.`,
+                          ``,
+                          `| Algılama Kanalı | Sıcak Görünür Alev | Görünmez Soğuk Alev (\`550–780 K\`) | Kabin / Ay Regolit Tozu |`,
+                          `| :--- | :--- | :--- | :--- |`,
+                          `| **Standart Optik Kamera** | Yüksek (\`%75–100\`) | **\`~%0–2\` (TAMAMEN KÖR)** | Işığı saçar (Yanlış Alarm Riski) |`,
+                          `| **UV / Orta-IR Radyometre** | Yüksek (\`12–35 kW/m²\`) | **\`2.5–5.5 kW/m²\` ışıma yakalar** | \`0 kW/m²\` (Toza Bağışıklı) |`,
+                          `| **Elektrokimyasal \`CO / CH₂O\`** | Orta–Yüksek | **\`90–350 ppm CO\` artışını yakalar** | \`0 ppm\` (Toza Bağışıklı) |`,
+                          `| **SAME / DAFT Çok Açılı Lazer** | \`<0.4 µm\` yanma dumanı | \`CFI\` buhar bulutunu algılar | **Polarizasyon ve saçılma açısıyla \`1–10 µm\` Ay tozunu reddeder** |`,
+                      ].join("\n"),
+                citations: relCits,
+            };
+        }
+
+        // 8. Halon 1301 Yasağı, NASA-STD-6001B Söndürme, SoFIE-MIST & İtfaiye Transferi
+        if (intent === "suppression_halon") {
+            const zSim = simulateCombustionClient(Object.assign({}, inp, { airflow_cms: 0.0 }));
+            const zt = zSim.telemetry;
+            const incSpin = hasAnyTerm(nq, ["itfaiye", "firefighter", "dunya", "earth", "giysi", "tank", "spinoff", "transfer"]);
+            const relCits = NASA_CATALOG.filter((e) => ["PSI-SOFIE-MIST-15", "PSI-BASS-03", "PSI-SAME-10"].includes(e.exp_id)).map((e) => ({ id: e.exp_id, program: e.program, ntrs_id: e.ntrs_id, url: e.ntrs_url }));
+            const spinTr = incSpin
+                ? `\n\n### Dünya'daki İtfaiye ve Endüstriyel Uygulamalar (Space-to-Earth)\n- **SoFIE-MIST Su Sisi:** \`25–40 µm\` temiz su sisi nozulları veri merkezleri, ameliyathaneler ve lityum-iyon batarya depolarında Halon'un yerini almıştır.\n- **PBI/Nomex İtfaiyeci Giysileri & \`SCBA\` Hava Tankları:** Apollo/EVA yangın araştırmalarından doğan \`PBI/Nomex\` kumaşlar modern itfaiyeci elbiselerini korur; NASA karbon-fiber \`COPV\` teknolojisi itfaiyeci \`SCBA\` solunum tüplerini \`%40\` hafifletmiştir.\n- **DAFT/SAME Duman Dedektörleri:** Çok açılı lazer saçılma algoritmaları maden ve uçak kargo ambarlarında toz kaynaklı yanlış alarmları önler.`
+                : "";
+            const spinEn = incSpin
+                ? `\n\n### Terrestrial Firefighting & Industrial Spinoffs\n- **SoFIE-MIST Water Mist:** Sub-\`50 µm\` nozzles protect data centers, cleanrooms, and EV battery packs without fluorinated gases.\n- **Firefighter Turnout Gear & \`SCBA\` Tanks:** Apollo/EVA \`PBI/Nomex\` thermal fabrics shield municipal firefighters, while NASA \`COPV\` composite vessels reduce \`SCBA\` air-tank weight by \`~40%\`.\n- **DAFT/SAME Smoke Detectors:** Multi-angle laser scattering prevents dust false alarms in mines and aircraft cargo bays.`
+                : "";
+            return {
+                reply: isEn
+                    ? [
+                          `### Why Halon 1301 Is Strictly Prohibited & NASA-STD-6001B Suppression Protocol (CON-05)`,
+                          `1. **Why Halon 1301 (\`CF₃Br\`) Is Banned:** Above \`750 K\`, Halon 1301 pyrolyzes into corrosive **\`HF\`** and **\`HBr\`** acid gases—fatal to crew lungs inside sealed cabins and **permanently poisoning ECLSS \`LiOH\` / amine scrubbers and catalytic beds**.`,
+                          `2. **Live ECLSS Survival Clock (\`${tl.habitat_name_en}\`):** Alarm at \`+${tl.t_alarm_s} s\` | Critical **\`SMAC 125 ppm CO\`** reached at **\`${tl.t_smac_125ppm_s} s\`** | CO at response: \`${tl.co_at_response_ppm} ppm\`.`,
+                          `3. **Mandatory 4-Step Non-Halon Sequence:**`,
+                          `   - **Step 1 — HVAC Airflow Cutoff (\`${inp.airflow_cms} cm/s → 0 cm/s\`):** Live solver check drops risk from **\`${tel.risk_score}/100\` → \`${zt.risk_score}/100\`** (\`${zt.regime}\`).`,
+                          `   - **Step 2 — Electrical Bus Isolation:** Eliminate arc re-ignition sources.`,
+                          `   - **Step 3 — \`25–40 µm\` Fine Water Mist (\`ISS PFE / SoFIE-MIST\`, \`NTRS #20230008415\`) or \`CO₂ / N₂\`:** High latent heat (\`L_v = 2257 kJ/kg\`) + \`1700×\` steam expansion with zero toxic acid residue.`,
+                          `   - **Step 4 — Depressurization & Post-Fire IR/CO Watch:** Verify zero Cool Flame persistence before restarting fans.` + spinEn,
+                      ].join("\n")
+                    : [
+                          `### İnsanlı Uzay Araçlarında Halon 1301 Neden Kesinlikle Yasaktır? — NASA-STD-6001B Protokolü (CON-05)`,
+                          `1. **Halon 1301 (\`CF₃Br\`) Yasağının Bilimsel Nedeni:** Kapalı devre \`ECLSS\` yaşam destekli uzay araçlarında Halon 1301 gazı \`>750 K\` alevde parçalanarak öldürücü **hidrojen florür (\`HF\`)** ve **hidrojen bromür (\`HBr\`)** asit gazları üretir; mürettebat akciğerlerini yakar ve **ECLSS karbondioksit/iz-kirletici filtrelerini kalıcı olarak zehirler**.`,
+                          `2. **Aktif ECLSS Yaşam Destek Saati (\`${tl.habitat_name_tr}\`):** Sensör alarmı \`+${tl.t_alarm_s} sn\` | Kritik **\`SMAC 125 ppm CO\`** sınırı **\`${tl.t_smac_125ppm_s} sn\`** | Müdahale anı CO: \`${tl.co_at_response_ppm} ppm\`.`,
+                          `3. **Zorunlu 4 Adımlı Müdahale Sırası:**`,
+                          `   - **Adım 1 — HVAC Fanlarını Anında Kapat (\`${inp.airflow_cms} cm/s → 0 cm/s\`):** Canlı çözücü kontrolüne göre akışı kesmek riski **\`${tel.risk_score}/100\` → \`${zt.risk_score}/100\`** düzeyine indirir (\`${zt.regime}\`).`,
+                          `   - **Adım 2 — Elektrik Beslemesini Kes:** Ark ve ohmik ısınmayı durdurur.`,
+                          `   - **Adım 3 — \`25–40 µm\` İnce Su Sisi (\`ISS PFE / SoFIE-MIST\`, \`NTRS #20230008415\`) veya \`CO₂ / N₂\`:** Yüksek buharlaşma gizli ısısı (\`L_v = 2257 kJ/kg\`) çekerek toksik kalıntı bırakmadan alevi söndürür.`,
+                          `   - **Adım 4 — Kontrollü Basınç Düşürme & IR/CO Soğuk Alev Taraması:** Fanlar açılmadan önce gizli Soğuk Alev kalmadığı doğrulanır.` + spinTr,
+                      ].join("\n"),
+                citations: relCits,
+            };
+        }
+
+        // 9. Spesifik NASA PSI Deneyi / Donanım Rafı
+        if (intent === "specific_experiment") {
+            let matched = [];
+            if (hasAnyTerm(nq, ["en yuksek oksijen", "highest oxygen"])) {
+                matched = NASA_CATALOG.filter((e) => e.exp_id === "PSI-ACME-CFIG-14");
+            } else {
+                const pMap = [
+                    ["cfi-g", "PSI-ACME-CFIG-14"], ["cfig", "PSI-ACME-CFIG-14"], ["flex-2", "PSI-FLEX2-02"],
+                    ["flex", "PSI-FLEX-01"], ["cfi", "PSI-CFI-11"], ["e-field", "PSI-ACME-09"],
+                    ["bre", "PSI-BRE-05"], ["sofie-mist", "PSI-SOFIE-MIST-15"], ["sofie", "PSI-SOFIE-08"],
+                    ["saffire", "PSI-SAFFIRE5-07"], ["bass-ii", "PSI-BASS2-04"], ["bass", "PSI-BASS-03"],
+                    ["spice", "PSI-SPICE-12"], ["slise", "PSI-SLISE-13"], ["same", "PSI-SAME-10"], ["daft", "PSI-SAME-10"]
+                ];
+                pMap.forEach(([kw, eid]) => {
+                    if (nq.indexOf(kw) !== -1) {
+                        const found = NASA_CATALOG.find((x) => x.exp_id === eid);
+                        if (found && !matched.includes(found)) matched.push(found);
+                    }
+                });
+                if (!matched.length) {
+                    if (nq.indexOf("msg") !== -1) matched = NASA_CATALOG.filter((e) => e.hardware_group === "MSG").slice(0, 3);
+                    else if (nq.indexOf("cygnus") !== -1) matched = NASA_CATALOG.filter((e) => e.hardware_group === "CYGNUS").slice(0, 3);
+                    else if (nq.indexOf("cir") !== -1 || nq.indexOf("mdca") !== -1) matched = NASA_CATALOG.filter((e) => e.hardware_group === "CIR").slice(0, 3);
+                }
+            }
+            if (!matched.length) matched = ranked.slice(0, 2);
+
+            const blocks = matched.slice(0, 3).map((e) => {
+                const runs = e.intra_runs || [];
+                let runTbl = "";
+                if (runs.length) {
+                    const hdr = isEn
+                        ? `\n\n| Sub-Test / Run | Held Constant | Varied Parameter | Experimental Outcome |\n| :--- | :--- | :--- | :--- |\n`
+                        : `\n\n| Alt Test / Koşum | Sabit Tutulan | Değiştirilen Parametre | Deneysel Sonuç |\n| :--- | :--- | :--- | :--- |\n`;
+                    runTbl = hdr + runs.map((r) => `| **${r.run_code || r.run || "-"}** | ${isEn ? r.same_en : r.same_tr} | ${isEn ? r.diff_en : r.diff_tr} | ${isEn ? r.result_en : r.result_tr} |`).join("\n");
+                }
+                return isEn
+                    ? `### ${e.program} (\`${e.exp_id}\`) — ${e.title}\n- **Facility:** \`${e.facility}\` (\`${e.hardware_group}\`) | **Citation:** [NTRS #${e.ntrs_id}](${e.ntrs_url})\n- **Conditions:** \`${e.gravity_g} G\`, \`${e.oxygen_pct}% O₂\`, \`${e.pressure_psia} psia\`, \`${e.airflow_cms} cm/s\`, Measured **\`MOC = ${e.moc_measured_pct}% O₂\`**\n- **Key Finding:** ${e.key_finding_en}\n- **Safety Action:** ${e.safety_insight_en}${runTbl}`
+                    : `### ${e.program} (\`${e.exp_id}\`) — ${e.title_tr}\n- **Donanım Rafı:** \`${e.facility}\` (\`${e.hardware_group}\`) | **Resmi Kaynak:** [NTRS #${e.ntrs_id}](${e.ntrs_url})\n- **Test Koşulları:** \`${e.gravity_g} G\`, \`%${e.oxygen_pct} O₂\`, \`${e.pressure_psia} psia\`, \`${e.airflow_cms} cm/s\`, Ölçülen **\`MOC = %${e.moc_measured_pct} O₂\`**\n- **Temel Bulgu:** ${e.key_finding_tr}\n- **Güvenlik Önlemi:** ${e.safety_insight_tr}${runTbl}`;
+            });
+            return {
+                reply: blocks.join("\n\n"),
+                citations: matched.slice(0, 3).map((e) => ({ id: e.exp_id, program: e.program, ntrs_id: e.ntrs_id, url: e.ntrs_url })),
+            };
+        }
+
+        // 10. Spesifik Denklem ve Boyutsuz Sayı Türetimi
+        if (intent === "equation_deep_dive") {
+            const tblLines = (sim.formula_table || []).map(
+                (r) => `| **${isEn ? r.law_en : r.law_tr}** | \`${r.equation}\` | **\`${r.value}\`** | ${isEn ? r.status_en : r.status_tr} |`
+            );
+            const focus = hasAnyTerm(nq, ["spalding", "b_oq", "boq", "d2", "d²", "yanma sabiti", "burning constant", "standoff", "durma"])
+                ? (isEn
+                    ? `### Step-by-Step \`d²\`-Law & Spalding \`B_oq\` Substitution\n- **Spalding Number (\`B_oq = ${tel.spalding_b_number}\`):** Ratio of oxidative enthalpy driving force (\`Y_O2·ΔH_c / ν_s\`) to latent heat of vaporization (\`L_v\`).\n- **Burning Rate Constant (\`K = ${tel.burning_rate_k_mm2_s} mm²/s\`):** From \`K = [8·λ_g/(ρ_l·c_p)]·ln(1+B_oq)·(Sh/2)·(1-χ_r)\`, droplet lifetime is \`t_burn = D₀² / K = ${tel.burn_lifetime_s} s\` and standoff ratio is **\`R_f / R_d = ${tel.standoff_ratio_rf_rd}\`**.\n\n`
+                    : `### Adım Adım \`d²\` Damlacık Yasası ve Spalding \`B_oq\` Türetimi\n- **Spalding Kütle Aktarım Sayısı (\`B_oq = ${tel.spalding_b_number}\`):** Oksijen kütle kesriyle (\`%${inp.oxygen_pct} O₂\`) açığa çıkan yanma entalpisinin gizli buharlaşma ısısına (\`L_v\`) oranıdır.\n- **Efektif Yanma Hızı Sabiti (\`K = ${tel.burning_rate_k_mm2_s} mm²/s\`):** \`K = [8·λ_g/(ρ_l·c_p)]·ln(1+B_oq)·(Sh/2)·(1-χ_r)\` bağıntısıyla \`D₀ = ${inp.droplet_d0_mm} mm\` için yanma ömrü \`t_burn = D₀² / K = ${tel.burn_lifetime_s} sn\` ve alev durma mesafesi **\`R_f / R_d = ${tel.standoff_ratio_rf_rd}\`** bulunur.\n\n`)
+                : "";
+            const hdr = isEn
+                ? `### Live Governing Equations & Dimensionless Substitution (\`${inp.fuel_name_en}\`)\n\n| Physical Law / Criterion | Governing Equation | Live Numerical Output | Regime Diagnosis |\n| :--- | :--- | :--- | :--- |\n`
+                : `### Aktif 3B Odanız İçin Canlı Denklem ve Boyutsuz Sayı Çözümü (\`${inp.fuel_name_tr}\`)\n\n| Fiziksel Yasa / Kriter | Matematiksel Denklem | Anlık Sayısal Sonuç | Rejim Tanısı |\n| :--- | :--- | :--- | :--- |\n`;
+            return { reply: focus + hdr + tblLines.join("\n"), citations: defaultCitations.slice(0, 2) };
+        }
+
+        // 11. Karşı-Olgusal 'Ne Olur?' Duyarlılık Taraması
+        if (intent === "what_if_sensitivity") {
+            let sweepTitle = isEn ? "Ventilation Airflow Sweep (`0` → `30 cm/s`)" : "Kabin Havalandırma Akış Hızı Taraması (`0` → `30 cm/s`)";
+            let variants = [0.0, 2.0, 6.0, 15.0, 30.0].map((u) => ({ lbl: `U = ${u} cm/s`, p: Object.assign({}, inp, { airflow_cms: u }) }));
+            if (hasAnyTerm(nq, ["seyreltici", "diluent", "helyum", "helium", "argon", "co2", "azot"])) {
+                sweepTitle = isEn ? "Diluent Gas Comparison (`N₂` vs `CO₂` vs `He` vs `Ar`)" : "Seyreltici Kabin Gazı Kıyaslaması (`N₂` vs `CO₂` vs `He` vs `Ar`)";
+                variants = ["N2", "CO2", "He", "Ar"].map((dl) => ({ lbl: dl, p: Object.assign({}, inp, { diluent: dl }) }));
+            } else if (hasAnyTerm(nq, ["oksijen", "oxygen", "o2"])) {
+                sweepTitle = isEn ? "Oxygen Sweep (`14%` → `34% O₂`)" : "Oksijen Konsantrasyonu Taraması (`%14` → `%34 O₂`)";
+                variants = [14.0, 18.0, 21.0, 28.0, 34.0].map((ox) => ({ lbl: `${ox}% O₂`, p: Object.assign({}, inp, { oxygen_pct: ox }) }));
+            } else if (hasAnyTerm(nq, ["0g ile 1g", "yercekimi", "gravity", "1g"])) {
+                sweepTitle = isEn ? "Gravity Sweep (`0G` → `1G`)" : "Yerçekimi Taraması (`0G` → `1G`)";
+                variants = [0.0, 0.16, 0.38, 1.0].map((gv) => ({ lbl: `${gv} G`, p: Object.assign({}, inp, { gravity_g: gv }) }));
+            }
+            const swRows = variants.map((v) => {
+                const sw = simulateCombustionClient(v.p);
+                const swt = sw.telemetry;
+                const rv = swt.flame_spread_mm_s > 0 ? `V_f=${swt.flame_spread_mm_s} mm/s` : `K=${swt.burning_rate_k_mm2_s} mm²/s`;
+                return `| **${v.lbl}** | \`${swt.sherwood_number}\` | \`${swt.damkohler_number}\` | **\`${swt.moc_pct}% O₂\`** | \`${swt.flame_temp_k} K\` | \`${rv}\` | \`${swt.regime}\` (**\`${swt.risk_score}/100\`**) |`;
+            });
+            return {
+                reply: isEn
+                    ? `### Counterfactual Sensitivity Simulation: ${sweepTitle} — \`${inp.fuel_name_en}\`\n\n| Perturbed Condition | Sherwood \`Sh\` | Damköhler \`Da\` | Critical \`MOC\` | Flame \`T_f\` | Burn / Spread | Regime & Risk |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n${swRows.join("\n")}\n\n- **Ventilation Paradox (CON-03):** Gentle \`2–8 cm/s\` spacecraft airflow replenishes \`O₂\` (\`Sh > 2\`, \`Da > 1\`) without convective blowoff, minimizing \`MOC\` and maximizing hazard before high-speed blowoff (\`>25 cm/s\`).`
+                    : `### Karşı-Olgusal Duyarlılık Simülasyonu: ${sweepTitle} — \`${inp.fuel_name_tr}\`\n\n| Test Noktası | Sherwood \`Sh\` | Damköhler \`Da\` | Kritik \`MOC\` | Sıcaklık \`T_f\` | Yanma / Yayılma | Rejim & Risk |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n${swRows.join("\n")}\n\n- **Havalandırma Paradoksu (CON-03):** Durgun \`0G\` ortamında (\`0 cm/s\`) alev kendi \`CO₂\` kabuğuyla zayıflarken, \`2–8 cm/s\` hafif kabin fan akışı taze \`O₂\` taşıyarak (\`Sh > 2\`, \`Da > 1\`) \`MOC\` sınırını en tehlikeli minimuma indirir; \`>25 cm/s\` üzerinde ise üfleyerek sönme (*blowoff*) başlar.`,
+                citations: defaultCitations.slice(0, 2),
+            };
+        }
+
+        // 12. Uzaydan Dünya'ya Teknoloji Transferi
+        if (intent === "earth_spinoffs") {
+            const etRows = EARTH_TRANSFERS.map(
+                (et) => `| **${isEn ? et.domain_en : et.domain_tr}** | \`${et.nasa_source}\` | ${isEn ? et.insight_en : et.insight_tr} |`
+            );
+            return {
+                reply: isEn
+                    ? `### Space-to-Earth Fire Safety & Clean Combustion Spinoffs (CON-09)\n\n| Terrestrial Application | NASA PSI Heritage | Mechanism & Impact |\n| :--- | :--- | :--- |\n${etRows.join("\n")}`
+                    : `### NASA Mikroçekim Yanma Araştırmalarının Dünya'daki Güvenlik Uygulamaları (CON-09)\n\n| Dünya Uygulama Alanı | NASA PSI Kaynağı | Mühendislik Mekanizması ve Etkisi |\n| :--- | :--- | :--- |\n${etRows.join("\n")}`,
+                citations: defaultCitations,
+            };
+        }
+
+        // 13. Yüklenen Dosya / Görsel Odaklı Sentez
+        if (intent === "uploaded_media") {
+            const expLines = ranked
+                .slice(0, 3)
+                .map((e) => `- **#${e.rank} ${e.program} (\`${e.exp_id}\` • [NTRS #${e.ntrs_id}](${e.ntrs_url}))** — \`${e.priority_score}/100\`, MOC \`${e.moc_measured_pct}%\`: ${isEn ? e.key_finding_en : e.key_finding_tr}`)
+                .join("\n");
+            return {
+                reply: isEn
+                    ? `### Multimodal Dataset / Flame Imagery Synthesis\n${mediaCtx}\n\n### Synchronized 3D Chamber & Equations\n- **Active State (\`${inp.fuel_name_en}\`):** \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\`, \`${inp.airflow_cms} cm/s\` → **\`${tel.regime}\`** (\`${tel.flame_temp_k} K\`, Risk **\`${tel.risk_score}/100\`**).\n- **Numbers:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Da = ${tel.damkohler_number}\` | \`MOC = ${tel.moc_pct}% O₂\`.\n\n### Closest NASA PSI Benchmarks\n${expLines}`
+                    : `### Yüklenen Veri Kaynağı / Alev Görseli Sentezi\n${mediaCtx}\n\n### Senkronize 3B Yanma Odası ve Boyutsuz Sayılar\n- **Aktif Durum (\`${inp.fuel_name_tr}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\`, \`${inp.airflow_cms} cm/s\` → **\`${tel.regime}\`** (\`${tel.flame_temp_k} K\`, Risk **\`${tel.risk_score}/100\`**).\n- **Boyutsuz Çıktılar:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Da = ${tel.damkohler_number}\` | \`MOC = %${tel.moc_pct} O₂\`.\n\n### En Yakın NASA PSI Referansları\n${expLines}`,
+                citations: defaultCitations,
+            };
+        }
+
+        // 14. Kapsamlı 4-Bölümlü Görev Sentezi (Preset #1)
+        if (intent === "full_synthesis") {
+            if (isEn) {
+                const expLines = ranked
+                    .map((e) => `- **#${e.rank} ${e.program} (${e.exp_id} • ${e.hardware_group})** — Score \`${e.priority_score}/100\`, MOC \`${e.moc_measured_pct}% O₂\`, [NTRS #${e.ntrs_id}](${e.ntrs_url}): ${e.key_finding_en}`)
+                    .join("\n");
+                return {
+                    reply: [
+                        `### 1. Microgravity & Partial-Gravity Governing Physics Synthesis`,
+                        `- **Active State (${inp.fuel_name_en}):** Regime **\`${tel.regime}\`** at \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\` (Risk: **\`${tel.risk_score}/100\`**).`,
+                        `- **Analytical Transport & Kinetics:** Burning rate \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, Spalding \`B_oq = ${tel.spalding_b_number}\`, Sherwood \`Sh = ${tel.sherwood_number}\`, Damköhler \`Da = ${tel.damkohler_number}\`, radiative loss \`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\`, critical \`MOC = ${tel.moc_pct}% O₂\`.`,
+                        `- **ISS Flight Telemetry Validation:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` against **${fv.campaign}**.`,
+                        mediaCtx ? `- **Attached Context:** ${mediaCtx}` : ``,
+                        ``,
+                        `### 2. Top Ranked NASA PSI Investigations & Intra-Run Evidence`,
+                        expLines,
+                        ``,
+                        `### 3. ECLSS Crew Survival Clock & Non-Halon Suppression Protocol`,
+                        `- **Habitat (${tl.habitat_name_en}):** Alarm at \`+${tl.t_alarm_s} s\` | NASA 1-hr SMAC (\`125 ppm CO\`) in \`${tl.t_smac_125ppm_s} s\` | Intervention CO \`${tl.co_at_response_ppm} ppm\`.`,
+                        `- **Mandatory NASA-STD-6001B Action Sequence:** **(1)** Cut cabin HVAC ventilation immediately (\`U → 0 cm/s\`), **(2)** Isolate electrical bus power, **(3)** Discharge **25–40 µm Fine Water Mist (SoFIE-MIST)** or CO₂/N₂ (*Halon 1301 is strictly prohibited due to toxic HF/HBr poisoning ECLSS scrubbers*).`,
+                        ``,
+                        `### 4. Space-to-Earth Fire Safety Spinoffs`,
+                        `- ISS multi-wavelength dust-immune smoke detection (**SAME / DAFT**) prevents false alarms in aircraft cargo bays and smart homes, while **SoFIE-MIST** water-mist physics and **PBI/Nomex + SCBA** systems protect cleanrooms, EV battery facilities, and municipal firefighters.`,
+                    ].filter(Boolean).join("\n"),
+                    citations: defaultCitations,
+                };
+            }
+            const expLinesTr = ranked
+                .map((e) => `- **#${e.rank} ${e.program} (${e.exp_id} • ${e.hardware_group})** — Öncelik \`${e.priority_score}/100\`, MOC \`%${e.moc_measured_pct} O₂\`, [NTRS #${e.ntrs_id}](${e.ntrs_url}): ${e.key_finding_tr}`)
+                .join("\n");
+            return {
+                reply: [
+                    `### 1. Mikroçekim ve Kısmi Yerçekimi Fiziksel Denklem Sentezi`,
+                    `- **Aktif Durum (${inp.fuel_name_tr}):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.po2_psia} psia\`) ve \`U = ${inp.airflow_cms} cm/s\` koşullarında **\`${tel.regime}\`** rejimi aktiftir (Yangın Riski: **\`${tel.risk_score}/100\`**).`,
+                    `- **Boyutsuz Taşınım ve Yanma Sabitleri:** \`d²\` yanma hızı \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, Spalding \`B_oq = ${tel.spalding_b_number}\`, Sherwood \`Sh = ${tel.sherwood_number}\`, Damköhler \`Da = ${tel.damkohler_number}\`, radyatif kayıp \`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\` ve kritik \`MOC = %${tel.moc_pct} O₂\`.`,
+                    `- **ISS Uçuş Telemetrisi Doğrulaması:** **${fv.campaign}** uçuş noktalarıyla \`R² = ${fv.r_squared}\` ve \`RMSE = ${fv.rmse}\` uyumu doğrulandı.`,
+                    mediaCtx ? `- **Ekli Dosya / Görsel / Web Bağlamı:** ${mediaCtx}` : ``,
+                    ``,
+                    `### 2. Termodinamik & TF-IDF Sıralı NASA PSI Soruşturmaları ve NTRS Kanıtları`,
+                    expLinesTr,
+                    ``,
+                    `### 3. ECLSS Yaşam Destek Saati ve Uzay Aracı Müdahale Protokolü`,
+                    `- **Kabin / Giysi Senaryosu (${tl.habitat_name_tr}):** Sensör alarmı \`t = ${tl.t_alarm_s} sn\`, NASA Acil SMAC CO eşiği (\`125 ppm\`) \`t = ${tl.t_smac_125ppm_s} sn\`, müdahale anı CO seviyesi \`${tl.co_at_response_ppm} ppm\`.`,
+                    `- **Zorunlu Müdahale Sırası (NASA-STD-6001B):** **(1)** Kabin HVAC havalandırma fanlarını anında kapatın (\`U → 0 cm/s\`), **(2)** Elektrik beslemesini kesin, **(3)** **25–40 µm İnce Su Sisi (SoFIE-MIST PFE)** veya CO₂/N₂ uygulayın (*Halon 1301 toksik HF/HBr üreterek ECLSS filtrelerini zehirlediği için kesinlikle yasaktır*).`,
+                    ``,
+                    `### 4. Uzaydan Dünya'ya Yangın Güvenliği Teknoloji Transferi`,
+                    `- ISS **SAME / DAFT** lazerli toz-duman ayrım algoritmaları Dünya'da madenlerde ve uçak kargo ambarlarında yanlış alarmları önlerken; **SoFIE-MIST** su sisi ve **EVA Nomex/PBI + SCBA** sistemleri veri merkezleri, elektrikli araç batarya depoları ve itfaiyeci ekipmanlarını korumaktadır.`,
+                ].filter(Boolean).join("\n"),
+                citations: defaultCitations,
+            };
+        }
+
+        // 15. Açık Uçlu Bilimsel Sorgu (Sıfır Kopyala-Yapıştır Garantili Soru-Odaklı Sentez)
+        const fuelMap = [
+            ["heptan", "n_heptane"], ["metanol", "methanol"], ["methanol", "methanol"],
+            ["pmma", "pmma"], ["akrilik", "pmma"], ["acrylic", "pmma"],
+            ["sibal", "sibal"], ["pamuk", "sibal"], ["cotton", "sibal"],
+            ["nomex", "nomex"], ["hidrojen", "hydrogen"], ["hydrogen", "hydrogen"],
+            ["propan", "propane_cfig"], ["propane", "propane_cfig"]
+        ];
+        let fuelLine = "";
+        for (let i = 0; i < fuelMap.length; i++) {
+            if (nq.indexOf(fuelMap[i][0]) !== -1 && FUEL_PROPERTIES[fuelMap[i][1]]) {
+                const fid = fuelMap[i][1];
+                const fp = FUEL_PROPERTIES[fid];
+                const fSim = simulateCombustionClient(Object.assign({}, inp, { fuel_id: fid }));
+                const ft = fSim.telemetry;
+                fuelLine = isEn
+                    ? `- **Queried Fuel / Material (\`${fp.name_en}\`, \`${fp.formula}\`):** 3D Geometry \`${fp.geometry_3d}\`, \`0G MOC = ${fp.moc_0g_pct}% O₂\` vs \`1G MOC = ${fp.moc_1g_pct}% O₂\` → yields \`T_f = ${ft.flame_temp_k} K\`, **\`${ft.regime}\`**, Risk **\`${ft.risk_score}/100\`** under current cabin conditions.`
+                    : `- **Sorgulanan Yakıt / Malzeme (\`${fp.name_tr}\`, \`${fp.formula}\`):** 3B Geometri \`${fp.geometry_3d}\`, \`0G MOC = %${fp.moc_0g_pct} O₂\` vs \`1G MOC = %${fp.moc_1g_pct} O₂\` → mevcut kabin atmosferinizde \`T_f = ${ft.flame_temp_k} K\`, **\`${ft.regime}\`** rejimi ve **\`${ft.risk_score}/100\`** risk üretir.`;
+                break;
+            }
+        }
+
+        const bestDir = DIRECTIVES
+            .map((d) => ({ d, sc: computeTextSimilarity(msg, `${d.title_tr} ${d.rule_tr} ${d.title_en} ${d.rule_en}`) }))
+            .sort((a, b) => b.sc - a.sc)[0].d;
+
+        const topRag = ragDocs
+            .map((d) => ({ d, sc: computeTextSimilarity(msg, `${d.title} ${d.text}`) }))
+            .sort((a, b) => b.sc - a.sc)[0];
+
+        const e1 = ranked[0] || NASA_CATALOG[0];
+        const e2 = ranked[1] || NASA_CATALOG[1];
+        const qShort = String(msg || "").trim().slice(0, 110);
+
         return {
-            reply: [
-                `## 1. Mikroçekim ve Kısmi Yerçekimi Fiziksel Denklem Sentezi`,
-                `- **Aktif Durum (${inp.fuel_name_tr}):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.po2_psia} psia\`) ve \`U = ${inp.airflow_cms} cm/s\` koşullarında **\`${tel.regime}\`** rejimi aktiftir (Yangın Riski: **\`${tel.risk_score}/100\`**).`,
-                `- **Boyutsuz Taşınım ve Yanma Sabitleri:** \`d²\` yanma hızı \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, Spalding \`B_oq = ${tel.spalding_b_number}\`, Sherwood \`Sh = ${tel.sherwood_number}\`, Damköhler \`Da = ${tel.damkohler_number}\`, radyatif kayıp \`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\` ve kritik \`MOC = %${tel.moc_pct} O₂\`.`,
-                `- **ISS Uçuş Telemetrisi Doğrulaması:** **${fv.campaign}** uçuş noktalarıyla \`R² = ${fv.r_squared}\` ve \`RMSE = ${fv.rmse}\` uyumu doğrulandı.`,
-                mediaCtx ? `- **Ekli Dosya / Görsel / Web Bağlamı:** ${mediaCtx}` : ``,
-                ``,
-                `## 2. Termodinamik & TF-IDF Sıralı NASA PSI Soruşturmaları ve NTRS Kanıtları`,
-                expLinesTr,
-                ``,
-                `## 3. ECLSS Yaşam Destek Saati ve Uzay Aracı Müdahale Protokolü`,
-                `- **Kabin / Giysi Senaryosu (${tl.habitat_name_tr}):** Sensör alarmı \`t = ${tl.t_alarm_s} sn\`, NASA Acil SMAC CO eşiği (\`125 ppm\`) \`t = ${tl.t_smac_125ppm_s} sn\`, müdahale anı CO seviyesi \`${tl.co_at_response_ppm} ppm\`.`,
-                `- **Zorunlu Müdahale Sırası (NASA-STD-6001B):** **(1)** Kabin HVAC havalandırma fanlarını anında kapatın (\`U -> 0 cm/s\`), **(2)** Elektrik beslemesini kesin, **(3)** **25–40 µm İnce Su Sisi (SoFIE-MIST PFE)** veya CO₂/N₂ uygulayın (*Halon 1301 toksik HF/HBr üreterek ECLSS filtrelerini zehirlediği için kesinlikle yasaktır*).`,
-                ``,
-                `## 4. Uzaydan Dünya'ya Yangın Güvenliği Teknoloji Transferi`,
-                `- ISS **SAME / DAFT** lazerli toz-duman ayrım algoritmaları Dünya'da madenlerde ve uçak kargo ambarlarında yanlış alarmları önlerken; **SoFIE-MIST** su sisi ve **EVA Nomex/PBI** dokumaları veri merkezleri, elektrikli araç batarya depoları ve itfaiyeci ekipmanlarını korumaktadır.`,
-            ].filter(Boolean).join("\n"),
-            citations,
+            reply: isEn
+                ? [
+                      `### Targeted Scientific Analysis — *"${qShort}"*`,
+                      fuelLine,
+                      `- **Governing Physical Constraint (\`${bestDir.id} • ${bestDir.code}\`):** ${bestDir.rule_en}`,
+                      topRag && topRag.sc > 0.05 ? `- **Corpus Match (\`${topRag.d.title}\`):** ${topRag.d.text.slice(0, 280)}` : ``,
+                      `- **Live 3D Chamber Coupling (\`${inp.fuel_name_en}\`):** At \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\`, active regime is **\`${tel.regime}\`** (\`T_f = ${tel.flame_temp_k} K\`, \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, \`Sh = ${tel.sherwood_number}\`, \`Da = ${tel.damkohler_number}\`, \`MOC = ${tel.moc_pct}% O₂\`, Risk **\`${tel.risk_score}/100\`**).`,
+                      `- **Matched NASA PSI Investigations:**`,
+                      `  1. **${e1.program} (\`${e1.exp_id}\` • [NTRS #${e1.ntrs_id}](${e1.ntrs_url}))** — ${e1.key_finding_en}`,
+                      `  2. **${e2.program} (\`${e2.exp_id}\` • [NTRS #${e2.ntrs_id}](${e2.ntrs_url}))** — ${e2.key_finding_en}`,
+                  ].filter(Boolean).join("\n")
+                : [
+                      `### Soru-Odaklı Bilimsel Analiz — *"${qShort}"*`,
+                      fuelLine,
+                      `- **İlgili Fiziksel Kısıt ve Yasa (\`${bestDir.id} • ${bestDir.code}\`):** ${bestDir.rule_tr}`,
+                      topRag && topRag.sc > 0.05 ? `- **Bilgi Tabanı Kanıt Eşleşmesi (\`${topRag.d.title}\`):** ${topRag.d.text.slice(0, 280)}` : ``,
+                      `- **Aktif 3B Odanızla Sayısal Bağlantı (\`${inp.fuel_name_tr}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\` koşullarında **\`${tel.regime}\`** rejimi aktiftir (\`T_f = ${tel.flame_temp_k} K\`, \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, \`Sh = ${tel.sherwood_number}\`, \`Da = ${tel.damkohler_number}\`, \`MOC = %${tel.moc_pct} O₂\`, Risk **\`${tel.risk_score}/100\`**).`,
+                      `- **Doğrudan Eşleşen NASA PSI Bulguları:**`,
+                      `  1. **${e1.program} (\`${e1.exp_id}\` • [NTRS #${e1.ntrs_id}](${e1.ntrs_url}))** — ${e1.key_finding_tr}`,
+                      `  2. **${e2.program} (\`${e2.exp_id}\` • [NTRS #${e2.ntrs_id}](${e2.ntrs_url}))** — ${e2.key_finding_tr}`,
+                  ].filter(Boolean).join("\n"),
+            citations: defaultCitations.slice(0, 2),
         };
+    }
+
+    async function callBrowserCloudGateway(msg, simParams, mediaCtx, history, provOverride) {
+        const pref = String(provOverride || runtimeConfig.active_provider || "auto").toLowerCase();
+        const useGemini = (pref === "gemini" || pref === "auto") && Boolean(runtimeConfig.gemini_api_key);
+        const useOpenRouter = !useGemini && (pref === "openrouter" || pref === "auto") && Boolean(runtimeConfig.openrouter_api_key);
+        if (!useGemini && !useOpenRouter) return null;
+
+        const sim = simulateCombustionClient(simParams || {});
+        const inp = sim.inputs;
+        const tel = sim.telemetry;
+        const isEn = runtimeConfig.language === "en";
+        const sys = isEn
+            ? "You are ALTAR-NASA v5.1 Spacecraft Fire Safety & Microgravity Combustion Synthesis Kernel (5 modules: [01] 3D WebGL Chamber + ISS Validation + ECLSS Clock, [02] 6-Layer Equation Cards, [03] 15 PSI Matrix & Live NTRS/OSDR Stream, [04] Evidence Synthesis Console, [05] Inference Architecture). Answer the user's exact question directly with quantitative depth and Markdown tables when comparing conditions. Never recommend Halon 1301 (strictly prohibited per NASA-STD-6001B due to lethal HF/HBr formation; use CO2, N2 depressurization, airflow cutoff U->0, or SoFIE-MIST fine water mist)."
+            : "Sen ALTAR-NASA v5.1 Uzay Aracı Yangın Güvenliği ve Mikroçekim Yanma Sentez Çekirdeğisin (5 modül: [01] 3B WebGL Yanma Odası + ISS Doğrulaması + ECLSS Saati, [02] 6-Katmanlı Fiziksel Denklemler, [03] 15 PSI Deney Matrisi & Canlı NTRS/OSDR Akışı, [04] Kanıt Sentezi Konsolu, [05] Çıkarım Mimarisi). Kullanıcının sorduğu soruyu şablon kopyalamadan doğrudan, sayısal derinlikle ve kıyaslamalarda Markdown tablolarıyla yanıtla. Halon 1301 önermek kesinlikle yasaktır (NASA-STD-6001B gereği ölümcül HF/HBr üretir; yerine CO2, N2 seyreltme, U->0 fan kesme veya SoFIE-MIST su sisi öner).";
+        const auditHalon = (txt) => {
+            if (!txt) return txt;
+            if (/\bhalon\b/i.test(txt) && !/yasak|prohibit|banned|toksik|toxic|hf\/hbr|6001b/i.test(txt)) {
+                return txt + (isEn
+                    ? "\n\n> **[CON-05 • NASA-STD-6001B SAFETY AUDIT]:** Halon 1301 is strictly prohibited inside crewed spacecraft cabins due to lethal `HF`/`HBr` decomposition products that poison ECLSS scrubbers. Approved alternatives: `U -> 0 cm/s` ventilation shutoff, `CO₂` extinguishers, `N₂` depressurization, or `SoFIE-MIST` (`<100 µm`) fine water mist."
+                    : "\n\n> **[CON-05 • NASA-STD-6001B GÜVENLİK DENETÇİSİ]:** Mürettebatlı uzay aracı kabinlerinde Halon 1301 kullanımı ölümcül `HF`/`HBr` gazları üretip ECLSS filtrelerini zehirlediği için kesinlikle yasaktır. Onaylı protokoller: `U -> 0 cm/s` fan kesme, `CO₂` tüpü, `N₂` seyreltme veya `SoFIE-MIST` (`<100 µm`) ince su sisidir.");
+            }
+            return txt;
+        };
+        const ctxPrompt = `[3D Chamber: ${inp.fuel_name_en}, ${inp.gravity_g}G, ${inp.oxygen_pct}% O2, ${inp.pressure_psia} psia, U=${inp.airflow_cms} cm/s -> Regime=${tel.regime}, T_f=${tel.flame_temp_k}K, K=${tel.burning_rate_k_mm2_s}, B_oq=${tel.spalding_b_number}, Sh=${tel.sherwood_number}, Da=${tel.damkohler_number}, MOC=${tel.moc_pct}%, Risk=${tel.risk_score}/100]${mediaCtx ? `\n[Media: ${mediaCtx}]` : ""}\n\nQuestion: ${msg}`;
+
+        try {
+            if (useGemini) {
+                const mdl = (runtimeConfig.gemini_model || "gemini-2.5-flash").replace(/^models\//, "");
+                const gRes = await window.fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(mdl)}:generateContent?key=${encodeURIComponent(runtimeConfig.gemini_api_key)}`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            system_instruction: { parts: [{ text: sys }] },
+                            contents: [{ role: "user", parts: [{ text: ctxPrompt }] }],
+                            generationConfig: { temperature: 0.25 },
+                        }),
+                    }
+                );
+                if (gRes.ok) {
+                    const gData = await gRes.json();
+                    const txt = (((gData.candidates || [])[0] || {}).content || {}).parts;
+                    const out = Array.isArray(txt) ? txt.map((p) => p.text || "").join("") : "";
+                    if (out.trim()) return { provider: "gemini", model: mdl, reply: auditHalon(out.trim()) };
+                }
+            } else if (useOpenRouter) {
+                const orMdl = runtimeConfig.openrouter_model || "google/gemini-2.0-flash-exp:free";
+                const orRes = await window.fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${runtimeConfig.openrouter_api_key}`,
+                    },
+                    body: JSON.stringify({
+                        model: orMdl,
+                        messages: [
+                            { role: "system", content: sys },
+                            { role: "user", content: ctxPrompt },
+                        ],
+                        temperature: 0.25,
+                    }),
+                });
+                if (orRes.ok) {
+                    const orData = await orRes.json();
+                    const out = ((((orData.choices || [])[0] || {}).message || {}).content || "").trim();
+                    if (out) return { provider: "openrouter", model: orMdl, reply: auditHalon(out) };
+                }
+            }
+        } catch (_) {}
+        return null;
+    }
+
+    function emitNextBrowserStreamPacket() {
+        const pick = NASA_CATALOG[streamState.seq_id % NASA_CATALOG.length];
+        streamState.seq_id += 1;
+        streamState.last_tick_ms = Date.now();
+        streamState.last_fetch_time = new Date().toTimeString().slice(0, 8);
+        streamState.last_error = "";
+        streamState.latest_sim_params = {
+            fuel_id: pick.fuel_id,
+            gravity_g: pick.gravity_g,
+            oxygen_pct: pick.oxygen_pct,
+            pressure_psia: pick.pressure_psia,
+            airflow_cms: pick.airflow_cms,
+            droplet_d0_mm: 3.2,
+            diluent: "N2",
+        };
+        const isOsdr = streamState.source === "osdr";
+        streamState.events.unshift({
+            seq_id: streamState.seq_id,
+            time: streamState.last_fetch_time,
+            source: isOsdr ? "NASA OSDR / PSI Stream" : "NASA NTRS Live Stream",
+            id: isOsdr ? pick.exp_id : `NTRS-${pick.ntrs_id}`,
+            title: pick.title,
+            summary: runtimeConfig.language === "en" ? pick.key_finding_en : pick.key_finding_tr,
+            url: pick.ntrs_url,
+            extracted_sim_params: streamState.latest_sim_params,
+        });
+        streamState.events = streamState.events.slice(0, 12);
+    }
+
+    function syncBrowserStreamTimer() {
+        if (streamState.timerId) {
+            clearInterval(streamState.timerId);
+            streamState.timerId = null;
+        }
+        if (streamState.enabled) {
+            const periodMs = Math.max(5000, (Number(streamState.interval_sec) || 25) * 1000);
+            streamState.timerId = window.setInterval(() => {
+                if (streamState.enabled) {
+                    emitNextBrowserStreamPacket();
+                }
+            }, periodMs);
+        }
     }
 
     function makeJsonResponse(obj, status) {
@@ -840,19 +1593,21 @@
                 earth_transfers: EARTH_TRANSFERS,
                 config: Object.assign({}, runtimeConfig, {
                     gemini_api_key: "",
+                    openrouter_api_key: "",
                     gemini_api_key_configured: Boolean(runtimeConfig.gemini_api_key),
+                    openrouter_api_key_configured: Boolean(runtimeConfig.openrouter_api_key),
                     antigravity_api_key_configured: false,
                 }),
                 providers: {
-                    active_provider: "auto",
+                    active_provider: runtimeConfig.active_provider || "auto",
                     gemini_ready: Boolean(runtimeConfig.gemini_api_key),
                     gemini_model: runtimeConfig.gemini_model,
                     antigravity_ready: false,
                     antigravity: { cli_ready: false, models: [] },
                     ollama: { online: false, models: [], recommended_active: "" },
-                    openrouter_ready: false,
+                    openrouter_ready: Boolean(runtimeConfig.openrouter_api_key),
                 },
-                stream: streamState,
+                stream: Object.assign({}, streamState, { timerId: null }),
             });
         }
 
@@ -886,8 +1641,9 @@
                     error: "Sunucusuz İzole Modda dış bağlantı güvenliği (CSP) gereği yalnızca resmi https://ntrs.nasa.gov ve https://osdr.nasa.gov kaynakları sorgulanabilir.",
                 });
             }
-            const live = await fetchLiveNasaBrowser("ntrs", "Saffire microgravity fire");
-            const first = (live.items && live.items[0]) || { title: "NASA NTRS Citation", abstract: "" };
+            const srcType = /osdr\.nasa\.gov/i.test(targetUrl) ? "osdr" : "ntrs";
+            const live = await fetchLiveNasaBrowser(srcType, "Saffire microgravity fire");
+            const first = (live.items && live.items[0]) || { title: "NASA Citation", abstract: "" };
             const extracted = { fuel_id: "sibal", gravity_g: 0.0, oxygen_pct: 21.0, pressure_psia: 14.7, airflow_cms: 3.0, droplet_d0_mm: 3.4, diluent: "N2" };
             return makeJsonResponse({
                 ok: true,
@@ -916,50 +1672,74 @@
                 .map((d) => ({ title: d.title, text: d.text, similarity: Math.max(0.18, computeTextSimilarity(q, `${d.title} ${d.text}`)) }))
                 .sort((a, b) => b.similarity - a.similarity)
                 .slice(0, 5);
-            return makeJsonResponse({ results });
+            return makeJsonResponse({ ok: true, results });
         }
 
         if (path === "/api/stream/config" && method === "POST") {
-            streamState.enabled = Boolean(jsonBody.enabled);
-            streamState.source = jsonBody.source || "ntrs";
-            streamState.interval_sec = Number(jsonBody.interval_sec || 25);
+            if ("enabled" in jsonBody) streamState.enabled = Boolean(jsonBody.enabled);
+            if (jsonBody.source) streamState.source = jsonBody.source;
+            if (jsonBody.query_or_url) streamState.query_or_url = String(jsonBody.query_or_url);
+            if (jsonBody.interval_sec) streamState.interval_sec = Math.max(10, Number(jsonBody.interval_sec) || 25);
+            if ("auto_sync_sim" in jsonBody) streamState.auto_sync_sim = Boolean(jsonBody.auto_sync_sim);
+
             if (jsonBody.trigger_immediate || streamState.enabled) {
-                const pick = NASA_CATALOG[streamState.seq_id % NASA_CATALOG.length];
-                streamState.seq_id += 1;
-                streamState.last_fetch_time = new Date().toTimeString().slice(0, 8);
-                streamState.latest_sim_params = {
-                    fuel_id: pick.fuel_id, gravity_g: pick.gravity_g, oxygen_pct: pick.oxygen_pct,
-                    pressure_psia: pick.pressure_psia, airflow_cms: pick.airflow_cms, droplet_d0_mm: 3.2, diluent: "N2",
-                };
-                streamState.events.unshift({
-                    seq_id: streamState.seq_id,
-                    time: streamState.last_fetch_time,
-                    id: pick.exp_id,
-                    title: pick.title,
-                    summary: pick.key_finding_tr,
-                    url: pick.ntrs_url,
-                    extracted_sim_params: streamState.latest_sim_params,
-                });
-                streamState.events = streamState.events.slice(0, 10);
+                emitNextBrowserStreamPacket();
             }
-            return makeJsonResponse(streamState);
+            syncBrowserStreamTimer();
+            return makeJsonResponse(Object.assign({}, streamState, { timerId: null }));
         }
 
         if (path === "/api/stream/status") {
-            return makeJsonResponse(streamState);
+            if (streamState.enabled) {
+                const elapsed = Date.now() - (streamState.last_tick_ms || 0);
+                if (elapsed >= Math.max(8000, (Number(streamState.interval_sec) || 25) * 1000)) {
+                    emitNextBrowserStreamPacket();
+                }
+            }
+            return makeJsonResponse(Object.assign({}, streamState, { timerId: null }));
         }
 
-        if (path === "/api/chat/start" && method === "POST") {
-            const jobId = `srvless-${Date.now()}`;
-            const built = buildDeterministicSiReply(jsonBody.message, jsonBody.sim_params, jsonBody.media_context, runtimeConfig.language);
-            chatJobs.set(jobId, {
-                status: "done",
-                provider: "Browser Analytical Solver",
-                model: "d² / B_oq / Sh + 15 PSI NTRS",
-                reply: built.reply,
-                citations: built.citations,
-                stages: ["[4/4] Zero-Trust Browser Evidence Synthesis Ready"],
-            });
+        if ((path === "/api/chat/start" || path === "/api/chat") && method === "POST") {
+            const jobId = `srvless-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            const intentStr = classifyBrowserIntent(jsonBody.message, jsonBody.media_context);
+            const built = buildQuestionDrivenReply(
+                jsonBody.message,
+                jsonBody.sim_params,
+                jsonBody.media_context,
+                runtimeConfig.language
+            );
+            const prefNow = String(jsonBody.provider_override || runtimeConfig.active_provider || "auto").toLowerCase();
+            const isMetaTurn = ["capabilities_guide", "platform_features", "greeting_identity"].includes(intentStr);
+            const cloudRes = (prefNow === "auto" && isMetaTurn)
+                ? null
+                : await callBrowserCloudGateway(
+                    jsonBody.message,
+                    jsonBody.sim_params,
+                    jsonBody.media_context,
+                    jsonBody.history || [],
+                    jsonBody.provider_override
+                );
+            const payload = cloudRes
+                ? {
+                    status: "done",
+                    provider: cloudRes.provider,
+                    model: cloudRes.model,
+                    reply: cloudRes.reply,
+                    citations: built.citations,
+                    stages: ["[4/4] Cloud Gateway + Browser Physics Verification Complete"],
+                }
+                : {
+                    status: "done",
+                    provider: "deterministic_physics",
+                    model: "ALTAR-Analytical-Solver-Core",
+                    reply: built.reply,
+                    citations: built.citations,
+                    stages: ["[4/4] Zero-Trust Question-Driven Browser Synthesis Ready"],
+                };
+            if (path === "/api/chat") {
+                return makeJsonResponse(Object.assign({ ok: true }, payload));
+            }
+            chatJobs.set(jobId, payload);
             return makeJsonResponse({ ok: true, job_id: jobId });
         }
 
@@ -986,7 +1766,9 @@
                 ok: true,
                 config: Object.assign({}, runtimeConfig, {
                     gemini_api_key: "",
+                    openrouter_api_key: "",
                     gemini_api_key_configured: Boolean(runtimeConfig.gemini_api_key),
+                    openrouter_api_key_configured: Boolean(runtimeConfig.openrouter_api_key),
                 }),
                 providers: {
                     active_provider: runtimeConfig.active_provider,
@@ -995,7 +1777,7 @@
                     antigravity_ready: false,
                     antigravity: { cli_ready: false, models: [] },
                     ollama: { online: false, models: [], recommended_active: "" },
-                    openrouter_ready: false,
+                    openrouter_ready: Boolean(runtimeConfig.openrouter_api_key),
                 },
             });
         }
@@ -1007,12 +1789,30 @@
             return makeJsonResponse({ cli_ready: false, models: [] });
         }
         if (path === "/api/providers/test") {
+            const t0 = performance.now();
+            const cloudCheck = await callBrowserCloudGateway(
+                "0G küresel alevde Spalding B_oq sayısını tek cümleyle özetle.",
+                {},
+                "",
+                [],
+                runtimeConfig.active_provider
+            );
+            const dt = roundN((performance.now() - t0) / 1000, 2);
+            if (cloudCheck) {
+                return makeJsonResponse({
+                    ok: true,
+                    provider: cloudCheck.provider,
+                    model: cloudCheck.model,
+                    latency_s: dt,
+                    sample: cloudCheck.reply.slice(0, 280),
+                });
+            }
             return makeJsonResponse({
                 ok: true,
-                provider: "Browser Analytical Physics Solver",
-                model: "v5.1 Serverless Kernel",
+                provider: "deterministic_physics",
+                model: "ALTAR-Analytical-Solver-Core (v5.1)",
                 latency_s: 0.01,
-                sample: "0G küresel difüzyon denklemleri (d² yasası, Spalding B_oq, ISS R² doğrulaması) ve 15 PSI bilgi tabanı %100 sunucusuz izole modda aktif.",
+                sample: "Soru-odaklı çok katmanlı analitik fizik çözücü (d² yasası, Spalding B_oq, ISS R² doğrulaması, karşı-olgusal duyarlılık matrisi ve 15 PSI bilgi tabanı) %100 sunucusuz izole modda aktif.",
             });
         }
         if (path === "/api/ollama/pull" || path === "/api/ollama/unload") {

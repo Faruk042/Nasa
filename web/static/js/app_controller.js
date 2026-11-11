@@ -121,6 +121,7 @@
             copilot_ctx_tag: "Canlı 3B Telemetri + 15 PSI Deneyi + Denklem Bağlamı Aktif",
             welcome_title: "◈ ALTAR-NASA // KANIT SENTEZİ VE KARAR DESTEK KONSOLU [v5.1]",
             kv_solver_lbl: "SAYISAL ÇÖZÜCÜ",
+            kv_solver_val: "d² • B_oq • Sh • Da • MOC [AKTİF]",
             kv_corpus_lbl: "REFERANS KORPUSU",
             kv_auditor_lbl: "GÜVENLİK DENETÇİSİ",
             welcome_p1: "Telemetri bağlamı kilitlendi. Bu konsol; aktif 3B yanma odası durum vektörünü, boyutsuz taşınım sayılarını, ISS uçuş doğrulama kalıntılarını (R² / RMSE) ve 15 doğrulanmış NASA PSI soruşturmasını deterministik fizik çözücü ve çevrimdışı/hibrit çıkarım katmanlarıyla sentezler.",
@@ -280,6 +281,7 @@
             copilot_ctx_tag: "Live 3D Telemetry + 15 PSI Investigations + Equations Active",
             welcome_title: "◈ ALTAR-NASA // EVIDENCE SYNTHESIS & DECISION CONSOLE [v5.1]",
             kv_solver_lbl: "NUMERICAL SOLVER",
+            kv_solver_val: "d² • B_oq • Sh • Da • MOC [ACTIVE]",
             kv_corpus_lbl: "EVIDENCE CORPUS",
             kv_auditor_lbl: "SAFETY AUDITOR",
             welcome_p1: "Telemetry context locked. This console synthesizes the active 3D chamber state vector, dimensionless transport numbers, ISS flight validation residuals (R² / RMSE), and 15 verified NASA PSI investigations through the deterministic physics solver and offline/hybrid inference kernels.",
@@ -476,20 +478,70 @@
         let cleaned = String(mdText || "")
             .replace(/\\text\{([^}]*)\}/g, "$1")
             .replace(/\\mathrm\{([^}]*)\}/g, "$1")
-            .replace(/\\mu\b/g, "µ")
-            .replace(/\\chi\b/g, "χ")
-            .replace(/\\Delta\b/g, "Δ")
-            .replace(/\\approx\b/g, "≈")
-            .replace(/\\(?:rightarrow|to)\b/g, "→")
-            .replace(/\\times\b/g, "×")
+            .replace(/\\mum\b/g, "µm")
+            .replace(/\\mu(?![a-zA-Z])/g, "µ")
+            .replace(/\\chi(?![a-zA-Z])/g, "χ")
+            .replace(/\\lambda(?![a-zA-Z])/g, "λ")
+            .replace(/\\rho(?![a-zA-Z])/g, "ρ")
+            .replace(/\\sigma(?![a-zA-Z])/g, "σ")
+            .replace(/\\nu(?![a-zA-Z])/g, "ν")
+            .replace(/\\tau(?![a-zA-Z])/g, "τ")
+            .replace(/\\alpha(?![a-zA-Z])/g, "α")
+            .replace(/\\beta(?![a-zA-Z])/g, "β")
+            .replace(/\\Delta(?![a-zA-Z])/g, "Δ")
+            .replace(/\\nabla(?![a-zA-Z])/g, "∇")
+            .replace(/\\infty(?![a-zA-Z])/g, "∞")
+            .replace(/\\approx(?![a-zA-Z])/g, "≈")
+            .replace(/\\propto(?![a-zA-Z])/g, "∝")
+            .replace(/\\(?:leq|le)(?![a-zA-Z])/g, "≤")
+            .replace(/\\(?:geq|ge)(?![a-zA-Z])/g, "≥")
+            .replace(/\\pm(?![a-zA-Z])/g, "±")
+            .replace(/\\cdot(?![a-zA-Z])/g, "·")
+            .replace(/\\(?:rightarrow|to)(?![a-zA-Z])/g, "→")
+            .replace(/\\times(?![a-zA-Z])/g, "×")
             .replace(/\\%/g, "%")
             .replace(/\$([^$\n]{1,80})\$/g, "$1");
         let html = escapeHtml(cleaned);
+
+        // GFM Markdown pipe tablolarını (| A | B |) temiz HTML tablosuna dönüştür
+        html = html.replace(
+            /(?:^\|.+\|[ \t]*(?:\n|$))+/gm,
+            (tableBlock) => {
+                const lines = tableBlock
+                    .trim()
+                    .split("\n")
+                    .map((ln) => ln.trim())
+                    .filter((ln) => ln.startsWith("|") && ln.endsWith("|"));
+                if (lines.length < 2 || !/^\|[\s:\-\|]+\|$/.test(lines[1])) {
+                    return tableBlock;
+                }
+                const parseCells = (rowStr) =>
+                    rowStr
+                        .slice(1, -1)
+                        .split("|")
+                        .map((c) => c.trim());
+                const headers = parseCells(lines[0]);
+                const bodyRows = lines.slice(2).map(parseCells);
+                const thHtml = headers
+                    .map((h) => `<th style="padding:6px 9px; border-bottom:1px solid rgba(56,189,248,0.3); text-align:left; color:#7dd3fc;">${h}</th>`)
+                    .join("");
+                const trHtml = bodyRows
+                    .map(
+                        (cols) =>
+                            `<tr>${cols
+                                .map((c) => `<td style="padding:5px 9px; border-bottom:1px solid rgba(148,163,184,0.14); vertical-align:top;">${c}</td>`)
+                                .join("")}</tr>`
+                    )
+                    .join("");
+                return `<div style="overflow-x:auto; margin:8px 0;"><table class="nasa-table" style="width:100%; border-collapse:collapse; font-size:12px;"><thead><tr>${thHtml}</tr></thead><tbody>${trHtml}</tbody></table></div>\n`;
+            }
+        );
+
         html = html.replace(/^####\s+(.+)$/gm, "<h4>$1</h4>");
         html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
         html = html.replace(/^##\s+(.+)$/gm, "<h3>$1</h3>");
         html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-        html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+        html = html.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
         html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
         html = html.replace(
             /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
@@ -499,8 +551,9 @@
             /^&gt;\s*(.+)$/gm,
             '<div style="margin:8px 0; padding:8px 12px; border-left:3px solid #f59e0b; background:rgba(245,158,11,0.1); border-radius:4px;">$1</div>'
         );
-        html = html.replace(/^\-\s+(.+)$/gm, "• $1");
-        html = html.replace(/^(\d+)\.\s+(.+)$/gm, '<strong style="color:#38bdf8;">$1.</strong> $2');
+        html = html.replace(/^\s*\-\s+(.+)$/gm, "• $1");
+        html = html.replace(/^\s*(\d+)\.\s+(.+)$/gm, '<strong style="color:#38bdf8;">$1.</strong> $2');
+        html = html.replace(/<\/div>\n/g, "</div>");
         html = html.replace(/\n/g, "<br/>");
         return html;
     }
@@ -804,8 +857,9 @@
                 return;
             }
 
+            const pickedSummary = isEn ? (data.summary_en || data.summary_tr || "") : (data.summary_tr || "");
             state.attachedMediaName = data.filename || fileObj.name;
-            state.attachedMediaSummary = data.summary_tr || "";
+            state.attachedMediaSummary = pickedSummary;
             if (data.media_type === "image" && data.image_base64) {
                 state.attachedImageB64 = data.image_base64;
             } else {
@@ -827,9 +881,12 @@
                 }
             }
 
+            const detectedReg = data.metrics
+                ? (isEn ? (data.metrics.detected_regime_en || data.metrics.detected_regime_tr) : data.metrics.detected_regime_tr)
+                : "";
             const shortInfo =
                 data.media_type === "image"
-                    ? `◫ ${state.attachedMediaName} -> ${data.metrics.detected_regime_tr}`
+                    ? `◫ ${state.attachedMediaName} -> ${detectedReg}`
                     : `◫ ${state.attachedMediaName} (${data.chunks} chunks) -> O₂:%${data.extracted_sim_params.oxygen_pct}, ${data.extracted_sim_params.airflow_cms} cm/s`;
 
             if (statusEl) {
@@ -859,7 +916,7 @@
                     <div class="media-preview-card">
                         ${thumbHtml}
                         <div style="flex:1; font-size:12px;">
-                            <div>${renderSafeMarkdown(data.summary_tr || "")}</div>
+                            <div>${renderSafeMarkdown(pickedSummary)}</div>
                             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
                                 <button class="btn-primary" id="btn-preview-goto-3d" style="padding:4px 10px; font-size:11.5px;">${isEn ? "▸ View in 3D Chamber" : "▸ 3B Sahneyi Gör"}</button>
                                 <button class="btn-secondary" id="btn-preview-ask-ai" style="padding:4px 10px; font-size:11.5px;">${isEn ? "⌖ Evidence Synthesis" : "⌖ Kanıt Konsolunda Sentezle"}</button>
@@ -1770,6 +1827,9 @@
         } else if (providers.openrouter_ready) {
             dot.style.background = "#10b981";
             txt.textContent = isEn ? "Solver: Analytical + OpenRouter" : "Çözücü: Analitik + OpenRouter";
+        } else if (window.ALTAR_SERVERLESS_MODE) {
+            dot.style.background = "#38bdf8";
+            txt.textContent = isEn ? "Browser Analytical & Synthesis Kernel" : "Tarayıcı Analitik & Sentez Çekirdeği";
         } else {
             dot.style.background = "#f59e0b";
             txt.textContent = isEn ? "Analytical Physics Solver (Offline)" : "Analitik Fizik Çözücü (Çevrimdışı)";
@@ -2155,7 +2215,7 @@
                 <div class="console-readiness-grid">
                     <div class="console-kv-item">
                         <div class="console-kv-label" data-i18n="kv_solver_lbl">${escapeHtml(tStr("kv_solver_lbl"))}</div>
-                        <div class="console-kv-val">d² • B_oq • Sh • Da • MOC [${isEn ? "ACTIVE" : "AKTİF"}]</div>
+                        <div class="console-kv-val" data-i18n="kv_solver_val">${escapeHtml(tStr("kv_solver_val"))}</div>
                     </div>
                     <div class="console-kv-item">
                         <div class="console-kv-label" data-i18n="kv_corpus_lbl">${escapeHtml(tStr("kv_corpus_lbl"))}</div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' https://ntrs.nasa.gov https://osdr.nasa.gov; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' https://ntrs.nasa.gov https://osdr.nasa.gov https://generativelanguage.googleapis.com https://openrouter.ai; object-src 'none'; base-uri 'self'; form-action 'self';" />
     <link rel="icon" href="./nasa_flame.ico" />
     <title>ALTAR-NASA • Flame in Freefall v5.1 | Zero-Trust Microgravity Combustion &amp; PSI Analytics Suite</title>
     <link rel="stylesheet" href="./css/mission_control.css" />
@@ -605,7 +605,7 @@
                     <div class="chat-topbar">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="font-size:12px; font-weight:700; color:var(--accent-cyan);" data-i18n="lbl_active_engine">◈ Aktif Sentez Çekirdeği:</span>
-                            <select class="nasa-select" id="sel-copilot-provider" style="width:290px; padding:5px 9px; font-size:12px;">
+                            <select class="nasa-select" id="sel-copilot-provider" style="min-width:340px; max-width:410px; width:auto; padding:5px 10px; font-size:12px;">
                                 <option value="auto" data-tr="◈ Otomatik (Analitik Fizik + Aktif Çıkarım Çekirdeği)" data-en="◈ Auto (Analytical Solver + Active Inference Kernel)">◈ Otomatik (Analitik Fizik + Aktif Çıkarım Çekirdeği)</option>
                                 <option value="ollama" data-tr="◈ Yerel Çevrimdışı Ollama (Derin Uzay Otonom Modu)" data-en="◈ Local Offline Ollama (Deep-Space Autonomous Mode)">◈ Yerel Çevrimdışı Ollama (Derin Uzay Otonom Modu)</option>
                                 <option value="antigravity" data-tr="◈ Yerel Sistem Çıkarım Köprüsü (CLI / SDK)" data-en="◈ Local System Inference Bridge (CLI / SDK)">◈ Yerel Sistem Çıkarım Köprüsü (CLI / SDK)</option>
@@ -627,7 +627,7 @@
                             <div class="console-readiness-grid">
                                 <div class="console-kv-item">
                                     <div class="console-kv-label" data-i18n="kv_solver_lbl">SAYISAL ÇÖZÜCÜ</div>
-                                    <div class="console-kv-val">d² • B_oq • Sh • Da • MOC [AKTİF]</div>
+                                    <div class="console-kv-val" data-i18n="kv_solver_val">d² • B_oq • Sh • Da • MOC [AKTİF]</div>
                                 </div>
                                 <div class="console-kv-item">
                                     <div class="console-kv-label" data-i18n="kv_corpus_lbl">REFERANS KORPUSU</div>

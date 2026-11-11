@@ -30,6 +30,7 @@ from core.directives import build_system_prompt
 from core.nasa_live_fetcher import NasaLiveFetcher
 from core.physics_engine import simulate_combustion_state
 from core.ranking_engine import ExperimentRankingEngine, SemanticKnowledgeIndex
+from core.smart_synthesizer import classify_user_intent, synthesize_question_driven_report
 
 _RE_THOUGHT_CLEAN = re.compile(
     r"<(think|düşünce|thought)>.*?</\1>|<think>.*?$",
@@ -488,9 +489,12 @@ class HybridNasaAIEngine:
         ranked_pack = self.ranker.rank_experiments(active_sim["inputs"], query=user_message)
         top_exps = ranked_pack["ranked_experiments"][:4]
         rag_hits = self.knowledge.search(user_message, top_k=4)
+        combined_media_ctx = "\n".join(x for x in (media_context or "", cv_image_summary) if x.strip())
+        query_intent = classify_user_intent(user_message, media_context=combined_media_ctx)
+        is_meta_intent = query_intent in ("capabilities_guide", "platform_features", "greeting_identity")
 
         live_ntrs_snippets: List[Dict[str, Any]] = []
-        if include_live_nasa and len(user_message.strip()) > 3:
+        if include_live_nasa and not is_meta_intent and len(user_message.strip()) > 3:
             if on_stage:
                 on_stage(
                     "[2/4] ◈ Querying live NASA NTRS & PSI databases..."
@@ -504,7 +508,6 @@ class HybridNasaAIEngine:
         if cancel_check and cancel_check():
             return {"ok": False, "error": "Stopped by user." if lang == "en" else "Kullanıcı tarafından durduruldu."}
 
-        combined_media_ctx = "\n".join(x for x in (media_context or "", cv_image_summary) if x.strip())
         grounded_context = self._format_grounded_context(
             active_sim=active_sim,
             top_exps=top_exps,
@@ -531,6 +534,8 @@ class HybridNasaAIEngine:
             active_sim=active_sim,
             top_exps=top_exps,
             live_ntrs=live_ntrs_snippets,
+            rag_hits=rag_hits,
+            media_context=combined_media_ctx,
             on_chunk=on_chunk,
             cancel_check=cancel_check,
         )
@@ -568,6 +573,8 @@ class HybridNasaAIEngine:
                     active_sim=active_sim,
                     top_exps=top_exps,
                     live_ntrs=live_ntrs_snippets,
+                    rag_hits=rag_hits,
+                    media_context=combined_media_ctx,
                     on_chunk=on_chunk,
                     cancel_check=cancel_check,
                 )
@@ -584,26 +591,51 @@ class HybridNasaAIEngine:
 
         clean_reply = _RE_THOUGHT_CLEAN.sub("", raw_reply).strip()
 
-        citations = [
-            {
-                "id": exp["exp_id"],
-                "program": exp["program"],
-                "ntrs_id": exp["ntrs_id"],
-                "title": exp["title_tr"] if lang == "tr" else exp["title"],
-                "url": exp["ntrs_url"],
-                "priority_score": exp["priority_score"],
-            }
-            for exp in top_exps[:3]
-        ]
-        for n_item in live_ntrs_snippets[:2]:
-            citations.append({
-                "id": n_item["id"],
-                "program": "NTRS Live",
-                "ntrs_id": n_item["raw_id"],
-                "title": n_item["title"],
-                "url": n_item["url"],
-                "priority_score": 92.0,
-            })
+        if is_meta_intent:
+            citations: List[Dict[str, Any]] = []
+        elif provider_used == "deterministic_physics":
+            _, det_cits = synthesize_question_driven_report(
+                user_message=user_message,
+                sim_params=active_sim["inputs"],
+                active_sim=active_sim,
+                top_exps=top_exps,
+                rag_hits=rag_hits,
+                live_ntrs=live_ntrs_snippets,
+                history=history or [],
+                media_context=combined_media_ctx,
+                lang=lang,
+            )
+            citations = list(det_cits)
+            for n_item in live_ntrs_snippets[:2]:
+                citations.append({
+                    "id": n_item["id"],
+                    "program": "NTRS Live",
+                    "ntrs_id": n_item["raw_id"],
+                    "title": n_item["title"],
+                    "url": n_item["url"],
+                    "priority_score": 92.0,
+                })
+        else:
+            citations = [
+                {
+                    "id": exp["exp_id"],
+                    "program": exp["program"],
+                    "ntrs_id": exp["ntrs_id"],
+                    "title": exp["title_tr"] if lang == "tr" else exp["title"],
+                    "url": exp["ntrs_url"],
+                    "priority_score": exp["priority_score"],
+                }
+                for exp in top_exps[:3]
+            ]
+            for n_item in live_ntrs_snippets[:2]:
+                citations.append({
+                    "id": n_item["id"],
+                    "program": "NTRS Live",
+                    "ntrs_id": n_item["raw_id"],
+                    "title": n_item["title"],
+                    "url": n_item["url"],
+                    "priority_score": 92.0,
+                })
 
         return {
             "ok": True,
@@ -669,11 +701,33 @@ class HybridNasaAIEngine:
         active_sim: Dict[str, Any],
         top_exps: List[Dict[str, Any]],
         live_ntrs: List[Dict[str, Any]],
+        rag_hits: Optional[List[Dict[str, Any]]] = None,
+        media_context: str = "",
         on_chunk: Optional[Callable[[str, str, str], None]] = None,
         cancel_check: Optional[Callable[[], bool]] = None,
     ) -> Tuple[str, str, str, List[str]]:
         pref = str(cfg.get("active_provider", "auto")).lower()
         stages: List[str] = ["◈ Boyutsuz Denklemler (K, B_oq, Sh, Ra, Ri, Da) + NASA PSI/NTRS Kanıtları Hazırlandı"]
+        intent = classify_user_intent(user_message, media_context=media_context)
+
+        # Otomatik modda doğrudan sistem yetenek/mimari/selamlama sorularına sıfır gecikmeyle %100 kesin mimari envanter dön
+        if pref == "auto" and intent in ("capabilities_guide", "platform_features", "greeting_identity"):
+            fast_text, _ = synthesize_question_driven_report(
+                user_message=user_message,
+                sim_params=active_sim["inputs"],
+                active_sim=active_sim,
+                top_exps=top_exps,
+                rag_hits=rag_hits,
+                live_ntrs=live_ntrs,
+                history=history,
+                media_context=media_context,
+                lang=str(cfg.get("language", "tr")),
+            )
+            stages.append("◈ Sistem Yetenek & Telemetri Envanteri Doğrudan Yanıtlandı")
+            if on_chunk:
+                on_chunk(fast_text, "deterministic_physics", "ALTAR-Analytical-Solver-Core")
+            return ("deterministic_physics", "ALTAR-Analytical-Solver-Core", fast_text, stages)
+
         agy_st = self.get_antigravity_status()
         agy_available = bool(agy_st["cli_ready"] or self._antigravity_sdk_available or cfg.get("antigravity_api_key"))
 
@@ -784,11 +838,16 @@ class HybridNasaAIEngine:
                 if ok and text:
                     return ("ollama", model_name, text, stages)
 
-        stages.append("◈ Deterministik Termodinamik & NASA PSI/NTRS Analitik Sentez Çekirdeği yanıt üretti")
-        fallback_text = self._build_deterministic_scientific_report(
+        stages.append("◈ Deterministik Soru-Odaklı Termodinamik & NASA PSI Analitik Çekirdeği yanıt üretti")
+        fallback_text, _ = synthesize_question_driven_report(
+            user_message=user_message,
+            sim_params=active_sim["inputs"],
             active_sim=active_sim,
             top_exps=top_exps,
+            rag_hits=rag_hits,
             live_ntrs=live_ntrs,
+            history=history,
+            media_context=media_context,
             lang=str(cfg.get("language", "tr")),
         )
         if on_chunk:

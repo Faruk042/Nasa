@@ -82,24 +82,28 @@ def analyze_flame_image_bytes(raw_bytes: bytes, filename: str = "flame.jpg") -> 
             inferred_o2 = 13.0
             inferred_fuel = "n_heptane"
             detected_regime_tr = "Görünmez/UV Soğuk Alev (Cool Flame • 0G NTC Rejimi)"
+            detected_regime_en = "Invisible/UV Cool Flame (0G NTC Regime)"
         elif aspect_hw > 1.28:
             inferred_gravity = min(1.0, round((aspect_hw - 1.0) * 1.15, 2))
             inferred_airflow = 2.0
             inferred_o2 = 21.0 if soot_warm_ratio < 0.58 else 26.0
             inferred_fuel = "n_heptane" if soot_warm_ratio >= 0.42 else "methanol"
             detected_regime_tr = f"Kaldırma Kuvvetli (Buoyant) Uzamış Alev (H/W = {aspect_hw})"
+            detected_regime_en = f"Buoyant Elongated Plume (H/W = {aspect_hw})"
         elif aspect_hw < 0.82:
             inferred_gravity = 0.0
             inferred_airflow = round(min(25.0, (1.0 / max(0.3, aspect_hw)) * 6.5), 1)
             inferred_o2 = 18.5
             inferred_fuel = "pmma" if soot_warm_ratio >= 0.45 else "methanol"
             detected_regime_tr = f"0G Havalandırma Kuyruk Alevi (Wake Flame • W/H = {round(1/aspect_hw, 2)})"
+            detected_regime_en = f"0G Ventilated Wake Flame (W/H = {round(1/aspect_hw, 2)})"
         else:
             inferred_gravity = 0.0
             inferred_airflow = 0.3
             inferred_o2 = 21.0 if blue_chemilum_ratio >= 0.38 else 19.0
             inferred_fuel = "methanol" if blue_chemilum_ratio >= 0.46 else "n_heptane"
             detected_regime_tr = f"0G Küresel Mikroçekim Difüzyon Alevi (H/W = {aspect_hw} ≈ 1.0)"
+            detected_regime_en = f"0G Spherical Microgravity Diffusion Flame (H/W = {aspect_hw} ≈ 1.0)"
 
         inferred_d0 = round(max(1.8, min(5.4, (math.sqrt(active_count) / 256.0) * 7.5)), 1)
 
@@ -126,6 +130,12 @@ def analyze_flame_image_bytes(raw_bytes: bytes, filename: str = "flame.jpg") -> 
             f"- **CH*/OH* Mavi Kemilüminesans Oranı:** `%{blue_chemilum_ratio * 100:.1f}` | **Kurum (Soot) Sıcak Işıma İndeksi:** `{soot_warm_ratio:.2f}`\n"
             f"- **Çıkarılan 3B Simülasyon Parametreleri:** Yerçekimi `{inferred_gravity}G`, Oksijen `%{inferred_o2}`, Akış `{inferred_airflow} cm/s`, Yakıt `{inferred_fuel}`, Çap `{inferred_d0} mm`."
         )
+        summary_en = (
+            f"◈ **Spectral & Morphological Flame Analysis ({filename} • {orig_w}×{orig_h}px):**\n"
+            f"- **Detected Geometric Regime:** {detected_regime_en}\n"
+            f"- **CH*/OH* Blue Chemiluminescence:** `{blue_chemilum_ratio * 100:.1f}%` | **Soot Thermal Index:** `{soot_warm_ratio:.2f}`\n"
+            f"- **Extracted 3D Parameters:** Gravity `{inferred_gravity}G`, Oxygen `{inferred_o2}%`, Airflow `{inferred_airflow} cm/s`, Fuel `{inferred_fuel}`, Diameter `{inferred_d0} mm`."
+        )
 
         return {
             "ok": True,
@@ -137,9 +147,11 @@ def analyze_flame_image_bytes(raw_bytes: bytes, filename: str = "flame.jpg") -> 
                 "blue_chemiluminescence_ratio": blue_chemilum_ratio,
                 "soot_warm_ratio": soot_warm_ratio,
                 "detected_regime_tr": detected_regime_tr,
+                "detected_regime_en": detected_regime_en,
             },
             "extracted_sim_params": extracted_params,
             "summary_tr": summary_tr,
+            "summary_en": summary_en,
             "image_base64": b64_data_uri,
         }
     except Exception as exc:

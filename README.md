@@ -61,7 +61,7 @@ Bu depo **iki tam sürümü bir arada** barındırır:
 ### 04 // Kanıt Sentezi & Karar Konsolu (`NASA-STD-6001B` Denetçisi)
 ![Kanıt Sentezi ve Karar Konsolu](./docs/screenshots/05_evidence_synthesis_console.png)
 
-* **◈ Kanıt İzlenebilir Karar Sentezi:** Aktif 3B simülasyon telemetrisini, boyutsuz denklemleri ve en alakalı NASA PSI makalelerini birleştirerek tıklanabilir **NTRS kaynak rozetleriyle** yapılandırılmış 4 bölümlü mühendislik raporu üretir.
+* **◈ Soru-Odaklı Çok Katmanlı Kanıt & Duyarlılık Sentezi:** Sabit metin şablonları yerine sorulan sorunun niyetini çözümleyerek aktif 3B yanma odası telemetrisi üzerinde canlı karşı-olgusal taramalar (*havalandırma hızı, `O₂%`, seyreltici gaz, kısmi yerçekimi, EVA giysisi vs. Ay gezgini matrisi*), adım adım denklem türetimleri, deney-içi varyasyon tabloları ve tıklanabilir **NTRS kaynak rozetleri** üretir.
 * **▲ Zorunlu Halon 1301 Yasağı (`CON-05`):** Toksik `HF/HBr` gazlarıyla ECLSS yaşam destek filtrelerini zehirleyen Halon 1301 önerilerini 6-katmanlı güvenlik denetçisiyle engeller; daima **(1) HVAC Fan Kesme (`U -> 0 cm/s`) -> (2) Güç İzolasyonu -> (3) `25–40 µm` İnce Su Sisi (`SoFIE-MIST`) / `CO₂`** protokolünü uygular.
 
 ---
