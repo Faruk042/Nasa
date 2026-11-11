@@ -1,0 +1,23 @@
+# ============================================================================
+# ALTAR-NASA v5.0 — Zero-Trust Güvenlik ve Derleme Hariç Tutma Kuralları
+# ============================================================================
+
+# Sırlar, API Anahtarları ve Yerel Kullanıcı Yapılandırması (ASLA Git'e Giremez)
+.env
+.env.*
+!.env.example
+config.local.json
+*secret*
+*.pem
+*.key
+
+# Python Önbellek ve Derleme Çıktıları
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
