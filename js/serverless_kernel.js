@@ -327,6 +327,46 @@
             benchmark_en: `ISS Validation (${campShort}): R² = ${rSq.toFixed(3)} • RMSE = ${rmse.toFixed(3)}`,
         };
 
+        const calloutsMap = {
+            HOT_SPHERICAL_0G: {
+                badge_tr: "0G KÜRESEL DİFÜZYON ALEVİ",
+                badge_en: "0G SPHERICAL DIFFUSION FLAME",
+                summary_tr: `Doğal konveksiyon (Ra=0) sıfırlandı. ${flameTempK.toFixed(0)} K sıcaklıkta safir-mavi kemilüminesans küresi oluşuyor.`,
+                summary_en: `Buoyancy vanishes in freefall (Ra=0). Symmetrical ${flameTempK.toFixed(0)} K sapphire-blue diffusion sphere.`,
+            },
+            VENTILATED_WAKE_0G: {
+                badge_tr: `0G HAVALANDIRMALI KUYRUK ALEVİ (${airflowCms.toFixed(1)} cm/s)`,
+                badge_en: `0G VENTILATED WAKE FLAME (${airflowCms.toFixed(1)} cm/s)`,
+                summary_tr: `Kabin fan akışı (${airflowCms.toFixed(1)} cm/s) taze O₂ taşıyarak mavi durgunluk yayı ve kuyruk alevi oluşturdu (MOC: %${mocCurrent}).`,
+                summary_en: `Ventilation (${airflowCms.toFixed(1)} cm/s) convects fresh O₂ to the flame sheet (MOC: ${mocCurrent}%).`,
+            },
+            BUOYANT_PLUME_1G: {
+                badge_tr: `KALDIRMA KUVVETLİ KONVEKTİF ALEV (${gravityG.toFixed(2)}G)`,
+                badge_en: `BUOYANCY-DRIVEN CONVECTIVE PLUME (${gravityG.toFixed(2)}G)`,
+                summary_tr: `Yerçekimi (${gravityG.toFixed(2)}G) sıcak gazları yukarı ivmelendiriyor; gözyaşı formu ve kurum ışıması etkin.`,
+                summary_en: `Gravity (${gravityG.toFixed(2)}G) stretches the flame into a convective plume with luminous soot.`,
+            },
+            COOL_FLAME_NTC: {
+                badge_tr: "GÖRÜNMEZ SOĞUK ALEV (UV/IR MODU)",
+                badge_en: "INVISIBLE COOL FLAME (UV/IR VIEW)",
+                summary_tr: `Isıl kayıp sıcak alevi söndürdü ancak ${flameTempK.toFixed(0)} K görünmez Soğuk Alev (FLEX/CFI) CO üretmeye devam ediyor!`,
+                summary_en: `Radiative loss quenched the hot flame, yet ${flameTempK.toFixed(0)} K invisible Cool Flame chemistry persists!`,
+            },
+            BLOWOFF_EXTINGUISHED: {
+                badge_tr: "YÜKSEK HIZLI ÜFLEME SÖNMESİ (BLOWOFF)",
+                badge_en: "CONVECTIVE BLOWOFF EXTINCTION",
+                summary_tr: `Akış hızı (${airflowCms.toFixed(1)} cm/s) Damköhler sınırını (Da < 1) aşarak alevi üfleyip söndürdü.`,
+                summary_en: `Airflow (${airflowCms.toFixed(1)} cm/s) exceeded Damköhler residence threshold (Da < 1).`,
+            },
+            QUENCHED_EXTINGUISHED: {
+                badge_tr: `OKSİJEN / RADYATİF SÖNÜMLENME (MOC < %${mocCurrent})`,
+                badge_en: `DIFFUSIVE / RADIATIVE QUENCHING (O₂ < ${mocCurrent}%)`,
+                summary_tr: `Mevcut O₂ (%${oxygenPct.toFixed(1)}) MOC sınırının (%${mocCurrent}) altında kaldığı için alev kendi kendine söndü.`,
+                summary_en: `Ambient O₂ (${oxygenPct.toFixed(1)}%) is below MOC (${mocCurrent}%); flame self-extinguished.`,
+            },
+        };
+        const activeCall = calloutsMap[regime] || calloutsMap.HOT_SPHERICAL_0G;
+
         // ECLSS Kabin / Gezgin / EVA Saati
         const hab = HABITAT_CONFIGS[habitatId];
         const volM3 = Number(hab.volume_m3);
@@ -391,7 +431,7 @@
                 summary_tr: `**${hab.name_tr}:** Alarm \`t = ${tAlarm} s\` anında tetiklendi. NASA 1-Saatlik Acil SMAC CO sınırı (\`125 ppm\`) \`t = ${tSmac} s\` içinde aşılır. Seçilen senaryoda (\`t = ${tInt} s\`) kabin CO düzeyi **\`${coAtResp} ppm\`** ve yerel ısınma **\`+${peakDt} °C\`** olur.`,
                 summary_en: `**${hab.name_en}:** Alarm triggered at \`t = ${tAlarm} s\`. NASA 1-hr Emergency SMAC CO limit (\`125 ppm\`) reached in \`t = ${tSmac} s\`. At intervention (\`t = ${tInt} s\`), cabin CO hits **\`${coAtResp} ppm\`** with **\`+${peakDt} °C\`** local ΔT.`,
                 milestones: [
-                    { t_s: 0.0, title_tr: "0.0 s • Tutuşma Başlangıcı", title_en: "0.0 s • Ignition Onset", detail_tr: `Rejim: ${regime} (${flameTempK.toFixed(0)} K, U=${airflowCms.toFixed(1)} cm/s)`, detail_en: `Regime: ${regime} (${flameTempK.toFixed(0)} K, U=${airflowCms.toFixed(1)} cm/s)`, state: "warn" },
+                    { t_s: 0.0, title_tr: "0.0 s • Tutuşma Başlangıcı", title_en: "0.0 s • Ignition Onset", detail_tr: `Rejim: ${activeCall.badge_tr} (${flameTempK.toFixed(0)} K, U=${airflowCms.toFixed(1)} cm/s)`, detail_en: `Regime: ${activeCall.badge_en} (${flameTempK.toFixed(0)} K, U=${airflowCms.toFixed(1)} cm/s)`, state: "warn" },
                     { t_s: tAlarm, title_tr: `${tAlarm} s • Sensör Füzyon Alarmı`, title_en: `${tAlarm} s • Sensor Fusion Alarm`, detail_tr: optBlind ? "Optik duman dedektörü KÖR! UV/IR + CO lazer sensörü alarm üretti." : "Fotoelektrik saçılma + CO sensör füzyonu yangını doğruladı.", detail_en: optBlind ? "Optical smoke detector BLIND! UV/IR + CO fusion triggered alarm." : "Photoelectric scattering + CO sensor fusion confirmed fire.", state: optBlind ? "crit" : "warn" },
                     { t_s: tInt, title_tr: `${tInt} s • ${unmit ? "Müdahalesiz Yanma" : "HVAC Kesme + İnce Su Sisi"}`, title_en: `${tInt} s • ${unmit ? "Unmitigated Burn" : "HVAC Cutoff + Water Mist"}`, detail_tr: `Müdahale anı CO: ${coAtResp} ppm • Kabin ΔT: +${peakDt} °C (Halon YASAK)`, detail_en: `CO at action: ${coAtResp} ppm • Local ΔT: +${peakDt} °C (No Halon)`, state: sev === "CRITICAL" ? "crit" : (sev === "WARNING" ? "warn" : "ok") },
                     { t_s: tSmac, title_tr: `${tSmac} s • NASA SMAC 125 ppm Eşiği`, title_en: `${tSmac} s • NASA SMAC 125 ppm Limit`, detail_tr: `Akut 400 ppm sınırı: ${tAcute} s (${tInt >= tSmac ? "AŞILDI!" : "Güvenli marj korundu"})`, detail_en: `Acute 400 ppm limit: ${tAcute} s (${tInt >= tSmac ? "BREACHED!" : "Margin preserved"})`, state: tInt >= tSmac ? "crit" : "ok" },
@@ -421,45 +461,6 @@
                 : isLunarRover
                 ? `**Lunar Base & Pressurized Rover (${pressurePsia.toFixed(1)} psia / ${oxygenPct.toFixed(0)}% O₂):** Elevated O₂ fraction increases material flammability.`
                 : "",
-        };
-
-        const calloutsMap = {
-            HOT_SPHERICAL_0G: {
-                badge_tr: "0G KÜRESEL DİFÜZYON ALEVİ",
-                badge_en: "0G SPHERICAL DIFFUSION FLAME",
-                summary_tr: `Doğal konveksiyon (Ra=0) sıfırlandı. ${flameTempK.toFixed(0)} K sıcaklıkta safir-mavi kemilüminesans küresi oluşuyor.`,
-                summary_en: `Buoyancy vanishes in freefall (Ra=0). Symmetrical ${flameTempK.toFixed(0)} K sapphire-blue diffusion sphere.`,
-            },
-            VENTILATED_WAKE_0G: {
-                badge_tr: `0G HAVALANDIRMALI KUYRUK ALEVİ (${airflowCms.toFixed(1)} cm/s)`,
-                badge_en: `0G VENTILATED WAKE FLAME (${airflowCms.toFixed(1)} cm/s)`,
-                summary_tr: `Kabin fan akışı (${airflowCms.toFixed(1)} cm/s) taze O₂ taşıyarak mavi durgunluk yayı ve kuyruk alevi oluşturdu (MOC: %${mocCurrent}).`,
-                summary_en: `Ventilation (${airflowCms.toFixed(1)} cm/s) convects fresh O₂ to the flame sheet (MOC: ${mocCurrent}%).`,
-            },
-            BUOYANT_PLUME_1G: {
-                badge_tr: `KALDIRMA KUVVETLİ KONVEKTİF ALEV (${gravityG.toFixed(2)}G)`,
-                badge_en: `BUOYANCY-DRIVEN CONVECTIVE PLUME (${gravityG.toFixed(2)}G)`,
-                summary_tr: `Yerçekimi (${gravityG.toFixed(2)}G) sıcak gazları yukarı ivmelendiriyor; gözyaşı formu ve kurum ışıması etkin.`,
-                summary_en: `Gravity (${gravityG.toFixed(2)}G) stretches the flame into a convective plume with luminous soot.`,
-            },
-            COOL_FLAME_NTC: {
-                badge_tr: "GÖRÜNMEZ SOĞUK ALEV (UV/IR MODU)",
-                badge_en: "INVISIBLE COOL FLAME (UV/IR VIEW)",
-                summary_tr: `Isıl kayıp sıcak alevi söndürdü ancak ${flameTempK.toFixed(0)} K görünmez Soğuk Alev (FLEX/CFI) CO üretmeye devam ediyor!`,
-                summary_en: `Radiative loss quenched the hot flame, yet ${flameTempK.toFixed(0)} K invisible Cool Flame chemistry persists!`,
-            },
-            BLOWOFF_EXTINGUISHED: {
-                badge_tr: "YÜKSEK HIZLI ÜFLEME SÖNMESİ (BLOWOFF)",
-                badge_en: "CONVECTIVE BLOWOFF EXTINCTION",
-                summary_tr: `Akış hızı (${airflowCms.toFixed(1)} cm/s) Damköhler sınırını (Da < 1) aşarak alevi üfleyip söndürdü.`,
-                summary_en: `Airflow (${airflowCms.toFixed(1)} cm/s) exceeded Damköhler residence threshold (Da < 1).`,
-            },
-            QUENCHED_EXTINGUISHED: {
-                badge_tr: `OKSİJEN / RADYATİF SÖNÜMLENME (MOC < %${mocCurrent})`,
-                badge_en: `DIFFUSIVE / RADIATIVE QUENCHING (O₂ < ${mocCurrent}%)`,
-                summary_tr: `Mevcut O₂ (%${oxygenPct.toFixed(1)}) MOC sınırının (%${mocCurrent}) altında kaldığı için alev kendi kendine söndü.`,
-                summary_en: `Ambient O₂ (${oxygenPct.toFixed(1)}%) is below MOC (${mocCurrent}%); flame self-extinguished.`,
-            },
         };
 
         const margin = oxygenPct - mocCurrent;
@@ -503,8 +504,8 @@
         ];
 
         const instantAiSummary = {
-            tr: `**Anlık Değerlendirme (${fuel.formula}):** \`P_O2 = ${po2Psia.toFixed(2)} psia\`, \`B_oq = ${spaldingB.toFixed(2)}\`, \`Sh = ${shConv.toFixed(2)}\`, \`Da = ${damkohlerDa.toFixed(2)}\` ve ISS uçuş doğrulaması \`R² = ${rSq}\`. Rejim **${regime}** (Risk: **${riskScore}/100**). İlk müdahale: Kabin fanlarını kapatıp Halon kullanmadan İnce Su Sisi (SoFIE-MIST) uygulayın.`,
-            en: `**Instant Summary (${fuel.formula}):** \`P_O2 = ${po2Psia.toFixed(2)} psia\`, \`B_oq = ${spaldingB.toFixed(2)}\`, \`Sh = ${shConv.toFixed(2)}\`, \`Da = ${damkohlerDa.toFixed(2)}\`, ISS validation \`R² = ${rSq}\`. Regime **${regime}** (Risk: **${riskScore}/100**). Action: Immediate HVAC shutoff + Fine Water Mist (No Halon).`,
+            tr: `**Anlık Değerlendirme (${fuel.formula}):** \`P_O2 = ${po2Psia.toFixed(2)} psia\`, \`B_oq = ${spaldingB.toFixed(2)}\`, \`Sh = ${shConv.toFixed(2)}\`, \`Da = ${damkohlerDa.toFixed(2)}\` ve ISS uçuş doğrulaması \`R² = ${rSq}\`. Rejim **${activeCall.badge_tr}** (Risk: **${riskScore}/100**). İlk müdahale: Kabin fanlarını kapatıp Halon kullanmadan İnce Su Sisi (SoFIE-MIST) uygulayın.`,
+            en: `**Instant Summary (${fuel.formula}):** \`P_O2 = ${po2Psia.toFixed(2)} psia\`, \`B_oq = ${spaldingB.toFixed(2)}\`, \`Sh = ${shConv.toFixed(2)}\`, \`Da = ${damkohlerDa.toFixed(2)}\`, ISS validation \`R² = ${rSq}\`. Regime **${activeCall.badge_en}** (Risk: **${riskScore}/100**). Action: Immediate HVAC shutoff + Fine Water Mist (No Halon).`,
         };
 
         return {
@@ -628,68 +629,22 @@
     async function fetchLiveNasaBrowser(source, q) {
         const query = q || "microgravity combustion";
         const srcNorm = String(source || "ntrs").toLowerCase();
-        try {
-            if (srcNorm === "osdr") {
-                const osdrUrl = `https://osdr.nasa.gov/osdr/data/search?term=${encodeURIComponent(query)}&size=8`;
-                const resOsdr = await window.fetch(osdrUrl, { method: "GET" });
-                if (resOsdr.ok) {
-                    const rawOsdr = await resOsdr.json();
-                    const hits = (rawOsdr && rawOsdr.hits && rawOsdr.hits.hits) || [];
-                    const itemsOsdr = hits.slice(0, 8).map((h, idx) => {
-                        const s = (h && h._source) || {};
-                        const acc = String(s["Accession"] || s["Authoritative Source URL"] || `OSDR-PSI-${idx + 1}`);
-                        const title = String(s["Study Title"] || s["Project Title"] || "NASA OSDR/PSI Investigation").trim();
-                        const desc = String(s["Study Description"] || s["Experiment Description"] || "NASA Open Science Data Repository & PSI dataset.").trim();
-                        return {
-                            id: acc,
-                            source: "NASA OSDR / PSI Live",
-                            title,
-                            abstract: desc.slice(0, 480),
-                            date: String(s["Flight Program"] || s["Space Program"] || "NASA PSI"),
-                            url: `https://osdr.nasa.gov/bio/repo/search?q=${encodeURIComponent(query)}`,
-                            pdf_url: "",
-                        };
-                    });
-                    if (itemsOsdr.length > 0) {
-                        return { ok: true, source_status: "live_online", count: itemsOsdr.length, items: itemsOsdr };
-                    }
-                }
-            } else {
-                const url = `https://ntrs.nasa.gov/api/citations/search?q=${encodeURIComponent(query)}`;
-                const res = await window.fetch(url, { method: "GET" });
-                if (res.ok) {
-                    const raw = await res.json();
-                    const results = (raw.results || []).slice(0, 8).map((r) => {
-                        const cid = String(r.id || "");
-                        return {
-                            id: `NTRS-${cid}`,
-                            source: "NASA NTRS Live",
-                            title: r.title || "NASA Technical Report",
-                            abstract: String(r.abstract || "Official NASA Technical Reports Server citation.").slice(0, 460),
-                            date: String(r.created || "").slice(0, 10),
-                            url: `https://ntrs.nasa.gov/citations/${cid}`,
-                            pdf_url: "",
-                        };
-                    });
-                    if (results.length > 0) {
-                        return { ok: true, source_status: "live_online", count: results.length, items: results };
-                    }
-                }
-            }
-        } catch (_) {}
 
-        // Çevrimdışı / CORS yedeklemesi: Doğrulanmış yerleşik 15 NASA PSI kaydını sorgu benzerliğine göre sırala
+        // Tarayıcı Modu (GitHub Pages): psi.nasa.gov ve ntrs.nasa.gov tarayıcı CORS başlığı sunmadığından,
+        // konsolda CORS hatası üretmeden doğrulanmış NASA PSI / NTRS kayıtlarını anında sorgu benzerliğine göre döndür.
         const scored = NASA_CATALOG.map((e) => ({
             e,
             sim: computeTextSimilarity(query, `${e.program} ${e.title} ${e.title_tr} ${e.key_finding_en} ${e.key_finding_tr} ${(e.tags || []).join(" ")}`),
         })).sort((a, b) => b.sim - a.sim);
         const items = scored.slice(0, 8).map(({ e }) => ({
             id: srcNorm === "osdr" ? e.exp_id : `NTRS-${e.ntrs_id}`,
-            source: srcNorm === "osdr" ? `NASA OSDR/PSI (${e.program})` : `NASA PSI/NTRS (${e.program})`,
+            source: srcNorm === "osdr" ? `NASA PSI (${e.program})` : `NASA PSI/NTRS (${e.program})`,
             title: e.title,
             abstract: e.key_finding_en,
             date: String(e.year),
-            url: e.ntrs_url,
+            url: srcNorm === "osdr"
+                ? `https://psi.nasa.gov/physci/repo/search?q=${encodeURIComponent(e.program)}`
+                : e.ntrs_url,
             pdf_url: "",
         }));
         return { ok: true, source_status: "cached_live", count: items.length, items };
@@ -722,16 +677,41 @@
             .slice(0, 8000);
     }
 
+    function parseCellNumberJs(rawVal) {
+        if (rawVal === undefined || rawVal === null) return null;
+        if (typeof rawVal === "number") return Number.isFinite(rawVal) ? rawVal : null;
+        let s = String(rawVal).trim();
+        if (!s || ["na", "n/a", "nan", "null", "none", "-", "--", "tbd"].includes(s.toLowerCase())) return null;
+        if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(s)) return null;
+        s = s.replace(/%/g, "").replace(/±\s*\d+(?:\.\d+)?/g, "").trim();
+        const direct = Number(s);
+        if (!Number.isNaN(direct) && Number.isFinite(direct)) return direct;
+        const rng = s.match(/^\s*(-?\d+(?:\.\d+)?)\s*(?:-|–|—|\bto\b)\s*(-?\d+(?:\.\d+)?)\b/i);
+        if (rng) {
+            const a = parseFloat(rng[1]), b = parseFloat(rng[2]);
+            if (Number.isFinite(a) && Number.isFinite(b)) return (a + b) * 0.5;
+        }
+        const parts = s.split(/[;/|]/);
+        for (let i = 0; i < parts.length; i++) {
+            const m = parts[i].match(/^\s*(-?\d+(?:\.\d+)?)(?:\s*(?:atm|psia|psi|kpa|bar|torr|mmhg|cm\/s|m\/s|mm|s|sec|k|c|°c|g))?\s*$/i);
+            if (m) {
+                const v = parseFloat(m[1]);
+                if (Number.isFinite(v)) return v;
+            }
+        }
+        return null;
+    }
+
     function parseFuelStrJs(val) {
         const vl = String(val || "").toLowerCase().trim();
         if (!vl) return null;
         const cands = [
-            ["propane_cfig", ["propane_cfig", "propan", "propane", "cfig", "cfi-g"]],
-            ["n_heptane", ["n_heptane", "heptan", "heptane"]],
-            ["methanol", ["methanol", "metanol"]],
-            ["pmma", ["pmma", "akrilik", "acrylic"]],
-            ["sibal", ["sibal", "pamuk", "cotton"]],
-            ["nomex", ["nomex", "ht90", "spacesuit", "uzay giysisi"]],
+            ["propane_cfig", ["propane_cfig", "propan", "propane", "c3h8", "cfig", "cfi-g", "ethane", "c2h6", "etan", "ethylene", "etilen", "c2h4", "propene", "propylene", "c3h6", "butane", "butan", "c4h10", "methane", "metan", "ch4"]],
+            ["n_heptane", ["n_heptane", "n-heptane", "heptan", "heptane", "c7h16", "dodecane", "n-dodecane", "c12h26", "decane", "n-decane", "c10h22", "octane", "iso-octane", "isooctane", "c8h18", "hexadecane", "pentane", "jp-8", "jp8", "kerosene"]],
+            ["methanol", ["methanol", "metanol", "ch3oh", "ethanol", "etanol", "c2h5oh", "propanol", "isopropanol", "ipa", "butanol", "n-butanol"]],
+            ["pmma", ["pmma", "akrilik", "acrylic", "plexiglas", "perspex", "polymethyl", "teflon", "ptfe", "delrin", "polyoxymethylene", "pom", "polyethylene", "hdpe", "ldpe", "polypropylene", "polycarbonate", "lexan", "ultem", "pei", "silicone", "pvc", "nylon", "abs", "epoxy"]],
+            ["sibal", ["sibal", "pamuk", "cotton", "cellulose", "seluloz", "whatman", "paper", "kagit", "fabric", "fiberglass", "glass fabric", "kimwipe"]],
+            ["nomex", ["nomex", "ht90", "spacesuit", "uzay giysisi", "kevlar", "kapton", "polyimide", "pbi", "gore-tex", "orthofabric", "betacloth"]],
             ["hydrogen", ["hydrogen", "hidrojen"]],
         ];
         let bestFuel = null, bestPos = 1e9;
@@ -744,14 +724,18 @@
                 }
             });
         });
+        if (!bestFuel && /(?:^|[\s,;/(_-])h2(?:$|[\s,;/)_-])/.test(vl)) return "hydrogen";
         return bestFuel;
     }
 
     function parseDiluentStrJs(val) {
         const vl = String(val || "").trim().toUpperCase();
-        if (vl === "CO2" || vl.includes("CO2") || vl.includes("KARBONDIOKSIT")) return "CO2";
-        if (vl === "HE" || vl.includes("HELIUM") || vl.includes("HELYUM")) return "He";
-        if (vl === "N2" || vl.includes("N2") || vl.includes("AZOT") || vl.includes("NITROGEN")) return "N2";
+        if (!vl) return null;
+        if (vl === "CO2" || vl.includes("CO2") || vl.includes("KARBONDIOKSIT") || vl.includes("CARBON DIOXIDE")) return "CO2";
+        if (vl === "HE" || vl.includes("HELIUM") || vl.includes("HELYUM") || /\bHE\b/.test(vl)) return "He";
+        if (vl === "AR" || vl.includes("ARGON")) return "Ar";
+        if (vl === "XE" || vl.includes("XENON")) return "Xe";
+        if (vl === "N2" || vl.includes("N2") || vl.includes("AZOT") || vl.includes("NITROGEN") || vl === "AIR") return "N2";
         return null;
     }
 
@@ -767,27 +751,55 @@
     }
 
     function classifyTableColJs(colName) {
-        const kl = String(colName || "").trim().toLowerCase();
+        const kl = String(colName || "").trim().toLowerCase().replace(/\s+/g, " ");
         if (!kl) return null;
-        if (["t", "time", "time_s", "t_s", "zaman", "zaman_sn", "sec", "seconds"].includes(kl) || kl.includes("zaman") || kl.includes("time_s")) return "time_s";
+        if (["test name", "test_name", "test id", "test_id", "test #", "test number", "run id", "run_id", "point #", "sample id", "drop #", "droplet id", "flame id", "experiment id"].some((w) => kl.includes(w)) || ["test", "run", "trial", "test_no"].includes(kl)) return "test_id";
+        if (!["date", "ignition", "burn time", "delay", "duration", "lifetime", "extinct"].some((b) => kl.includes(b)) &&
+            (["t", "time", "time_s", "t_s", "zaman", "zaman_sn", "sec", "seconds"].includes(kl) || kl.includes("zaman") || kl.includes("time_s") || kl.includes("time (s)"))) return "time_s";
         if (kl === "faz_kodu" || kl === "phase_code") return "phase_code";
-        if (["faz_ve_fiziksel", "phase_desc", "fiziksel_durum", "faz", "phase", "stage"].some((w) => kl.includes(w))) return "phase_desc";
-        if (["fuel", "yakit", "material", "malzeme"].some((w) => kl.includes(w))) return "fuel";
-        if (["diluent", "seyreltici"].some((w) => kl.includes(w))) return "diluent";
+        if (!["gas phase", "liquid phase", "solid phase"].some((b) => kl.includes(b)) &&
+            ["faz_ve_fiziksel", "phase_desc", "fiziksel_durum", "faz", "phase", "stage"].some((w) => kl.includes(w))) return "phase_desc";
+        if (!["rate", "flow", "mass", "temp", "fraction", "mole", "conc", "width", "thick", "length", "diam", "size", "initial", "final"].some((b) => kl.includes(b)) &&
+            ["fuel", "yakit", "material", "malzeme", "sample type", "polymer", "hydrocarbon", "reactant"].some((w) => kl.includes(w))) return "fuel";
+        if (["diluent", "seyreltici", "balance gas", "inert gas"].some((w) => kl.includes(w))) return "diluent";
+        if (kl === "xhe" || kl === "x_he" || ((kl.includes("helium") || /\bhe\b/.test(kl)) && (kl.includes("mole") || kl.includes("frac") || kl.includes("%") || kl.includes("conc") || kl.includes("initial")))) return "diluent_he_frac";
+        if (kl === "xco2" || kl === "x_co2" || (kl.includes("co2") && (kl.includes("mole") || kl.includes("frac") || kl.includes("ambient") || kl.includes("initial") || kl.includes("%")))) return "diluent_co2_frac";
         if (["habitat", "kabin_tipi"].some((w) => kl.includes(w))) return "habitat";
-        if (["donanim", "facility", "hardware"].some((w) => kl.includes(w))) return "facility";
-        if (["deney_referans", "exp_ref", "exp_id", "ntrs"].some((w) => kl.includes(w))) return "exp_ref";
-        if (!kl.includes("co2") && !kl.includes("po2") && !kl.includes("h2o") && !kl.includes("ch2o") && !kl.includes("moc") &&
-            (kl.includes("oxygen") || kl.includes("oksijen") || /(?:^|[_\s])o2(?:$|[_\s])/.test(kl))) return "oxygen_pct";
-        if (!kl.includes("po2") && (kl.includes("psia") || ((kl.includes("pressure") || kl.includes("basinc")) && !kl.includes("kpa")))) return "pressure_psia";
-        if (!kl.includes("po2") && kl.includes("kpa")) return "pressure_kpa";
-        if (!kl.includes("yayilim") && !kl.includes("spread") && !kl.includes("mm_s") &&
-            ["airflow", "akis", "flow", "velocity", "u_cms", "fan_cm"].some((w) => kl.includes(w))) return "airflow_cms";
-        if (["gravity", "yercekimi", "g_level"].some((w) => kl.includes(w))) return "gravity_g";
-        if (kl.includes("d2") || kl.includes("d_sq")) return "d2_mm2";
-        if (!kl.includes("partikul") && !kl.includes("sisi") && !kl.includes("mist") && !kl.includes("aerosol") &&
-            ["damlacik", "droplet", "diameter", "d0", "d_mm", "numune_cap"].some((w) => kl.includes(w))) return "d0_mm";
-        if (["sicaklik", "temp_k", "flame_temp", "thermocouple"].some((w) => kl.includes(w))) return "temp_k";
+        if (["donanim", "facility", "hardware", "rack", "insert"].some((w) => kl.includes(w))) return "facility";
+        if (["deney_referans", "exp_ref", "exp_id", "ntrs", "psi_id"].some((w) => kl.includes(w))) return "exp_ref";
+
+        if (!["co2", "po2", "p_o2", "h2o", "ch2o", "moc", "sio2", "no2", "so2", "tio2", "flow", "rate", "sccm"].some((b) => kl.includes(b))) {
+            const isO2Name = kl === "xo2" || kl === "x_o2" || kl.includes("oxygen") || kl.includes("oksijen") || kl.includes("o initial ambient") || /(?:^|[_\s(%])o2(?:$|[_\s)%])/.test(kl);
+            if (isO2Name) {
+                if (kl === "xo2" || kl === "x_o2" || kl.includes("mole frac") || kl.includes("mol frac") || kl.includes("mole_frac") || kl.includes("volume frac")) return "oxygen_mole_frac";
+                return "oxygen_pct";
+            }
+        }
+
+        if (!kl.includes("po2") && !kl.includes("p_o2") && !kl.includes("partial") && !kl.includes("drop")) {
+            if (kl.includes("mmhg") || kl.includes("torr")) return "pressure_mmhg";
+            if (/\bbar\b|\bara\b/.test(kl)) return "pressure_bar";
+            if (/\batm\b|atmosphere/.test(kl) && !kl.includes("ambient atmosphere")) return "pressure_atm";
+            if (kl.includes("kpa")) return "pressure_kpa";
+            if (kl.includes("psia") || kl.includes("psi") || kl.includes("pressure") || kl.includes("basinc") || kl.includes("p_amb") || kl.includes("chamber p")) return "pressure_psia";
+        }
+
+        if (!["yayilim", "spread", "mm_s", "mm/s", "fuel", "burner", "nozzle", "sccm", "slpm", "mg/s", "g/s", "ml/min", "l/min", "restrictor", "fan display", "self-ext", "flow term", "mass flow", "volumetric"].some((b) => kl.includes(b))) {
+            if (["air rate", "air flow", "airflow", "concurrent flow", "oxidizer vel", "tunnel vel", "duct vel", "forced flow", "akis", "u_cms", "fan_cm", "air vel"].some((w) => kl.includes(w)) ||
+                ((kl.includes("flow") || kl.includes("velocity")) && (kl.includes("cm/s") || kl.includes("cm_s") || kl.includes("m/s"))) ||
+                kl === "air display") return "airflow_cms";
+        }
+
+        if (["gravity", "yercekimi", "g_level", "g-level", "microgravity"].some((w) => kl.includes(w))) return "gravity_g";
+        if (kl.includes("d2") || kl.includes("d_sq") || kl.includes("d^2")) return "d2_mm2";
+        if (!["partikul", "sisi", "mist", "aerosol", "wire", "igniter", "fiber"].some((b) => kl.includes(b)) &&
+            ["damlacik", "droplet", "diameter", "d0", "d_mm", "numune_cap", "nozzle", "burner size", "burner dia", "sphere dia", "rod dia"].some((w) => kl.includes(w))) return "d0_mm";
+
+        if (["sicaklik", "temp_k", "flame_temp", "thermocouple", "tad", "adiabatic flame", "peak burner t", "peak temp", "max temp"].some((w) => kl.includes(w))) {
+            if (/\(\s*°?c\s*\)|deg\s*c|celsius/.test(kl)) return "temp_c";
+            return "temp_k";
+        }
+        if (kl.includes("cool flame") || kl.includes("soguk alev")) return "cool_flag";
         if (!kl.includes("co2") && !kl.includes("smac") && (kl === "co" || kl.includes("co_ppm") || kl.includes("co_sensor"))) return "co_ppm";
         if (kl.includes("co2")) return "co2_ppm";
         if (kl.includes("ch2o") || kl.includes("formaldehit") || kl.includes("formaldehyde")) return "ch2o_ppm";
@@ -867,15 +879,108 @@
         return { k_meas: Number(kMeas.toFixed(3)), r2: Number(r2.toFixed(4)) };
     }
 
+    function convertO2ValJs(v, isMoleCol) {
+        if (v === null || v === undefined || !Number.isFinite(v) || v <= 0) return null;
+        if (isMoleCol) {
+            const pct = v <= 1.05 ? v * 100.0 : v;
+            return pct >= 3.0 && pct <= 100.0 ? pct : null;
+        }
+        if (v >= 0.03 && v <= 1.0) return v * 100.0;
+        if (v >= 3.0 && v <= 100.0) return v;
+        return null;
+    }
+
     function analyzeTabularRowsInBrowser(rows, filename) {
-        if (!rows || !rows.length) return null;
+        rows = (rows || []).filter((r) => r && Object.values(r).some((v) => String(v ?? "").trim() !== ""));
+        if (!rows.length) return null;
         const colMap = {};
         Object.keys(rows[0] || {}).forEach((rawK) => {
             const role = classifyTableColJs(rawK);
             if (role && !colMap[role]) colMap[role] = rawK;
         });
 
-        const groupedPhases = [];
+        const numList = (rList, roleKey) => {
+            const col = colMap[roleKey];
+            if (!col) return [];
+            const out = [];
+            rList.forEach((it) => {
+                const v = parseCellNumberJs(it[col]);
+                if (v !== null) out.push(v);
+            });
+            return out;
+        };
+
+        const firstStr = (rList, roleKey) => {
+            const col = colMap[roleKey];
+            if (!col) return "";
+            for (let i = 0; i < rList.length; i++) {
+                const s = String(rList[i][col] || "").trim();
+                if (s && !["na", "n/a", "null", "none", "-"].includes(s.toLowerCase())) return s;
+            }
+            return "";
+        };
+
+        const extractO2Values = (rList) => {
+            const out = [];
+            numList(rList, "oxygen_mole_frac").forEach((v) => {
+                const c = convertO2ValJs(v, true);
+                if (c !== null) out.push(c);
+            });
+            numList(rList, "oxygen_pct").forEach((v) => {
+                const c = convertO2ValJs(v, false);
+                if (c !== null) out.push(c);
+            });
+            return out;
+        };
+
+        const extractPressurePsia = (rList) => {
+            const out = [];
+            numList(rList, "pressure_psia").forEach((v) => {
+                const colL = String(colMap.pressure_psia || "").toLowerCase();
+                if (!colL.includes("psi") && v >= 0.2 && v <= 2.2) out.push(v * 14.6959);
+                else if (!colL.includes("psi") && v >= 45 && v <= 220) out.push(v / 6.89476);
+                else if (v >= 2.0 && v <= 35.0) out.push(v);
+            });
+            numList(rList, "pressure_atm").forEach((v) => { if (v >= 0.1 && v <= 3.0) out.push(v * 14.6959); });
+            numList(rList, "pressure_bar").forEach((v) => { if (v >= 0.1 && v <= 3.0) out.push(v * 14.5038); });
+            numList(rList, "pressure_kpa").forEach((v) => { if (v >= 15.0 && v <= 260.0) out.push(v / 6.89476); });
+            numList(rList, "pressure_mmhg").forEach((v) => { if (v >= 100.0 && v <= 1800.0) out.push(v / 51.7149); });
+            return out.filter((p) => p >= 2.0 && p <= 35.0);
+        };
+
+        const extractDiluent = (rList) => {
+            const dExp = parseDiluentStrJs(firstStr(rList, "diluent"));
+            if (dExp) return dExp;
+            const heV = numList(rList, "diluent_he_frac");
+            const co2V = numList(rList, "diluent_co2_frac");
+            const heHdr = String(colMap.diluent_he_frac || "").toLowerCase();
+            const co2Hdr = String(colMap.diluent_co2_frac || "").toLowerCase();
+            const heIsPct = heHdr.includes("%") || heHdr.includes("percent") || heHdr.includes("by vol");
+            const co2IsPct = co2Hdr.includes("%") || co2Hdr.includes("percent") || co2Hdr.includes("by vol");
+            const heMean = heV.length ? heV.reduce((a, b) => a + b, 0) / heV.length : 0;
+            const co2Mean = co2V.length ? co2V.reduce((a, b) => a + b, 0) / co2V.length : 0;
+            const hePct = (!heIsPct && heMean <= 1.05) ? heMean * 100 : heMean;
+            const co2Pct = (!co2IsPct && co2Mean <= 1.05) ? co2Mean * 100 : co2Mean;
+            if (hePct >= 15 && hePct >= co2Pct) return "He";
+            if (co2Pct >= 15) return "CO2";
+            return "N2";
+        };
+
+        const flowColLow = String(colMap.airflow_cms || "").toLowerCase();
+        const flowScale = (flowColLow.includes("m/s") && !flowColLow.includes("cm/s") && !flowColLow.includes("mm/s")) ? 100.0 : 1.0;
+        const fuelCounts = {};
+        if (colMap.fuel) {
+            rows.forEach((r) => {
+                const pf = parseFuelStrJs(String(r[colMap.fuel] || ""));
+                if (pf) fuelCounts[pf] = (fuelCounts[pf] || 0) + 1;
+            });
+        }
+        const domFuelKey = Object.keys(fuelCounts).sort((a, b) => fuelCounts[b] - fuelCounts[a])[0];
+        const fnLow = String(filename || "").toLowerCase();
+        const fnHint = parseFuelStrJs(fnLow) || ((fnLow.includes("bass") || fnLow.includes("sofie") || fnLow.includes("same")) ? "pmma" : (fnLow.includes("saffire") ? "sibal" : null));
+        const fallbackFuel = domFuelKey || fnHint || "n_heptane";
+
+        let groupedPhases = [];
         const phaseLookup = {};
         rows.forEach((r) => {
             const pCode = String((colMap.phase_code && r[colMap.phase_code]) || "").trim();
@@ -894,27 +999,61 @@
             phaseLookup[pKey].rows.push(r);
         });
 
-        const numList = (rList, roleKey) => {
-            const col = colMap[roleKey];
-            if (!col) return [];
-            const out = [];
-            rList.forEach((it) => {
-                if (it[col] === undefined || it[col] === null || it[col] === "") return;
-                const v = parseFloat(String(it[col]).replace(/%/g, "").trim());
-                if (!Number.isNaN(v)) out.push(v);
-            });
-            return out;
-        };
-
-        const firstStr = (rList, roleKey) => {
-            const col = colMap[roleKey];
-            if (!col) return "";
-            for (let i = 0; i < rList.length; i++) {
-                const s = String(rList[i][col] || "").trim();
-                if (s) return s;
+        // Akıllı Çoklu Test Gruplaması (Gerçek NASA PSI Experimental Table CSV'leri için)
+        if (groupedPhases.length === 1 && rows.length >= 2 && !colMap.phase_code && !colMap.phase_desc) {
+            const tCheck = numList(rows, "time_s");
+            const d2Raw = numList(rows, "d2_mm2");
+            const d0Raw = numList(rows, "d0_mm");
+            const d2Check = d2Raw.length ? d2Raw : d0Raw.map((x) => x * x);
+            const isMonotonicD2 = tCheck.length >= 3 && d2Check.length === tCheck.length && Boolean(fitD2SlopeJs(tCheck, d2Check));
+            if (!isMonotonicD2) {
+                if (rows.length <= 7) {
+                    groupedPhases = rows.map((r, rIdx) => {
+                        const tid = String((colMap.test_id && r[colMap.test_id]) || "").trim();
+                        return {
+                            key: `TEST_${rIdx + 1}`,
+                            code: tid || `TEST_${rIdx + 1}`,
+                            desc: tid ? `Test ${tid}` : `Test ${rIdx + 1}`,
+                            rows: [r],
+                        };
+                    });
+                } else {
+                    const buckets = {};
+                    const bucketList = [];
+                    rows.forEach((r) => {
+                        const rFuel = parseFuelStrJs(firstStr([r], "fuel")) || fallbackFuel;
+                        const rO2L = extractO2Values([r]);
+                        const rO2B = rO2L.length ? Math.round(rO2L[0] / 3.0) * 3 : 21;
+                        const rPL = extractPressurePsia([r]);
+                        const rPB = rPL.length ? Math.round(rPL[0] / 2.0) * 2 : 15;
+                        const rFL = numList([r], "airflow_cms").map((v) => v * flowScale);
+                        const rFB = rFL.length ? (rFL[0] < 0.8 ? 0 : (rFL[0] <= 10 ? 5 : (rFL[0] <= 24 ? 15 : 30))) : 2;
+                        const rGL = numList([r], "gravity_g");
+                        const rGB = rGL.length ? Math.round(rGL[0] * 10) / 10 : 0;
+                        const rDil = extractDiluent([r]);
+                        const bKey = `${rFuel}|${rO2B}|${rPB}|${rFB}|${rGB}|${rDil}`;
+                        if (!buckets[bKey]) {
+                            if (bucketList.length < 7) {
+                                const tid = String((colMap.test_id && r[colMap.test_id]) || "").trim();
+                                const bObj = {
+                                    key: bKey,
+                                    code: tid || `GRUP_${bucketList.length + 1}`,
+                                    desc: `${rFuel} • %${rO2B} O₂ • ${rPB} psia`,
+                                    rows: [],
+                                };
+                                buckets[bKey] = bObj;
+                                bucketList.push(bObj);
+                            } else {
+                                bucketList[bucketList.length - 1].rows.push(r);
+                                return;
+                            }
+                        }
+                        buckets[bKey].rows.push(r);
+                    });
+                    if (bucketList.length >= 2) groupedPhases = bucketList;
+                }
             }
-            return "";
-        };
+        }
 
         const avg = (arr, defVal) => (arr.length ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2)) : defVal);
 
@@ -927,27 +1066,30 @@
         groupedPhases.forEach((grp, gIdx) => {
             const idx = gIdx + 1;
             const pr = grp.rows;
-            const fuelId = parseFuelStrJs(firstStr(pr, "fuel")) || "n_heptane";
-            const diluent = parseDiluentStrJs(firstStr(pr, "diluent")) || "N2";
+            const fuelId = parseFuelStrJs(firstStr(pr, "fuel")) || fallbackFuel;
+            const diluent = extractDiluent(pr);
             let habitatId = parseHabitatStrJs(firstStr(pr, "habitat"));
 
-            const o2Vals = numList(pr, "oxygen_pct").filter((x) => x >= 5 && x <= 100);
-            const psiaVals = numList(pr, "pressure_psia").filter((x) => x >= 3 && x <= 25);
-            const kpaVals = numList(pr, "pressure_kpa").filter((x) => x >= 20 && x <= 180);
-            const flowVals = numList(pr, "airflow_cms").filter((x) => x >= 0 && x <= 50);
+            const o2Vals = extractO2Values(pr);
+            const psiaVals = extractPressurePsia(pr);
+            const flowVals = numList(pr, "airflow_cms").map((x) => x * flowScale).filter((x) => x >= 0 && x <= 60);
             const gravVals = numList(pr, "gravity_g").filter((x) => x >= 0 && x <= 2);
-            const d0Vals = numList(pr, "d0_mm").filter((x) => x >= 0.5 && x <= 10);
+            const d0Vals = numList(pr, "d0_mm").filter((x) => x >= 0.4 && x <= 25);
             const d2Vals = numList(pr, "d2_mm2").filter((x) => x >= 0.1 && x <= 100);
             const tVals = numList(pr, "time_s");
-            const tempVals = numList(pr, "temp_k");
+            const tempKVals = numList(pr, "temp_k").filter((x) => x >= 250 && x <= 3500);
+            const tempCVals = numList(pr, "temp_c").filter((x) => x >= 20 && x <= 3000).map((x) => x + 273.15);
+            const tempVals = tempKVals.concat(tempCVals);
             const coVals = numList(pr, "co_ppm");
             const ch2oVals = numList(pr, "ch2o_ppm");
             const mistVals = numList(pr, "mist_um");
             const aeroVals = numList(pr, "aerosol_um").filter((x) => x > 0);
+            const coolStr = firstStr(pr, "cool_flag").toLowerCase();
+            const rowCoolObserved = ["y", "yes", "true", "1", "evet", "observed", "cool"].includes(coolStr);
 
             const o2Mean = avg(o2Vals, 21.0);
-            const pPsia = psiaVals.length ? avg(psiaVals, 14.7) : (kpaVals.length ? Number((avg(kpaVals, 101.3) / 6.89476).toFixed(2)) : 14.7);
-            const flowMean = avg(flowVals, 2.4);
+            const pPsia = avg(psiaVals, 14.7);
+            const flowMean = Number(Math.min(45.0, avg(flowVals, 2.4)).toFixed(2));
             const gravMean = avg(gravVals, 0.0);
             const d0Init = d0Vals.length
                 ? Number(Math.max(0.8, Math.min(8.0, d0Vals[0])).toFixed(2))
@@ -987,7 +1129,7 @@
             const ch2oMax = ch2oVals.length ? Number(Math.max(...ch2oVals).toFixed(1)) : 0;
             const mistMax = mistVals.length ? Number(Math.max(...mistVals).toFixed(1)) : 0;
 
-            if (tel.cool_flame_active || (tempMean >= 500 && tempMean <= 820) || ch2oMax >= 40) hasCoolTelemetry = true;
+            if (tel.cool_flame_active || rowCoolObserved || (tempMean >= 500 && tempMean <= 820) || ch2oMax >= 40) hasCoolTelemetry = true;
             if (mistMax > 0 || grp.desc.toLowerCase().includes("mist") || grp.desc.toLowerCase().includes("bastirma") || diluent === "CO2") hasMistTelemetry = true;
             if (aeroVals.length) {
                 const mn = Math.min(...aeroVals), mx = Math.max(...aeroVals);
@@ -1024,7 +1166,7 @@
                 risk_score: tel.risk_score,
                 smac_s: tl.t_smac_125ppm_s ?? 999,
                 extinguished: Boolean(tel.extinguished),
-                cool_flame: Boolean(tel.cool_flame_active),
+                cool_flame: Boolean(tel.cool_flame_active || rowCoolObserved),
                 simulation: simRes,
             });
         });
@@ -1084,10 +1226,200 @@
         };
     }
 
+    async function inflateRawZipSlice(compSlice) {
+        if (typeof DecompressionStream === "undefined") {
+            throw new Error("DecompressionStream unsupported in this browser.");
+        }
+        const ds = new DecompressionStream("deflate-raw");
+        const writer = ds.writable.getWriter();
+        const reader = ds.readable.getReader();
+        const chunks = [];
+        let totalLen = 0;
+        const writeTask = (async () => {
+            try {
+                await writer.write(compSlice);
+                await writer.close();
+            } catch (_) {}
+        })();
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                if (value) {
+                    totalLen += value.byteLength;
+                    if (totalLen > 25 * 1024 * 1024) throw new Error("Archive exceeds 25 MB limit.");
+                    chunks.push(value);
+                }
+            }
+        } catch (err) {
+            if (!chunks.length) throw err;
+        }
+        await writeTask;
+        const out = new Uint8Array(totalLen);
+        let offset = 0;
+        chunks.forEach((c) => { out.set(c, offset); offset += c.byteLength; });
+        return out;
+    }
+
+    function readZipEntriesFromBuffer(arrayBuffer) {
+        const bytes = new Uint8Array(arrayBuffer);
+        const dv = new DataView(arrayBuffer);
+        const minEocd = Math.max(0, bytes.length - 65558);
+        let eocdPos = -1;
+        for (let p = bytes.length - 22; p >= minEocd; p--) {
+            if (dv.getUint32(p, true) === 0x06054b50) { eocdPos = p; break; }
+        }
+        if (eocdPos < 0) return [];
+        const totalEntries = dv.getUint16(eocdPos + 10, true);
+        const cdOffset = dv.getUint32(eocdPos + 16, true);
+        const dec = new TextDecoder("utf-8");
+        const entries = [];
+        let ptr = cdOffset;
+        for (let i = 0; i < totalEntries && ptr + 46 <= bytes.length; i++) {
+            if (dv.getUint32(ptr, true) !== 0x02014b50) break;
+            const compMethod = dv.getUint16(ptr + 10, true);
+            const compSize = dv.getUint32(ptr + 20, true);
+            const uncompSize = dv.getUint32(ptr + 24, true);
+            const nameLen = dv.getUint16(ptr + 28, true);
+            const extraLen = dv.getUint16(ptr + 30, true);
+            const commentLen = dv.getUint16(ptr + 32, true);
+            const localHdrOffset = dv.getUint32(ptr + 42, true);
+            const nameStr = dec.decode(bytes.subarray(ptr + 46, ptr + 46 + nameLen));
+            entries.push({ name: nameStr, compMethod, compSize, uncompSize, localHdrOffset });
+            ptr += 46 + nameLen + extraLen + commentLen;
+        }
+        return { bytes, dv, entries };
+    }
+
+    async function extractZipEntryBytes(zipInfo, entry) {
+        if (!entry || entry.uncompSize > 25 * 1024 * 1024) return new Uint8Array(0);
+        const { bytes, dv } = zipInfo;
+        const lh = entry.localHdrOffset;
+        if (lh + 30 > bytes.length || dv.getUint32(lh, true) !== 0x04034b50) return new Uint8Array(0);
+        const lfNameLen = dv.getUint16(lh + 26, true);
+        const lfExtraLen = dv.getUint16(lh + 28, true);
+        const dataStart = lh + 30 + lfNameLen + lfExtraLen;
+        const compSlice = bytes.subarray(dataStart, dataStart + entry.compSize);
+        if (entry.compMethod === 0) return compSlice;
+        if (entry.compMethod === 8) return await inflateRawZipSlice(compSlice);
+        return new Uint8Array(0);
+    }
+
+    async function parseXlsxBufferToCsvText(arrayBuffer) {
+        const zipInfo = readZipEntriesFromBuffer(arrayBuffer);
+        if (!zipInfo.entries || !zipInfo.entries.length) return "";
+        const dec = new TextDecoder("utf-8");
+        const domParser = new DOMParser();
+        const sharedStrings = [];
+        const ssEntry = zipInfo.entries.find((e) => e.name.toLowerCase() === "xl/sharedstrings.xml");
+        if (ssEntry) {
+            const ssBytes = await extractZipEntryBytes(zipInfo, ssEntry);
+            if (ssBytes.length) {
+                const doc = domParser.parseFromString(dec.decode(ssBytes), "application/xml");
+                const siNodes = doc.getElementsByTagName("si");
+                for (let i = 0; i < siNodes.length; i++) {
+                    const tNodes = siNodes[i].getElementsByTagName("t");
+                    let acc = "";
+                    for (let j = 0; j < tNodes.length; j++) acc += tNodes[j].textContent || "";
+                    sharedStrings.push(acc);
+                }
+            }
+        }
+        const sheetEntries = zipInfo.entries
+            .filter((e) => /^xl\/worksheets\/sheet\d*\.xml$/i.test(e.name))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        if (!sheetEntries.length) return "";
+        const shBytes = await extractZipEntryBytes(zipInfo, sheetEntries[0]);
+        if (!shBytes.length) return "";
+        const shDoc = domParser.parseFromString(dec.decode(shBytes), "application/xml");
+        const rowNodes = shDoc.getElementsByTagName("row");
+        const csvLines = [];
+        const colRefToIdx = (refStr) => {
+            const m = String(refStr || "").match(/^[A-Za-z]+/);
+            if (!m) return -1;
+            const letters = m[0].toUpperCase();
+            let idx = 0;
+            for (let k = 0; k < letters.length; k++) idx = idx * 26 + (letters.charCodeAt(k) - 64);
+            return idx - 1;
+        };
+        const escCsvCell = (val) => {
+            const s = String(val ?? "").replace(/\r?\n/g, " ").trim();
+            return (s.includes(",") || s.includes('"') || s.includes(";")) ? `"${s.replace(/"/g, '""')}"` : s;
+        };
+        const maxRows = Math.min(rowNodes.length, 600);
+        for (let r = 0; r < maxRows; r++) {
+            const cNodes = rowNodes[r].getElementsByTagName("c");
+            const rowArr = [];
+            let hasNonEmpty = false;
+            for (let c = 0; c < cNodes.length; c++) {
+                const cell = cNodes[c];
+                const cIdx = colRefToIdx(cell.getAttribute("r"));
+                const targetIdx = cIdx >= 0 ? cIdx : rowArr.length;
+                while (rowArr.length < targetIdx) rowArr.push("");
+                const cType = cell.getAttribute("t") || "";
+                let valStr = "";
+                if (cType === "inlineStr") {
+                    const tEls = cell.getElementsByTagName("t");
+                    for (let ti = 0; ti < tEls.length; ti++) valStr += tEls[ti].textContent || "";
+                } else {
+                    const vEl = cell.getElementsByTagName("v")[0];
+                    const rawV = vEl ? (vEl.textContent || "") : "";
+                    if (cType === "s") {
+                        const sIdx = parseInt(rawV, 10);
+                        valStr = (!Number.isNaN(sIdx) && sharedStrings[sIdx] !== undefined) ? sharedStrings[sIdx] : rawV;
+                    } else {
+                        valStr = rawV;
+                    }
+                }
+                if (valStr.trim() !== "") hasNonEmpty = true;
+                rowArr[targetIdx] = escCsvCell(valStr);
+            }
+            if (hasNonEmpty) csvLines.push(rowArr.join(","));
+        }
+        return csvLines.join("\n");
+    }
+
+    async function extractArchiveBufferInBrowser(arrayBuffer, origName) {
+        const low = String(origName || "").toLowerCase();
+        if (low.endsWith(".xlsx")) {
+            const csvText = await parseXlsxBufferToCsvText(arrayBuffer);
+            return { text: csvText, effectiveName: origName };
+        }
+        const zipInfo = readZipEntriesFromBuffer(arrayBuffer);
+        if (!zipInfo.entries || !zipInfo.entries.length) return { text: "", effectiveName: origName };
+        if (zipInfo.entries.some((e) => e.name.toLowerCase() === "xl/workbook.xml")) {
+            const csvText = await parseXlsxBufferToCsvText(arrayBuffer);
+            return { text: csvText, effectiveName: origName };
+        }
+        const rankEntry = (nm) => {
+            const nl = nm.toLowerCase();
+            if (nl.endsWith("/") || nl.includes("__macosx")) return 999;
+            const bonus = (nl.includes("experimental") || nl.includes("table") || nl.includes("summary")) ? -10 : 0;
+            if (nl.endsWith(".csv")) return 10 + bonus;
+            if (nl.endsWith(".tsv")) return 12 + bonus;
+            if (nl.endsWith(".xlsx")) return 15 + bonus;
+            if (nl.endsWith(".json")) return 20 + bonus;
+            if (nl.endsWith(".txt") || nl.endsWith(".md")) return 30 + bonus;
+            return 999;
+        };
+        const sorted = zipInfo.entries.slice().sort((a, b) => rankEntry(a.name) - rankEntry(b.name));
+        const best = sorted[0];
+        if (!best || rankEntry(best.name) >= 999) return { text: "", effectiveName: origName };
+        const innerBytes = await extractZipEntryBytes(zipInfo, best);
+        if (!innerBytes.length) return { text: "", effectiveName: origName };
+        const baseInner = best.name.split("/").pop() || origName;
+        if (best.name.toLowerCase().endsWith(".xlsx")) {
+            const subBuf = innerBytes.buffer.slice(innerBytes.byteOffset, innerBytes.byteOffset + innerBytes.byteLength);
+            const csvText = await parseXlsxBufferToCsvText(subBuf);
+            return { text: csvText, effectiveName: `${origName} (${baseInner})` };
+        }
+        return { text: new TextDecoder("utf-8").decode(innerBytes), effectiveName: `${origName} (${baseInner})` };
+    }
+
     async function analyzeUploadedMediaInBrowser(formData) {
         const file = formData && formData.get ? formData.get("file") : null;
         if (!file) return { ok: false, error: "Dosya bulunamadı / No file provided." };
-        const name = file.name || "uploaded_file";
+        let name = file.name || "uploaded_file";
         const lower = name.toLowerCase();
 
         if (file.type.startsWith("image/") || /\.(png|jpg|jpeg|webp|bmp)$/.test(lower)) {
@@ -1146,7 +1478,12 @@
         }
 
         let text = "";
-        if (lower.endsWith(".pdf")) {
+        if (lower.endsWith(".xlsx") || lower.endsWith(".zip")) {
+            const ab = await file.arrayBuffer();
+            const archRes = await extractArchiveBufferInBrowser(ab, name);
+            text = archRes.text || "";
+            name = archRes.effectiveName || name;
+        } else if (lower.endsWith(".pdf")) {
             const ab = await file.arrayBuffer();
             text = extractReadableTextFromPdfBuffer(ab);
         } else {
@@ -1155,7 +1492,7 @@
 
         ragDocs.push({ doc_id: `USR-${Date.now()}`, title: name, source: "Browser Local File", url: "", text: text.slice(0, 12000) });
 
-        // 1. Çok fazlı JSON / CSV / TSV tablo çözümlemesi
+        // 1. Çok fazlı JSON / CSV / TSV / XLSX / ZIP tablo çözümlemesi
         const trimmed = text.replace(/^\uFEFF/, "").trim();
         let tabRes = null;
         if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
@@ -1190,9 +1527,9 @@
             };
         }
 
-        // 2. Serbest metin / PDF çıkarımı (sıkı kelime sınırı ile O2 okuma)
+        // 2. Serbest metin / PDF çıkarımı (sıkı kelime sınırı + birim dönüşümleri)
         const extracted = {
-            fuel_id: parseFuelStrJs(trimmed) || "n_heptane",
+            fuel_id: parseFuelStrJs(trimmed) || parseFuelStrJs(name) || "n_heptane",
             gravity_g: /0\.16|lunar|moon/i.test(trimmed) ? 0.16 : (/0\.38|mars/i.test(trimmed) ? 0.38 : (/1\.0\s*g|earth/i.test(trimmed) ? 1.0 : 0.0)),
             oxygen_pct: 21.0,
             pressure_psia: 14.7,
@@ -1200,13 +1537,23 @@
             droplet_d0_mm: 3.2,
             diluent: "N2",
         };
-        const o2Match = trimmed.match(/(\d{1,3}(?:\.\d+)?)\s*%\s*(?:o2|o₂|oxygen|oksijen)\b/i) || trimmed.match(/(?:^|[^a-z0-9])(?:o2|o₂|oxygen|oksijen)\s*[:=]\s*%?\s*(\d{1,3}(?:\.\d+)?)/i);
-        const pMatch = trimmed.match(/(\d{1,2}(?:\.\d+)?)\s*psia/i);
-        const kpaMatch = trimmed.match(/(\d{2,3}(?:\.\d+)?)\s*kpa/i);
-        const uMatch = trimmed.match(/(\d{1,2}(?:\.\d+)?)\s*cm\/s/i);
-        if (o2Match) extracted.oxygen_pct = Math.min(100, Math.max(5, parseFloat(o2Match[1])));
-        if (pMatch) extracted.pressure_psia = Math.min(20, Math.max(3.5, parseFloat(pMatch[1])));
-        else if (kpaMatch) extracted.pressure_psia = Number(Math.min(20, Math.max(3.5, parseFloat(kpaMatch[1]) / 6.89476)).toFixed(2));
+        const o2Match = trimmed.match(/(\d{1,3}(?:\.\d+)?)\s*%\s*(?:o2|o₂|oxygen|oksijen)\b/i) || trimmed.match(/(?:^|[^a-z0-9])(?:x_?o2|o2|o₂|oxygen|oksijen)\s*(?:mole\s*fraction)?\s*[:=]\s*%?\s*(\d{1,3}(?:\.\d+)?)/i);
+        const pMatch = trimmed.match(/(\d{1,2}(?:\.\d+)?)\s*psia\b/i);
+        const atmMatch = trimmed.match(/(\d{1,2}(?:\.\d+)?)\s*atm\b/i);
+        const barMatch = trimmed.match(/(\d{1,2}(?:\.\d+)?)\s*bar\b/i);
+        const kpaMatch = trimmed.match(/(\d{2,3}(?:\.\d+)?)\s*kpa\b/i);
+        const torrMatch = trimmed.match(/(\d{3,4}(?:\.\d+)?)\s*(?:torr|mmhg)\b/i);
+        const uMatch = trimmed.match(/(\d{1,2}(?:\.\d+)?)\s*cm\/s\b/i);
+        if (o2Match) {
+            const rawO2 = parseFloat(o2Match[1]);
+            const convO2 = (rawO2 >= 0.03 && rawO2 <= 1.0) ? rawO2 * 100.0 : rawO2;
+            extracted.oxygen_pct = Number(Math.min(100, Math.max(5, convO2)).toFixed(2));
+        }
+        if (pMatch) extracted.pressure_psia = Math.min(25, Math.max(3.0, parseFloat(pMatch[1])));
+        else if (atmMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(atmMatch[1]) * 14.6959)).toFixed(2));
+        else if (barMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(barMatch[1]) * 14.5038)).toFixed(2));
+        else if (kpaMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(kpaMatch[1]) / 6.89476)).toFixed(2));
+        else if (torrMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(torrMatch[1]) / 51.7149)).toFixed(2));
         if (uMatch) extracted.airflow_cms = Math.min(45, Math.max(0, parseFloat(uMatch[1])));
 
         const sim = simulateCombustionClient(extracted);
@@ -1255,7 +1602,7 @@
 
         if (
             mediaCtx &&
-            (hasAnyTerm(nq, ["yukledigim", "ekli", "dosya", "gorsel", "resim", "fotograf", "csv", "pdf", "json", "veriyi", "tabloyu", "veri seti", "tum ozellik", "butun ozellik", "uploaded", "attached", "image", "dataset", "file"]) ||
+            (hasAnyTerm(nq, ["yukledigim", "ekli", "dosya", "gorsel", "resim", "fotograf", "csv", "xlsx", "excel", "zip", "tsv", "pdf", "json", "veriyi", "tabloyu", "veri seti", "tum ozellik", "butun ozellik", "uploaded", "attached", "image", "dataset", "file"]) ||
                 ["analiz et", "bu veriyi analiz et", "incele", "degerlendir", "analyze", "analyze this", "evaluate"].includes(nq))
         ) {
             return "uploaded_media";
@@ -1316,7 +1663,9 @@
         const tel = sim.telemetry;
         const fv = sim.flight_validation;
         const tl = sim.scenario_timeline;
+        const call = sim.callouts || {};
         const isEn = lang === "en";
+        const regBadge = (isEn ? call.badge_en : call.badge_tr) || tel.regime;
         const nq = normQueryAscii(msg);
         const intent = classifyBrowserIntent(msg, mediaCtx);
 
@@ -1333,7 +1682,7 @@
                 reply: isEn
                     ? [
                           `### ALTAR-NASA v5.1 — Interactive Engineering & Scientific Capabilities`,
-                          `Currently locked onto your live 3D chamber (**${inp.fuel_name_en}** at \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → **\`${tel.regime}\`**, Risk \`${tel.risk_score}/100\`). Ask me to compute or analyze any specific scenario:`,
+                          `Currently locked onto your live 3D chamber (**${inp.fuel_name_en}** at \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → **${regBadge}**, Risk \`${tel.risk_score}/100\`). Ask me to compute or analyze any specific scenario:`,
                           ``,
                           `| Capability Domain | Live Calculation Executed | Example Question You Can Type |`,
                           `| :--- | :--- | :--- |`,
@@ -1342,11 +1691,11 @@
                           `| **EVA Suit & Rover Comparison** | Live table comparing ISS (\`14.7 psia\`), Lunar Rover (\`10.2 psia / 32% O₂\`), and EVA Suit (\`4.3 psia / 100% O₂\`) | *"Compare EVA spacesuit and Lunar Rover flammability risks."* |`,
                           `| **15 NASA PSI Investigations** | Deep-dive into \`FLEX\`, \`CFI-G\`, \`BASS\`, \`SPICE\`, \`SLISE\`, \`Saffire\`, \`SoFIE\`, \`DAFT\` & intra-run matrices | *"Explain Saffire-V test variations and CFI-G findings."* |`,
                           `| **ECLSS & Fire Suppression** | \`NASA-STD-6001B\` Halon 1301 ban, \`SoFIE-MIST\` water mist, \`SMAC 125 ppm CO\` clock, Cool Flame sensing | *"Why is Halon 1301 banned and how fast does CO hit SMAC?"* |`,
-                          `| **Image / Dataset Analyzer** | In-browser pixel chemiluminescence/soot segmentation (\`.png/.jpg\`) & \`.csv/.json/.pdf\` extraction | Upload a file on the left and ask *"Analyze my uploaded file"* |`,
+                          `| **Image / Dataset Analyzer** | In-browser pixel chemiluminescence/soot segmentation (\`.png/.jpg\`) & \`.csv/.xlsx/.zip/.pdf\` extraction | Upload a file on the left and ask *"Analyze my uploaded file"* |`,
                       ].join("\n")
                     : [
                           `### ALTAR-NASA v5.1 — Yapabileceğim Canlı Hesaplama ve Mühendislik Analizleri`,
-                          `Şu anda aktif 3B yanma odanıza kilitliyim (**${inp.fuel_name_tr}** • \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → **\`${tel.regime}\`**, Risk \`${tel.risk_score}/100\`). Bana doğrudan şu hesaplama ve sorguları yaptırabilirsiniz:`,
+                          `Şu anda aktif 3B yanma odanıza kilitliyim (**${inp.fuel_name_tr}** • \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → **${regBadge}**, Risk \`${tel.risk_score}/100\`). Bana doğrudan şu hesaplama ve sorguları yaptırabilirsiniz:`,
                           ``,
                           `| Analiz Yeteneği | Arka Planda Yürüttüğüm Canlı İşlem | Doğrudan Sorabileceğiniz Örnek Soru |`,
                           `| :--- | :--- | :--- |`,
@@ -1355,7 +1704,7 @@
                           `| **Giysi & Gezgin Atmosfer Kıyaslaması** | ISS (\`14.7 psia\`), Ay Gezgini (\`10.2 psia / %32 O₂\`) ve EVA Giysisi (\`4.3 psia / %100 O₂\`) yanıcılık matrisi | *"Uzay giysisi ile basınçlı Ay gezginini sayısal kıyasla."* |`,
                           `| **15 NASA PSI Deneyi & Raf Sorgusu** | \`FLEX\`, \`CFI\`, \`ACME CFI-G\`, \`BASS\`, \`SPICE\`, \`SLISE\`, \`Saffire\`, \`SoFIE\`, \`DAFT\` bulguları ve varyasyon tablosu | *"Saffire deneyinde neler sabit tutuldu, neler değiştirildi?"* |`,
                           `| **ECLSS Yaşam Saati & Söndürme** | \`NASA-STD-6001B\` Halon 1301 yasağı, \`SoFIE-MIST\` su sisi, \`SMAC 125 ppm CO\` saati ve Soğuk Alev tespiti | *"Uzay aracında Halon 1301 neden yasak?"* |`,
-                          `| **Görsel & Veri Dosyası Çözümleme** | Tarayıcı RAM'inde alev fotoğrafı (\`.png/.jpg\`) piksel analizi ve \`.csv/.json/.pdf\` parametre çıkarımı | Soldan dosya seçip *"Yüklediğim veriyi analiz et"* yazın |`,
+                          `| **Görsel & Veri Dosyası Çözümleme** | Tarayıcı RAM'inde alev fotoğrafı (\`.png/.jpg\`) piksel analizi ve \`.csv/.xlsx/.zip/.pdf\` parametre çıkarımı | Soldan dosya seçip *"Yüklediğim veriyi analiz et"* yazın |`,
                       ].join("\n"),
                 citations: [],
             };
@@ -1396,14 +1745,14 @@
                     ? [
                           `### ALTAR-NASA v5.1 — Decision Support Kernel Online`,
                           `- **Active 3D Chamber Lock:** \`${inp.fuel_name_en}\` (\`${inp.geometry_3d}\`) | \`${inp.gravity_g} G\` | \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`) | \`U = ${inp.airflow_cms} cm/s\``,
-                          `- **Computed State:** Regime **\`${tel.regime}\`** | Flame Temp \`${tel.flame_temp_k} K\` | Critical \`MOC = ${tel.moc_pct}% O₂\` | Fire Risk **\`${tel.risk_score}/100\`**`,
+                          `- **Computed State:** Regime **${regBadge}** | Flame Temp \`${tel.flame_temp_k} K\` | Critical \`MOC = ${tel.moc_pct}% O₂\` | Fire Risk **\`${tel.risk_score}/100\`**`,
                           ``,
                           `Ask me any targeted question—such as deriving \`Spalding B_oq\`, sweeping airflow or gravity (\`0G vs 0.16G Moon\`), comparing \`EVA Suit\` vs \`Lunar Rover\`, or inspecting \`FLEX\`, \`Saffire\`, \`SoFIE-MIST\`, or \`DAFT\`.`,
                       ].join("\n")
                     : [
                           `### ALTAR-NASA v5.1 — Kanıt Sentezi ve Karar Destek Çekirdeği Hazır`,
                           `- **Aktif 3B Yanma Odası Kilidi:** \`${inp.fuel_name_tr}\` (\`${inp.geometry_3d}\`) | \`${inp.gravity_g} G\` | \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`) | \`U = ${inp.airflow_cms} cm/s\``,
-                          `- **Anlık Çözücü Durumu:** Rejim **\`${tel.regime}\`** | Alev Sıcaklığı \`${tel.flame_temp_k} K\` | Kritik \`MOC = %${tel.moc_pct} O₂\` | Yangın Riski **\`${tel.risk_score}/100\`**`,
+                          `- **Anlık Çözücü Durumu:** Rejim **${regBadge}** | Alev Sıcaklığı \`${tel.flame_temp_k} K\` | Kritik \`MOC = %${tel.moc_pct} O₂\` | Yangın Riski **\`${tel.risk_score}/100\`**`,
                           ``,
                           `Bana belirli bir fiziksel denklemi (\`Spalding B_oq\`, \`Sherwood Sh\`, \`Damköhler Da\`), parametre değişim senaryosunu (*"Akış hızını artırırsam ne olur?"*), \`EVA Giysisi vs. Ay Gezgini\` kıyaslamasını veya merak ettiğiniz bir NASA PSI deneyini (\`FLEX\`, \`Saffire\`, \`SoFIE-MIST\`, \`DAFT\`) doğrudan sorabilirsiniz.`,
                       ].join("\n"),
@@ -1709,8 +2058,8 @@
             const pgNoteTr = pgInfo.show_banner && pgInfo.tr ? `- **Kısmi Yerçekimi Sınırlandırması (0G-1G):** ${pgInfo.tr}\n` : "";
             return {
                 reply: isEn
-                    ? `### 1. Uploaded Dataset & Multi-Phase Telemetry Audit\n${mediaCtx}\n\n### 2. Synchronized 3D Chamber, Governing Equations & ISS Flight Validation\n- **Active 3D State (\`${inp.fuel_name_en}\` • \`${inp.geometry_3d}\`):** \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`${inp.pressure_psia} psia\`, \`${inp.airflow_cms} cm/s\` -> **\`${tel.regime}\`** (\`T_f = ${tel.flame_temp_k} K\`, Spread \`${tel.flame_spread_mm_s} mm/s\`, Risk **\`${tel.risk_score}/100\`**).\n- **Dimensionless Transport & Kinetics:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`R_f/R_d = ${tel.standoff_ratio}\` | \`Re = ${tel.reynolds_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Ra = ${tel.rayleigh_number}\` | \`Ri = ${tel.richardson_number}\` | \`Da = ${tel.damkohler_number}\` | \`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\` | \`MOC = ${tel.moc_pct}% O₂\`.\n- **ISS Flight Telemetry Fit:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` (${fv.campaign}).\n${pgNoteEn}\n### 3. Ranked NASA PSI Investigations Across Orbital Hardware\n${expLines}\n\n### 4. Life Support Clock (ECLSS), Non-Halon Suppression & Earth Applications\n- **Life Support Clock (\`${tl.habitat_name_en || "ISS Module"}\`):** Alarm \`+${tl.t_alarm_s} s\` | \`SMAC 125 ppm CO\` limit in **\`${tl.t_smac_125ppm_s} s\`** | Crew response CO \`${tl.co_at_response_ppm} ppm\`.\n- **NASA-STD-6001B Protocol:** **(1)** Cut HVAC ventilation (\`${inp.airflow_cms} -> 0 cm/s\`), **(2)** Isolate power bus, **(3)** Discharge **25-40 µm Fine Water Mist (SoFIE-MIST)** or CO₂/N₂ (*Halon 1301 prohibited due to toxic HF/HBr*).\n- **Terrestrial Transfers:** Sub-50 µm clean water-mist extinguishers, **SAME/DAFT** dust-immune smoke sensors, **PBI/Nomex** firefighter gear & composite **SCBA** cylinders, and low-emission **HCCI** engine kinetics.`
-                    : `### 1. Yüklenen Veri Kaynağı ve Çok Fazlı Telemetri Denetimi\n${mediaCtx}\n\n### 2. Senkronize 3B Yanma Odası, Boyutsuz Denklemler ve ISS Doğrulaması\n- **Aktif 3B Sahne (\`${inp.fuel_name_tr}\` • \`${inp.geometry_3d}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`${inp.pressure_psia} psia\`, \`${inp.airflow_cms} cm/s\` -> **\`${tel.regime}\`** (\`T_f = ${tel.flame_temp_k} K\`, Yayılma \`${tel.flame_spread_mm_s} mm/s\`, Risk **\`${tel.risk_score}/100\`**).\n- **Boyutsuz Taşınım ve Kinetik:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`R_f/R_d = ${tel.standoff_ratio}\` | \`Re = ${tel.reynolds_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Ra = ${tel.rayleigh_number}\` | \`Ri = ${tel.richardson_number}\` | \`Da = ${tel.damkohler_number}\` | \`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\` | \`MOC = %${tel.moc_pct} O₂\`.\n- **ISS Uçuş Telemetrisi Uyumu:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` (${fv.campaign}).\n${pgNoteTr}\n### 3. Eşleşen NASA PSI Deneyleri ve Donanım Kıyaslaması\n${expLines}\n\n### 4. Yaşam Destek Saati (ECLSS), Su Sisi Söndürme ve Dünya Uygulamaları\n- **Yaşam Destek Saati (\`${tl.habitat_name_tr || "ISS Modülü"}\`):** Sensör alarmı \`+${tl.t_alarm_s} sn\` | Kritik \`SMAC 125 ppm CO\` süresi **\`${tl.t_smac_125ppm_s} sn\`** | Müdahale anı CO \`${tl.co_at_response_ppm} ppm\`.\n- **NASA-STD-6001B Müdahale Sırası:** **(1)** Havalandırma fanlarını kapat (\`${inp.airflow_cms} -> 0 cm/s\`), **(2)** Elektrik hattını izole et, **(3)** **25-40 µm İnce Su Sisi (SoFIE-MIST)** veya CO₂/N₂ uygula (*Halon 1301 toksik HF/HBr üretimi nedeniyle yasaktır*).\n- **Dünya Uygulamaları:** **SoFIE-MIST** temiz su sisli yangın söndürme, **SAME/DAFT** toz-bağışıklı lazer duman dedektörleri, **PBI/Nomex** itfaiyeci koruyucu giysileri, hafif **SCBA** kompozit solunum tüpleri ve düşük emisyonlu **HCCI** motor kinetiği.`,
+                    ? `### 1. Uploaded Dataset & Multi-Phase Telemetry Audit\n${mediaCtx}\n\n### 2. Synchronized 3D Chamber, Governing Equations & ISS Flight Validation\n- **Active 3D State (\`${inp.fuel_name_en}\` • \`${inp.geometry_3d}\`):** \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`${inp.pressure_psia} psia\`, \`${inp.airflow_cms} cm/s\` -> **${regBadge}** (\`T_f = ${tel.flame_temp_k} K\`, Spread \`${tel.flame_spread_mm_s} mm/s\`, Risk **\`${tel.risk_score}/100\`**).\n- **Dimensionless Transport & Kinetics:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`R_f/R_d = ${tel.standoff_ratio}\` | \`Re = ${tel.reynolds_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Ra = ${tel.rayleigh_number}\` | \`Ri = ${tel.richardson_number}\` | \`Da = ${tel.damkohler_number}\` | \`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\` | \`MOC = ${tel.moc_pct}% O₂\`.\n- **ISS Flight Telemetry Fit:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` (${fv.campaign}).\n${pgNoteEn}\n### 3. Ranked NASA PSI Investigations Across Orbital Hardware\n${expLines}\n\n### 4. Life Support Clock (ECLSS), Non-Halon Suppression & Earth Applications\n- **Life Support Clock (\`${tl.habitat_name_en || "ISS Module"}\`):** Alarm \`+${tl.t_alarm_s} s\` | \`SMAC 125 ppm CO\` limit in **\`${tl.t_smac_125ppm_s} s\`** | Crew response CO \`${tl.co_at_response_ppm} ppm\`.\n- **NASA-STD-6001B Protocol:** **(1)** Cut HVAC ventilation (\`${inp.airflow_cms} -> 0 cm/s\`), **(2)** Isolate power bus, **(3)** Discharge **25-40 µm Fine Water Mist (SoFIE-MIST)** or CO₂/N₂ (*Halon 1301 prohibited due to toxic HF/HBr*).\n- **Terrestrial Transfers:** Sub-50 µm clean water-mist extinguishers, **SAME/DAFT** dust-immune smoke sensors, **PBI/Nomex** firefighter gear & composite **SCBA** cylinders, and low-emission **HCCI** engine kinetics.`
+                    : `### 1. Yüklenen Veri Kaynağı ve Çok Fazlı Telemetri Denetimi\n${mediaCtx}\n\n### 2. Senkronize 3B Yanma Odası, Boyutsuz Denklemler ve ISS Doğrulaması\n- **Aktif 3B Sahne (\`${inp.fuel_name_tr}\` • \`${inp.geometry_3d}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`${inp.pressure_psia} psia\`, \`${inp.airflow_cms} cm/s\` -> **${regBadge}** (\`T_f = ${tel.flame_temp_k} K\`, Yayılma \`${tel.flame_spread_mm_s} mm/s\`, Risk **\`${tel.risk_score}/100\`**).\n- **Boyutsuz Taşınım ve Kinetik:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`R_f/R_d = ${tel.standoff_ratio}\` | \`Re = ${tel.reynolds_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Ra = ${tel.rayleigh_number}\` | \`Ri = ${tel.richardson_number}\` | \`Da = ${tel.damkohler_number}\` | \`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\` | \`MOC = %${tel.moc_pct} O₂\`.\n- **ISS Uçuş Telemetrisi Uyumu:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` (${fv.campaign}).\n${pgNoteTr}\n### 3. Eşleşen NASA PSI Deneyleri ve Donanım Kıyaslaması\n${expLines}\n\n### 4. Yaşam Destek Saati (ECLSS), Su Sisi Söndürme ve Dünya Uygulamaları\n- **Yaşam Destek Saati (\`${tl.habitat_name_tr || "ISS Modülü"}\`):** Sensör alarmı \`+${tl.t_alarm_s} sn\` | Kritik \`SMAC 125 ppm CO\` süresi **\`${tl.t_smac_125ppm_s} sn\`** | Müdahale anı CO \`${tl.co_at_response_ppm} ppm\`.\n- **NASA-STD-6001B Müdahale Sırası:** **(1)** Havalandırma fanlarını kapat (\`${inp.airflow_cms} -> 0 cm/s\`), **(2)** Elektrik hattını izole et, **(3)** **25-40 µm İnce Su Sisi (SoFIE-MIST)** veya CO₂/N₂ uygula (*Halon 1301 toksik HF/HBr üretimi nedeniyle yasaktır*).\n- **Dünya Uygulamaları:** **SoFIE-MIST** temiz su sisli yangın söndürme, **SAME/DAFT** toz-bağışıklı lazer duman dedektörleri, **PBI/Nomex** itfaiyeci koruyucu giysileri, hafif **SCBA** kompozit solunum tüpleri ve düşük emisyonlu **HCCI** motor kinetiği.`,
                 citations: defaultCitations.slice(0, 5),
             };
         }
@@ -1724,7 +2073,7 @@
                 return {
                     reply: [
                         `### 1. Microgravity & Partial-Gravity Governing Physics Synthesis`,
-                        `- **Active State (${inp.fuel_name_en}):** Regime **\`${tel.regime}\`** at \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\` (Risk: **\`${tel.risk_score}/100\`**).`,
+                        `- **Active State (${inp.fuel_name_en}):** Regime **${regBadge}** at \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\` (Risk: **\`${tel.risk_score}/100\`**).`,
                         `- **Analytical Transport & Kinetics:** Burning rate \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, Spalding \`B_oq = ${tel.spalding_b_number}\`, Sherwood \`Sh = ${tel.sherwood_number}\`, Damköhler \`Da = ${tel.damkohler_number}\`, radiative loss \`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\`, critical \`MOC = ${tel.moc_pct}% O₂\`.`,
                         `- **ISS Flight Telemetry Validation:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` against **${fv.campaign}**.`,
                         mediaCtx ? `- **Attached Context:** ${mediaCtx}` : ``,
@@ -1748,7 +2097,7 @@
             return {
                 reply: [
                     `### 1. Mikroçekim ve Kısmi Yerçekimi Fiziksel Denklem Sentezi`,
-                    `- **Aktif Durum (${inp.fuel_name_tr}):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.po2_psia} psia\`) ve \`U = ${inp.airflow_cms} cm/s\` koşullarında **\`${tel.regime}\`** rejimi aktiftir (Yangın Riski: **\`${tel.risk_score}/100\`**).`,
+                    `- **Aktif Durum (${inp.fuel_name_tr}):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.po2_psia} psia\`) ve \`U = ${inp.airflow_cms} cm/s\` koşullarında **${regBadge}** rejimi aktiftir (Yangın Riski: **\`${tel.risk_score}/100\`**).`,
                     `- **Boyutsuz Taşınım ve Yanma Sabitleri:** \`d²\` yanma hızı \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, Spalding \`B_oq = ${tel.spalding_b_number}\`, Sherwood \`Sh = ${tel.sherwood_number}\`, Damköhler \`Da = ${tel.damkohler_number}\`, radyatif kayıp \`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\` ve kritik \`MOC = %${tel.moc_pct} O₂\`.`,
                     `- **ISS Uçuş Telemetrisi Doğrulaması:** **${fv.campaign}** uçuş noktalarıyla \`R² = ${fv.r_squared}\` ve \`RMSE = ${fv.rmse}\` uyumu doğrulandı.`,
                     mediaCtx ? `- **Ekli Dosya / Görsel / Web Bağlamı:** ${mediaCtx}` : ``,
@@ -1808,7 +2157,7 @@
                       fuelLine,
                       `- **Governing Physical Constraint (\`${bestDir.id} • ${bestDir.code}\`):** ${bestDir.rule_en}`,
                       topRag && topRag.sc > 0.05 ? `- **Corpus Match (\`${topRag.d.title}\`):** ${topRag.d.text.slice(0, 280)}` : ``,
-                      `- **Live 3D Chamber Coupling (\`${inp.fuel_name_en}\`):** At \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\`, active regime is **\`${tel.regime}\`** (\`T_f = ${tel.flame_temp_k} K\`, \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, \`Sh = ${tel.sherwood_number}\`, \`Da = ${tel.damkohler_number}\`, \`MOC = ${tel.moc_pct}% O₂\`, Risk **\`${tel.risk_score}/100\`**).`,
+                      `- **Live 3D Chamber Coupling (\`${inp.fuel_name_en}\`):** At \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\`, active regime is **${regBadge}** (\`T_f = ${tel.flame_temp_k} K\`, \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, \`Sh = ${tel.sherwood_number}\`, \`Da = ${tel.damkohler_number}\`, \`MOC = ${tel.moc_pct}% O₂\`, Risk **\`${tel.risk_score}/100\`**).`,
                       `- **Matched NASA PSI Investigations:**`,
                       `  1. **${e1.program} (\`${e1.exp_id}\` • [NTRS #${e1.ntrs_id}](${e1.ntrs_url}))** — ${e1.key_finding_en}`,
                       `  2. **${e2.program} (\`${e2.exp_id}\` • [NTRS #${e2.ntrs_id}](${e2.ntrs_url}))** — ${e2.key_finding_en}`,
@@ -1818,7 +2167,7 @@
                       fuelLine,
                       `- **İlgili Fiziksel Kısıt ve Yasa (\`${bestDir.id} • ${bestDir.code}\`):** ${bestDir.rule_tr}`,
                       topRag && topRag.sc > 0.05 ? `- **Bilgi Tabanı Kanıt Eşleşmesi (\`${topRag.d.title}\`):** ${topRag.d.text.slice(0, 280)}` : ``,
-                      `- **Aktif 3B Odanızla Sayısal Bağlantı (\`${inp.fuel_name_tr}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\` koşullarında **\`${tel.regime}\`** rejimi aktiftir (\`T_f = ${tel.flame_temp_k} K\`, \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, \`Sh = ${tel.sherwood_number}\`, \`Da = ${tel.damkohler_number}\`, \`MOC = %${tel.moc_pct} O₂\`, Risk **\`${tel.risk_score}/100\`**).`,
+                      `- **Aktif 3B Odanızla Sayısal Bağlantı (\`${inp.fuel_name_tr}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\` koşullarında **${regBadge}** rejimi aktiftir (\`T_f = ${tel.flame_temp_k} K\`, \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, \`Sh = ${tel.sherwood_number}\`, \`Da = ${tel.damkohler_number}\`, \`MOC = %${tel.moc_pct} O₂\`, Risk **\`${tel.risk_score}/100\`**).`,
                       `- **Doğrudan Eşleşen NASA PSI Bulguları:**`,
                       `  1. **${e1.program} (\`${e1.exp_id}\` • [NTRS #${e1.ntrs_id}](${e1.ntrs_url}))** — ${e1.key_finding_tr}`,
                       `  2. **${e2.program} (\`${e2.exp_id}\` • [NTRS #${e2.ntrs_id}](${e2.ntrs_url}))** — ${e2.key_finding_tr}`,
@@ -2010,22 +2359,80 @@
         }
 
         if (path === "/api/scrape-url" && method === "POST") {
-            const targetUrl = String(jsonBody.url || "");
-            if (!/^https:\/\/(ntrs\.nasa\.gov|osdr\.nasa\.gov)/i.test(targetUrl)) {
+            const targetUrl = String(jsonBody.url || "").trim();
+            if (!/^https:\/\/(psi\.nasa\.gov|ntrs\.nasa\.gov|osdr\.nasa\.gov)/i.test(targetUrl)) {
                 return makeJsonResponse({
                     ok: false,
-                    error: "Sunucusuz İzole Modda dış bağlantı güvenliği (CSP) gereği yalnızca resmi https://ntrs.nasa.gov ve https://osdr.nasa.gov kaynakları sorgulanabilir.",
+                    error: "Tarayıcı Modunda güvenlik (CSP) gereği yalnızca resmi https://psi.nasa.gov, https://ntrs.nasa.gov ve https://osdr.nasa.gov kaynakları sorgulanabilir.",
+                });
+            }
+            if (/psi\.nasa\.gov/i.test(targetUrl)) {
+                const psiIdMap = {
+                    "PSI-69": "PSI-FLEX-01",
+                    "PSI-116": "PSI-FLEX2-02",
+                    "PSI-71": "PSI-BASS-03",
+                    "PSI-72": "PSI-BASS2-04",
+                    "PSI-120": "PSI-ACME-09",
+                    "PSI-131": "PSI-ACME-CFIG-14",
+                    "PSI-125": "PSI-BRE-05",
+                    "PSI-135": "PSI-SAFFIRE5-07",
+                    "PSI-143": "PSI-SOFIE-08",
+                    "PSI-55": "PSI-SAME-10",
+                    "PSI-117": "PSI-CFI-11",
+                    "PSI-111": "PSI-SPICE-12",
+                    "PSI-107": "PSI-SLISE-13",
+                };
+                const mPsi = targetUrl.match(/PSI-\d+/i);
+                const psiCode = mPsi ? mPsi[0].toUpperCase() : "";
+                const targetExpId = psiIdMap[psiCode] || "";
+                const matchedExp = NASA_CATALOG.find((e) => e.exp_id === targetExpId)
+                    || NASA_CATALOG.find((e) => targetUrl.toLowerCase().includes(e.program.toLowerCase()))
+                    || NASA_CATALOG[0];
+                const baseParams = {
+                    fuel_id: matchedExp.fuel_id || "n_heptane",
+                    gravity_g: Number(matchedExp.gravity_g ?? 0.0),
+                    oxygen_pct: Number(matchedExp.oxygen_pct ?? 21.0),
+                    pressure_psia: Number(matchedExp.pressure_psia ?? 14.7),
+                    airflow_cms: Number(matchedExp.airflow_cms ?? 2.4),
+                    droplet_d0_mm: 3.4,
+                    diluent: "N2",
+                };
+                const sim0 = simulateCombustionClient(baseParams);
+                const titleStr = `${psiCode || matchedExp.exp_id}: ${matchedExp.title} (${matchedExp.program})`;
+                ragDocs.push({ doc_id: psiCode || matchedExp.exp_id, title: titleStr, source: "NASA PSI Portal", url: targetUrl, text: `${matchedExp.title} ${matchedExp.key_finding_en}` });
+                return makeJsonResponse({
+                    ok: true,
+                    title: titleStr,
+                    preview: matchedExp.key_finding_en,
+                    summary_tr: `**NASA PSI Kaydı (${psiCode || matchedExp.exp_id} • ${matchedExp.program}):** ${matchedExp.title_tr}\n- **Test Koşulları:** \`${baseParams.fuel_id}\`, \`${baseParams.gravity_g}G\`, \`%${baseParams.oxygen_pct} O₂\`, \`${baseParams.pressure_psia} psia\`, \`${baseParams.airflow_cms} cm/s\` (Ölçülen MOC: \`%${matchedExp.moc_measured_pct}\`).\n- **Bulgu:** ${matchedExp.key_finding_tr}`,
+                    summary_en: `**NASA PSI Record (${psiCode || matchedExp.exp_id} • ${matchedExp.program}):** ${matchedExp.title}\n- **Conditions:** \`${baseParams.fuel_id}\`, \`${baseParams.gravity_g}G\`, \`${baseParams.oxygen_pct}% O₂\`, \`${baseParams.pressure_psia} psia\`, \`${baseParams.airflow_cms} cm/s\` (Measured MOC: \`${matchedExp.moc_measured_pct}%\`).\n- **Finding:** ${matchedExp.key_finding_en}`,
+                    chunks: 2,
+                    phases: [],
+                    extracted_sim_params: baseParams,
+                    simulation: sim0,
                 });
             }
             const srcType = /osdr\.nasa\.gov/i.test(targetUrl) ? "osdr" : "ntrs";
-            const live = await fetchLiveNasaBrowser(srcType, "Saffire microgravity fire");
+            const qHint = (targetUrl.match(/\d{8,12}/) || ["Saffire microgravity fire"])[0];
+            const live = await fetchLiveNasaBrowser(srcType, qHint);
             const first = (live.items && live.items[0]) || { title: "NASA Citation", abstract: "" };
-            const extracted = { fuel_id: "sibal", gravity_g: 0.0, oxygen_pct: 21.0, pressure_psia: 14.7, airflow_cms: 3.0, droplet_d0_mm: 3.4, diluent: "N2" };
+            const extracted = {
+                fuel_id: parseFuelStrJs(`${first.title} ${first.abstract}`) || "sibal",
+                gravity_g: 0.0,
+                oxygen_pct: 21.0,
+                pressure_psia: 14.7,
+                airflow_cms: 3.0,
+                droplet_d0_mm: 3.4,
+                diluent: "N2",
+            };
             return makeJsonResponse({
                 ok: true,
                 title: first.title,
                 preview: first.abstract,
+                summary_tr: `**Web (${targetUrl}):** ${first.title}\n${first.abstract}`,
+                summary_en: `**Web (${targetUrl}):** ${first.title}\n${first.abstract}`,
                 chunks: 2,
+                phases: [],
                 extracted_sim_params: extracted,
                 simulation: simulateCombustionClient(extracted),
             });
