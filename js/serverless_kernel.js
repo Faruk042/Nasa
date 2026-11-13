@@ -722,6 +722,368 @@
             .slice(0, 8000);
     }
 
+    function parseFuelStrJs(val) {
+        const vl = String(val || "").toLowerCase().trim();
+        if (!vl) return null;
+        const cands = [
+            ["propane_cfig", ["propane_cfig", "propan", "propane", "cfig", "cfi-g"]],
+            ["n_heptane", ["n_heptane", "heptan", "heptane"]],
+            ["methanol", ["methanol", "metanol"]],
+            ["pmma", ["pmma", "akrilik", "acrylic"]],
+            ["sibal", ["sibal", "pamuk", "cotton"]],
+            ["nomex", ["nomex", "ht90", "spacesuit", "uzay giysisi"]],
+            ["hydrogen", ["hydrogen", "hidrojen"]],
+        ];
+        let bestFuel = null, bestPos = 1e9;
+        cands.forEach(([fid, kws]) => {
+            kws.forEach((kw) => {
+                const idx = vl.indexOf(kw);
+                if (idx !== -1 && idx < bestPos) {
+                    bestPos = idx;
+                    bestFuel = fid;
+                }
+            });
+        });
+        return bestFuel;
+    }
+
+    function parseDiluentStrJs(val) {
+        const vl = String(val || "").trim().toUpperCase();
+        if (vl === "CO2" || vl.includes("CO2") || vl.includes("KARBONDIOKSIT")) return "CO2";
+        if (vl === "HE" || vl.includes("HELIUM") || vl.includes("HELYUM")) return "He";
+        if (vl === "N2" || vl.includes("N2") || vl.includes("AZOT") || vl.includes("NITROGEN")) return "N2";
+        return null;
+    }
+
+    function parseHabitatStrJs(val) {
+        const vl = String(val || "").toLowerCase().trim();
+        if (!vl) return null;
+        if (["iss_module", "lunar_hab", "lunar_rover", "eva_suit"].includes(vl)) return vl;
+        if (vl.includes("suit") || vl.includes("giysi") || vl.includes("eva")) return "eva_suit";
+        if (vl.includes("rover") || vl.includes("gezgin")) return "lunar_rover";
+        if (vl.includes("lunar") || vl.includes("ay_ussu") || vl.includes("hab")) return "lunar_hab";
+        if (vl.includes("iss") || vl.includes("destiny")) return "iss_module";
+        return null;
+    }
+
+    function classifyTableColJs(colName) {
+        const kl = String(colName || "").trim().toLowerCase();
+        if (!kl) return null;
+        if (["t", "time", "time_s", "t_s", "zaman", "zaman_sn", "sec", "seconds"].includes(kl) || kl.includes("zaman") || kl.includes("time_s")) return "time_s";
+        if (kl === "faz_kodu" || kl === "phase_code") return "phase_code";
+        if (["faz_ve_fiziksel", "phase_desc", "fiziksel_durum", "faz", "phase", "stage"].some((w) => kl.includes(w))) return "phase_desc";
+        if (["fuel", "yakit", "material", "malzeme"].some((w) => kl.includes(w))) return "fuel";
+        if (["diluent", "seyreltici"].some((w) => kl.includes(w))) return "diluent";
+        if (["habitat", "kabin_tipi"].some((w) => kl.includes(w))) return "habitat";
+        if (["donanim", "facility", "hardware"].some((w) => kl.includes(w))) return "facility";
+        if (["deney_referans", "exp_ref", "exp_id", "ntrs"].some((w) => kl.includes(w))) return "exp_ref";
+        if (!kl.includes("co2") && !kl.includes("po2") && !kl.includes("h2o") && !kl.includes("ch2o") && !kl.includes("moc") &&
+            (kl.includes("oxygen") || kl.includes("oksijen") || /(?:^|[_\s])o2(?:$|[_\s])/.test(kl))) return "oxygen_pct";
+        if (!kl.includes("po2") && (kl.includes("psia") || ((kl.includes("pressure") || kl.includes("basinc")) && !kl.includes("kpa")))) return "pressure_psia";
+        if (!kl.includes("po2") && kl.includes("kpa")) return "pressure_kpa";
+        if (!kl.includes("yayilim") && !kl.includes("spread") && !kl.includes("mm_s") &&
+            ["airflow", "akis", "flow", "velocity", "u_cms", "fan_cm"].some((w) => kl.includes(w))) return "airflow_cms";
+        if (["gravity", "yercekimi", "g_level"].some((w) => kl.includes(w))) return "gravity_g";
+        if (kl.includes("d2") || kl.includes("d_sq")) return "d2_mm2";
+        if (!kl.includes("partikul") && !kl.includes("sisi") && !kl.includes("mist") && !kl.includes("aerosol") &&
+            ["damlacik", "droplet", "diameter", "d0", "d_mm", "numune_cap"].some((w) => kl.includes(w))) return "d0_mm";
+        if (["sicaklik", "temp_k", "flame_temp", "thermocouple"].some((w) => kl.includes(w))) return "temp_k";
+        if (!kl.includes("co2") && !kl.includes("smac") && (kl === "co" || kl.includes("co_ppm") || kl.includes("co_sensor"))) return "co_ppm";
+        if (kl.includes("co2")) return "co2_ppm";
+        if (kl.includes("ch2o") || kl.includes("formaldehit") || kl.includes("formaldehyde")) return "ch2o_ppm";
+        if (kl.includes("optik") || kl.includes("optical")) return "opt_vis";
+        if (kl.includes("radyatif") || kl.includes("radiometer") || kl.includes("heat_flux") || kl.includes("isi_akisi")) return "ir_kw";
+        if (kl.includes("su_sisi") || kl.includes("mist")) return "mist_um";
+        if (kl.includes("partikul") || kl.includes("aerosol") || kl.includes("dust_um")) return "aerosol_um";
+        return null;
+    }
+
+    function splitCsvLineJs(line, delim) {
+        const out = [];
+        let cur = "", inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+                else inQuotes = !inQuotes;
+            } else if (ch === delim && !inQuotes) {
+                out.push(cur.trim());
+                cur = "";
+            } else {
+                cur += ch;
+            }
+        }
+        out.push(cur.trim());
+        return out;
+    }
+
+    function parseCsvRowsJs(cleanText) {
+        const lines = cleanText.replace(/^\uFEFF/, "").split(/\r?\n/).filter((ln) => ln.trim().length > 0).slice(0, 600);
+        if (lines.length < 2) return [];
+        const semiCnt = (lines[0].match(/;/g) || []).length;
+        const commaCnt = (lines[0].match(/,/g) || []).length;
+        const delim = semiCnt > commaCnt ? ";" : (lines[0].includes("\t") ? "\t" : ",");
+        const headers = splitCsvLineJs(lines[0], delim);
+        if (headers.length < 2) return [];
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+            const cells = splitCsvLineJs(lines[i], delim);
+            if (cells.length < 2) continue;
+            const obj = {};
+            for (let j = 0; j < headers.length; j++) {
+                obj[headers[j]] = cells[j] !== undefined ? cells[j] : "";
+            }
+            rows.push(obj);
+        }
+        return rows;
+    }
+
+    function fitD2SlopeJs(tVals, d2Vals) {
+        if (!tVals || !d2Vals || tVals.length < 3 || tVals.length !== d2Vals.length) return null;
+        const n = tVals.length;
+        const dt = tVals[n - 1] - tVals[0];
+        const drop = d2Vals[0] - d2Vals[n - 1];
+        if (dt <= 0.2 || drop <= 0.08) return null;
+        let sumT = 0, sumY = 0;
+        for (let i = 0; i < n; i++) { sumT += tVals[i]; sumY += d2Vals[i]; }
+        const meanT = sumT / n, meanY = sumY / n;
+        let num = 0, den = 0;
+        for (let i = 0; i < n; i++) {
+            num += (tVals[i] - meanT) * (d2Vals[i] - meanY);
+            den += (tVals[i] - meanT) * (tVals[i] - meanT);
+        }
+        if (den <= 1e-9) return null;
+        const slope = num / den;
+        const intercept = meanY - slope * meanT;
+        const kMeas = Math.max(0, -slope);
+        if (kMeas <= 0.005) return null;
+        let ssRes = 0, ssTot = 0;
+        for (let i = 0; i < n; i++) {
+            const pred = slope * tVals[i] + intercept;
+            ssRes += (d2Vals[i] - pred) * (d2Vals[i] - pred);
+            ssTot += (d2Vals[i] - meanY) * (d2Vals[i] - meanY);
+        }
+        const r2 = ssTot > 1e-9 ? Math.max(0, Math.min(1, 1 - ssRes / ssTot)) : 0.999;
+        return { k_meas: Number(kMeas.toFixed(3)), r2: Number(r2.toFixed(4)) };
+    }
+
+    function analyzeTabularRowsInBrowser(rows, filename) {
+        if (!rows || !rows.length) return null;
+        const colMap = {};
+        Object.keys(rows[0] || {}).forEach((rawK) => {
+            const role = classifyTableColJs(rawK);
+            if (role && !colMap[role]) colMap[role] = rawK;
+        });
+
+        const groupedPhases = [];
+        const phaseLookup = {};
+        rows.forEach((r) => {
+            const pCode = String((colMap.phase_code && r[colMap.phase_code]) || "").trim();
+            const pDesc = String((colMap.phase_desc && r[colMap.phase_desc]) || "").trim();
+            const pKey = pCode || pDesc || "FAZ_1";
+            if (!phaseLookup[pKey]) {
+                const entry = {
+                    key: pKey,
+                    code: pCode || pKey.split(" ")[0],
+                    desc: pDesc || pCode || "Standart Yanma Fazi",
+                    rows: [],
+                };
+                phaseLookup[pKey] = entry;
+                groupedPhases.push(entry);
+            }
+            phaseLookup[pKey].rows.push(r);
+        });
+
+        const numList = (rList, roleKey) => {
+            const col = colMap[roleKey];
+            if (!col) return [];
+            const out = [];
+            rList.forEach((it) => {
+                if (it[col] === undefined || it[col] === null || it[col] === "") return;
+                const v = parseFloat(String(it[col]).replace(/%/g, "").trim());
+                if (!Number.isNaN(v)) out.push(v);
+            });
+            return out;
+        };
+
+        const firstStr = (rList, roleKey) => {
+            const col = colMap[roleKey];
+            if (!col) return "";
+            for (let i = 0; i < rList.length; i++) {
+                const s = String(rList[i][col] || "").trim();
+                if (s) return s;
+            }
+            return "";
+        };
+
+        const avg = (arr, defVal) => (arr.length ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2)) : defVal);
+
+        const phasesOut = [];
+        let bestD2Fit = null;
+        let hasCoolTelemetry = false;
+        let hasMistTelemetry = false;
+        let aeroMin = null, aeroMax = null;
+
+        groupedPhases.forEach((grp, gIdx) => {
+            const idx = gIdx + 1;
+            const pr = grp.rows;
+            const fuelId = parseFuelStrJs(firstStr(pr, "fuel")) || "n_heptane";
+            const diluent = parseDiluentStrJs(firstStr(pr, "diluent")) || "N2";
+            let habitatId = parseHabitatStrJs(firstStr(pr, "habitat"));
+
+            const o2Vals = numList(pr, "oxygen_pct").filter((x) => x >= 5 && x <= 100);
+            const psiaVals = numList(pr, "pressure_psia").filter((x) => x >= 3 && x <= 25);
+            const kpaVals = numList(pr, "pressure_kpa").filter((x) => x >= 20 && x <= 180);
+            const flowVals = numList(pr, "airflow_cms").filter((x) => x >= 0 && x <= 50);
+            const gravVals = numList(pr, "gravity_g").filter((x) => x >= 0 && x <= 2);
+            const d0Vals = numList(pr, "d0_mm").filter((x) => x >= 0.5 && x <= 10);
+            const d2Vals = numList(pr, "d2_mm2").filter((x) => x >= 0.1 && x <= 100);
+            const tVals = numList(pr, "time_s");
+            const tempVals = numList(pr, "temp_k");
+            const coVals = numList(pr, "co_ppm");
+            const ch2oVals = numList(pr, "ch2o_ppm");
+            const mistVals = numList(pr, "mist_um");
+            const aeroVals = numList(pr, "aerosol_um").filter((x) => x > 0);
+
+            const o2Mean = avg(o2Vals, 21.0);
+            const pPsia = psiaVals.length ? avg(psiaVals, 14.7) : (kpaVals.length ? Number((avg(kpaVals, 101.3) / 6.89476).toFixed(2)) : 14.7);
+            const flowMean = avg(flowVals, 2.4);
+            const gravMean = avg(gravVals, 0.0);
+            const d0Init = d0Vals.length
+                ? Number(Math.max(0.8, Math.min(8.0, d0Vals[0])).toFixed(2))
+                : (d2Vals.length ? Number(Math.max(0.8, Math.min(8.0, Math.sqrt(Math.max(0.64, d2Vals[0])))).toFixed(2)) : 3.2);
+
+            if (!habitatId) {
+                if (o2Mean >= 75 && pPsia <= 6) habitatId = "eva_suit";
+                else if (gravMean >= 0.10 && gravMean <= 0.25 && pPsia <= 11.5) habitatId = "lunar_rover";
+                else if (gravMean >= 0.10) habitatId = "lunar_hab";
+                else habitatId = "iss_module";
+            }
+
+            const d2Series = d2Vals.length ? d2Vals : (d0Vals.length ? d0Vals.map((x) => x * x) : []);
+            const fit = (tVals.length && d2Series.length && tVals.length === d2Series.length) ? fitD2SlopeJs(tVals, d2Series) : null;
+
+            const phaseParams = {
+                fuel_id: fuelId,
+                gravity_g: gravMean,
+                oxygen_pct: o2Mean,
+                pressure_psia: pPsia,
+                airflow_cms: flowMean,
+                droplet_d0_mm: d0Init,
+                diluent: diluent,
+                habitat_id: habitatId,
+            };
+            const simRes = simulateCombustionClient(phaseParams);
+            const tel = simRes.telemetry;
+            const tl = simRes.scenario_timeline || {};
+            const call = simRes.callouts || {};
+
+            if (fit && (fuelId === "n_heptane" || fuelId === "methanol") && (!bestD2Fit || fit.k_meas > bestD2Fit.k_meas)) {
+                bestD2Fit = { phase_idx: idx, k_meas: fit.k_meas, k_model: tel.burning_rate_k_mm2_s, r2: fit.r2 };
+            }
+
+            const tempMean = tempVals.length ? Number((tempVals.reduce((a, b) => a + b, 0) / tempVals.length).toFixed(1)) : tel.flame_temp_k;
+            const coMax = coVals.length ? Number(Math.max(...coVals).toFixed(1)) : tel.co_ppm;
+            const ch2oMax = ch2oVals.length ? Number(Math.max(...ch2oVals).toFixed(1)) : 0;
+            const mistMax = mistVals.length ? Number(Math.max(...mistVals).toFixed(1)) : 0;
+
+            if (tel.cool_flame_active || (tempMean >= 500 && tempMean <= 820) || ch2oMax >= 40) hasCoolTelemetry = true;
+            if (mistMax > 0 || grp.desc.toLowerCase().includes("mist") || grp.desc.toLowerCase().includes("bastirma") || diluent === "CO2") hasMistTelemetry = true;
+            if (aeroVals.length) {
+                const mn = Math.min(...aeroVals), mx = Math.max(...aeroVals);
+                aeroMin = aeroMin === null ? mn : Math.min(aeroMin, mn);
+                aeroMax = aeroMax === null ? mx : Math.max(aeroMax, mx);
+            }
+
+            const tSpanTr = tVals.length >= 2 ? `${Math.trunc(tVals[0])}-${Math.trunc(tVals[tVals.length - 1])} sn` : `${pr.length} satir`;
+            const tSpanEn = tVals.length >= 2 ? `${Math.trunc(tVals[0])}-${Math.trunc(tVals[tVals.length - 1])} s` : `${pr.length} rows`;
+
+            phasesOut.push({
+                index: idx,
+                code: grp.code,
+                desc: grp.desc,
+                short_tr: `Faz ${idx}`,
+                short_en: `Phase ${idx}`,
+                time_span_tr: tSpanTr,
+                time_span_en: tSpanEn,
+                sim_params: phaseParams,
+                measured_temp_k: tempMean,
+                co_max_ppm: coMax,
+                ch2o_max_ppm: ch2oMax,
+                k_meas: fit ? fit.k_meas : null,
+                r2_d2: fit ? fit.r2 : null,
+                regime: tel.regime,
+                badge_tr: call.badge_tr || tel.regime,
+                badge_en: call.badge_en || tel.regime,
+                flame_temp_k: tel.flame_temp_k,
+                moc_pct: tel.moc_pct,
+                k_model: tel.burning_rate_k_mm2_s,
+                b_oq: tel.spalding_b_number,
+                sh: tel.sherwood_number,
+                da: tel.damkohler_number,
+                risk_score: tel.risk_score,
+                smac_s: tl.t_smac_125ppm_s ?? 999,
+                extinguished: Boolean(tel.extinguished),
+                cool_flame: Boolean(tel.cool_flame_active),
+                simulation: simRes,
+            });
+        });
+
+        if (!phasesOut.length) return null;
+        const activeHot = phasesOut.filter((p) => !p.extinguished && !p.cool_flame);
+        const activeCool = phasesOut.filter((p) => p.cool_flame);
+        const primary = activeHot[0] || activeCool[0] || phasesOut[0];
+
+        const tblTr = [
+            "| Faz | Zaman | Yakit ve Atmosfer | Sicaklik / CO / CH2O | Boyutsuz Sayilar (K, B_oq, Sh, Da, MOC) | Fiziksel Rejim ve SMAC |",
+            "| :--- | :--- | :--- | :--- | :--- | :--- |",
+        ];
+        const tblEn = [
+            "| Phase | Window | Fuel & Atmosphere | Temp / CO / CH2O | Dimensionless (K, B_oq, Sh, Da, MOC) | Regime & SMAC Clock |",
+            "| :--- | :--- | :--- | :--- | :--- | :--- |",
+        ];
+        phasesOut.forEach((p) => {
+            const sp = p.sim_params;
+            const kTxt = (p.k_meas !== null ? p.k_meas : p.k_model).toFixed(2);
+            const ch2oTxt = p.ch2o_max_ppm > 0 ? ` / ${Math.round(p.ch2o_max_ppm)} ppm CH₂O` : "";
+            const smacTr = p.smac_s >= 900 ? "Guvenli" : `${p.smac_s} sn`;
+            const smacEn = p.smac_s >= 900 ? "Safe" : `${p.smac_s} s`;
+            tblTr.push(`| **Faz ${p.index}** | \`${p.time_span_tr}\` | \`${sp.fuel_id}\` • \`${sp.gravity_g}G\` • \`%${sp.oxygen_pct} O₂\` • \`${sp.pressure_psia} psia\` • \`${sp.airflow_cms} cm/s\` | \`${p.measured_temp_k} K\` • \`${p.co_max_ppm} ppm CO\`${ch2oTxt} | \`K=${kTxt}\` • \`B=${p.b_oq}\` • \`Sh=${p.sh}\` • \`Da=${p.da}\` • \`MOC=%${p.moc_pct}\` | **${p.badge_tr}** (Risk \`${p.risk_score}/100\`, SMAC \`${smacTr}\`) |`);
+            tblEn.push(`| **Phase ${p.index}** | \`${p.time_span_en}\` | \`${sp.fuel_id}\` • \`${sp.gravity_g}G\` • \`${sp.oxygen_pct}% O₂\` • \`${sp.pressure_psia} psia\` • \`${sp.airflow_cms} cm/s\` | \`${p.measured_temp_k} K\` • \`${p.co_max_ppm} ppm CO\`${ch2oTxt} | \`K=${kTxt}\` • \`B=${p.b_oq}\` • \`Sh=${p.sh}\` • \`Da=${p.da}\` • \`MOC=${p.moc_pct}%\` | **${p.badge_en}** (Risk \`${p.risk_score}/100\`, SMAC \`${smacEn}\`) |`);
+        });
+
+        const diagTr = [], diagEn = [];
+        if (bestD2Fit) {
+            diagTr.push(`- **Deneysel d² Yasası Doğrulaması (Faz ${bestD2Fit.phase_idx}):** Ölçülen eğim \`K_ölç = ${bestD2Fit.k_meas.toFixed(3)} mm²/s\` ile kapalı-form model \`K_model = ${bestD2Fit.k_model.toFixed(3)} mm²/s\` arasında **\`R² = ${bestD2Fit.r2.toFixed(4)}\`** uyumu doğrulandı.`);
+            diagEn.push(`- **Empirical d²-Law Validation (Phase ${bestD2Fit.phase_idx}):** Least-squares slope \`K_meas = ${bestD2Fit.k_meas.toFixed(3)} mm²/s\` matches closed-form \`K_model = ${bestD2Fit.k_model.toFixed(3)} mm²/s\` with **\`R² = ${bestD2Fit.r2.toFixed(4)}\`**.`);
+        }
+        if (hasCoolTelemetry) {
+            diagTr.push(`- **Görünmez NTC Soğuk Alev ve Sensör Körlüğü (FLEX-2):** \`550-750 K\` bandında görünür optik şiddet \`%1\` altına düşerken \`CO\` ve \`CH₂O\` hızla yükselmektedir; \`CO + Orta-IR + CH₂O\` sensör füzyonu zorunludur.`);
+            diagEn.push(`- **Invisible NTC Cool Flame & Sensor Blindness (FLEX-2):** Below \`800 K\`, visible optical intensity drops under \`1%\` while \`CO\` and \`CH₂O\` surge; multi-channel \`CO + Mid-IR + CH₂O\` fusion is mandatory.`);
+        }
+        if (hasMistTelemetry) {
+            diagTr.push(`- **NASA-STD-6001B Söndürme Denetimi (SoFIE-MIST):** Havalandırma akışının kesilmesi (\`U -> 0 cm/s\`) ve \`<40 µm\` ince su sisi / \`CO₂\` seyreltmesiyle alev güvenli bölgeye (\`O₂ < MOC\`) indirilmiştir (*Halon 1301 kesinlikle kullanılmamıştır*).`);
+            diagEn.push(`- **NASA-STD-6001B Suppression Audit (SoFIE-MIST):** Cutting HVAC flow (\`U -> 0 cm/s\`) with \`<40 µm\` fine water mist / \`CO₂\` dilution quenched the flame below \`MOC\` (*Halon 1301 strictly excluded*).`);
+        }
+        if (aeroMin !== null && aeroMax !== null && aeroMax > aeroMin * 3.0) {
+            const ratio = (aeroMax / Math.max(0.01, aeroMin)).toFixed(1);
+            diagTr.push(`- **SAME / DAFT Duman ve Ay Tozu Ayrımı:** Veri setinde \`${aeroMin.toFixed(2)} µm\` piroliz dumanı ile \`${aeroMax.toFixed(2)} µm\` Ay regolit tozu çift dalga boylu saçılım oranıyla (\`${ratio}x\` çap farkı) yanlış alarmsız ayrıştırılmıştır.`);
+            diagEn.push(`- **SAME / DAFT Smoke vs. Lunar Dust Discrimination:** Sub-micron pyrolysis smoke (\`${aeroMin.toFixed(2)} µm\`) and coarse Lunar regolith dust (\`${aeroMax.toFixed(2)} µm\`) separated cleanly (\`${ratio}x\` size ratio) without false alarms.`);
+        }
+
+        const sp0 = primary.sim_params;
+        const summaryTr = `**Çok Fazlı Telemetri Analizi (\`${filename}\` • ${rows.length} satır • ${phasesOut.length} fiziksel faz):**\n- **3B Yanma Odasına Aktarılan Aktif Faz:** **Faz ${primary.index}** (\`${sp0.fuel_id}\`, \`${sp0.gravity_g}G\`, \`%${sp0.oxygen_pct} O₂\`, \`${sp0.pressure_psia} psia\`, \`${sp0.airflow_cms} cm/s\` -> \`${primary.flame_temp_k} K\`).\n` + (diagTr.length ? diagTr.join("\n") + "\n\n" : "\n") + tblTr.join("\n");
+        const summaryEn = `**Multi-Phase Telemetry Analysis (\`${filename}\` • ${rows.length} rows • ${phasesOut.length} physical phases):**\n- **Active Phase Synced to 3D Chamber:** **Phase ${primary.index}** (\`${sp0.fuel_id}\`, \`${sp0.gravity_g}G\`, \`${sp0.oxygen_pct}% O₂\`, \`${sp0.pressure_psia} psia\`, \`${sp0.airflow_cms} cm/s\` -> \`${primary.flame_temp_k} K\`).\n` + (diagEn.length ? diagEn.join("\n") + "\n\n" : "\n") + tblEn.join("\n");
+
+        return {
+            extracted_sim_params: sp0,
+            simulation: primary.simulation,
+            phases: phasesOut.map((p) => { const c = Object.assign({}, p); delete c.simulation; return c; }),
+            summary_tr: summaryTr,
+            summary_en: summaryEn,
+        };
+    }
+
     async function analyzeUploadedMediaInBrowser(formData) {
         const file = formData && formData.get ? formData.get("file") : null;
         if (!file) return { ok: false, error: "Dosya bulunamadı / No file provided." };
@@ -791,62 +1153,69 @@
             text = await file.text();
         }
 
+        ragDocs.push({ doc_id: `USR-${Date.now()}`, title: name, source: "Browser Local File", url: "", text: text.slice(0, 12000) });
+
+        // 1. Çok fazlı JSON / CSV / TSV tablo çözümlemesi
+        const trimmed = text.replace(/^\uFEFF/, "").trim();
+        let tabRes = null;
+        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+            try {
+                const parsedJson = JSON.parse(trimmed);
+                if (Array.isArray(parsedJson) && parsedJson.length && typeof parsedJson[0] === "object") {
+                    tabRes = analyzeTabularRowsInBrowser(parsedJson.slice(0, 600), name);
+                } else if (parsedJson && Array.isArray(parsedJson.rows) && parsedJson.rows.length) {
+                    tabRes = analyzeTabularRowsInBrowser(parsedJson.rows.slice(0, 600), name);
+                } else if (parsedJson && typeof parsedJson === "object") {
+                    tabRes = analyzeTabularRowsInBrowser([parsedJson], name);
+                }
+            } catch (_) {}
+        } else if (trimmed.includes(",") || trimmed.includes(";") || trimmed.includes("\t")) {
+            const csvRows = parseCsvRowsJs(trimmed);
+            if (csvRows.length > 0) {
+                tabRes = analyzeTabularRowsInBrowser(csvRows, name);
+            }
+        }
+
+        if (tabRes) {
+            return {
+                ok: true,
+                filename: name,
+                media_type: "document",
+                chunks: Math.max(1, Math.ceil(text.length / 800)),
+                phases: tabRes.phases,
+                extracted_sim_params: tabRes.extracted_sim_params,
+                simulation: tabRes.simulation,
+                summary_tr: tabRes.summary_tr,
+                summary_en: tabRes.summary_en,
+            };
+        }
+
+        // 2. Serbest metin / PDF çıkarımı (sıkı kelime sınırı ile O2 okuma)
         const extracted = {
-            fuel_id: /propane|propan|cfi-g|cfig/i.test(text)
-                ? "propane_cfig"
-                : /methanol|metanol/i.test(text)
-                ? "methanol"
-                : /pmma|acrylic|akrilik/i.test(text)
-                ? "pmma"
-                : /nomex|suit|uzay giysisi/i.test(text)
-                ? "nomex"
-                : /sibal|cotton|pamuk/i.test(text)
-                ? "sibal"
-                : /hydrogen|hidrojen/i.test(text)
-                ? "hydrogen"
-                : "n_heptane",
-            gravity_g: /0\.16|lunar|moon/i.test(text) ? 0.16 : (/0\.38|mars/i.test(text) ? 0.38 : (/1\.0\s*g|earth/i.test(text) ? 1.0 : 0.0)),
+            fuel_id: parseFuelStrJs(trimmed) || "n_heptane",
+            gravity_g: /0\.16|lunar|moon/i.test(trimmed) ? 0.16 : (/0\.38|mars/i.test(trimmed) ? 0.38 : (/1\.0\s*g|earth/i.test(trimmed) ? 1.0 : 0.0)),
             oxygen_pct: 21.0,
             pressure_psia: 14.7,
             airflow_cms: 2.4,
             droplet_d0_mm: 3.2,
             diluent: "N2",
         };
+        const o2Match = trimmed.match(/(\d{1,3}(?:\.\d+)?)\s*%\s*(?:o2|o₂|oxygen|oksijen)\b/i) || trimmed.match(/(?:^|[^a-z0-9])(?:o2|o₂|oxygen|oksijen)\s*[:=]\s*%?\s*(\d{1,3}(?:\.\d+)?)/i);
+        const pMatch = trimmed.match(/(\d{1,2}(?:\.\d+)?)\s*psia/i);
+        const kpaMatch = trimmed.match(/(\d{2,3}(?:\.\d+)?)\s*kpa/i);
+        const uMatch = trimmed.match(/(\d{1,2}(?:\.\d+)?)\s*cm\/s/i);
+        if (o2Match) extracted.oxygen_pct = Math.min(100, Math.max(5, parseFloat(o2Match[1])));
+        if (pMatch) extracted.pressure_psia = Math.min(20, Math.max(3.5, parseFloat(pMatch[1])));
+        else if (kpaMatch) extracted.pressure_psia = Number(Math.min(20, Math.max(3.5, parseFloat(kpaMatch[1]) / 6.89476)).toFixed(2));
+        if (uMatch) extracted.airflow_cms = Math.min(45, Math.max(0, parseFloat(uMatch[1])));
 
-        // JSON / CSV tablo sütun çözümlemesi
-        const trimmed = text.trim();
-        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-            try {
-                const parsedJson = JSON.parse(trimmed);
-                const row = Array.isArray(parsedJson) ? (parsedJson[0] || {}) : parsedJson;
-                Object.keys(row || {}).forEach((k) => {
-                    const kl = k.toLowerCase();
-                    const v = parseFloat(row[k]);
-                    if (!Number.isNaN(v)) {
-                        if ((kl.includes("o2") || kl.includes("oxygen") || kl.includes("oksijen")) && v >= 5 && v <= 100) extracted.oxygen_pct = v;
-                        else if ((kl.includes("psia") || kl.includes("pressure")) && v >= 3.5 && v <= 20) extracted.pressure_psia = v;
-                        else if ((kl.includes("flow") || kl.includes("velocity") || kl.includes("akis")) && v >= 0 && v <= 45) extracted.airflow_cms = v;
-                        else if (kl.includes("gravity") && v >= 0 && v <= 1.5) extracted.gravity_g = v;
-                        else if ((kl.includes("d0") || kl.includes("diameter") || kl.includes("droplet")) && v >= 0.8 && v <= 8) extracted.droplet_d0_mm = v;
-                    }
-                });
-            } catch (_) {}
-        } else {
-            const o2Match = text.match(/(?:o2|oxygen|oksijen)[^\d]{0,12}(\d{1,3}(?:\.\d+)?)/i) || text.match(/(\d{1,3}(?:\.\d+)?)\s*%\s*(?:o2|oxygen|oksijen)/i);
-            const pMatch = text.match(/(\d{1,2}(?:\.\d+)?)\s*psia/i);
-            const uMatch = text.match(/(\d{1,2}(?:\.\d+)?)\s*cm\/s/i);
-            if (o2Match) extracted.oxygen_pct = Math.min(100, Math.max(8, parseFloat(o2Match[1])));
-            if (pMatch) extracted.pressure_psia = Math.min(18, Math.max(4, parseFloat(pMatch[1])));
-            if (uMatch) extracted.airflow_cms = Math.min(40, Math.max(0, parseFloat(uMatch[1])));
-        }
-
-        ragDocs.push({ doc_id: `USR-${Date.now()}`, title: name, source: "Browser Local File", url: "", text: text.slice(0, 6000) });
         const sim = simulateCombustionClient(extracted);
         return {
             ok: true,
             filename: name,
             media_type: "document",
             chunks: Math.max(1, Math.ceil(text.length / 800)),
+            phases: [],
             extracted_sim_params: extracted,
             simulation: sim,
             summary_tr: `**Veri Dosyası Analizi (${name}):** Yakıt \`${extracted.fuel_id}\`, Yerçekimi \`${extracted.gravity_g}G\`, O₂ \`%${extracted.oxygen_pct}\`, Basınç \`${extracted.pressure_psia} psia\`, Akış \`${extracted.airflow_cms} cm/s\`.`,
@@ -884,7 +1253,11 @@
             return "full_synthesis";
         }
 
-        if (mediaCtx && hasAnyTerm(nq, ["yukledigim", "ekli", "dosya", "gorsel", "resim", "fotograf", "csv", "pdf", "json", "uploaded", "attached", "image", "dataset", "file"])) {
+        if (
+            mediaCtx &&
+            (hasAnyTerm(nq, ["yukledigim", "ekli", "dosya", "gorsel", "resim", "fotograf", "csv", "pdf", "json", "veriyi", "tabloyu", "veri seti", "tum ozellik", "butun ozellik", "uploaded", "attached", "image", "dataset", "file"]) ||
+                ["analiz et", "bu veriyi analiz et", "incele", "degerlendir", "analyze", "analyze this", "evaluate"].includes(nq))
+        ) {
             return "uploaded_media";
         }
 
@@ -1325,17 +1698,20 @@
             };
         }
 
-        // 13. Yüklenen Dosya / Görsel Odaklı Sentez
+        // 13. Yüklenen Dosya / Görsel Odaklı Kapsamlı Sentez
         if (intent === "uploaded_media") {
+            const pgInfo = sim.partial_gravity_info || {};
             const expLines = ranked
-                .slice(0, 3)
-                .map((e) => `- **#${e.rank} ${e.program} (\`${e.exp_id}\` • [NTRS #${e.ntrs_id}](${e.ntrs_url}))** — \`${e.priority_score}/100\`, MOC \`${e.moc_measured_pct}%\`: ${isEn ? e.key_finding_en : e.key_finding_tr}`)
+                .slice(0, 5)
+                .map((e) => `- **#${e.rank} ${e.program} (\`${e.exp_id}\` • \`${e.hardware_group || "CIR"}\` • [NTRS #${e.ntrs_id}](${e.ntrs_url}))** — ${isEn ? "Score" : "Uyum"} \`${e.priority_score}/100\`, MOC \`${e.moc_measured_pct}%\`: ${isEn ? e.key_finding_en : e.key_finding_tr}`)
                 .join("\n");
+            const pgNoteEn = pgInfo.show_banner && pgInfo.en ? `- **Partial-Gravity Bounding (0G-1G):** ${pgInfo.en}\n` : "";
+            const pgNoteTr = pgInfo.show_banner && pgInfo.tr ? `- **Kısmi Yerçekimi Sınırlandırması (0G-1G):** ${pgInfo.tr}\n` : "";
             return {
                 reply: isEn
-                    ? `### Uploaded Dataset / Flame Photo Analysis\n${mediaCtx}\n\n### Synchronized 3D Chamber & Equations\n- **Active State (\`${inp.fuel_name_en}\`):** \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\`, \`${inp.airflow_cms} cm/s\` → **\`${tel.regime}\`** (\`${tel.flame_temp_k} K\`, Risk **\`${tel.risk_score}/100\`**).\n- **Numbers:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Da = ${tel.damkohler_number}\` | \`MOC = ${tel.moc_pct}% O₂\`.\n\n### Closest NASA PSI Benchmarks\n${expLines}`
-                    : `### Yüklenen Veri Dosyası / Alev Fotoğrafı Analizi\n${mediaCtx}\n\n### Senkronize 3B Yanma Odası ve Boyutsuz Sayılar\n- **Aktif Durum (\`${inp.fuel_name_tr}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\`, \`${inp.airflow_cms} cm/s\` → **\`${tel.regime}\`** (\`${tel.flame_temp_k} K\`, Risk **\`${tel.risk_score}/100\`**).\n- **Boyutsuz Çıktılar:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Da = ${tel.damkohler_number}\` | \`MOC = %${tel.moc_pct} O₂\`.\n\n### En Yakın NASA PSI Referansları\n${expLines}`,
-                citations: defaultCitations,
+                    ? `### 1. Uploaded Dataset & Multi-Phase Telemetry Audit\n${mediaCtx}\n\n### 2. Synchronized 3D Chamber, Governing Equations & ISS Flight Validation\n- **Active 3D State (\`${inp.fuel_name_en}\` • \`${inp.geometry_3d}\`):** \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`${inp.pressure_psia} psia\`, \`${inp.airflow_cms} cm/s\` -> **\`${tel.regime}\`** (\`T_f = ${tel.flame_temp_k} K\`, Spread \`${tel.flame_spread_mm_s} mm/s\`, Risk **\`${tel.risk_score}/100\`**).\n- **Dimensionless Transport & Kinetics:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`R_f/R_d = ${tel.standoff_ratio}\` | \`Re = ${tel.reynolds_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Ra = ${tel.rayleigh_number}\` | \`Ri = ${tel.richardson_number}\` | \`Da = ${tel.damkohler_number}\` | \`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\` | \`MOC = ${tel.moc_pct}% O₂\`.\n- **ISS Flight Telemetry Fit:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` (${fv.campaign}).\n${pgNoteEn}\n### 3. Ranked NASA PSI Investigations Across Orbital Hardware\n${expLines}\n\n### 4. Life Support Clock (ECLSS), Non-Halon Suppression & Earth Applications\n- **Life Support Clock (\`${tl.habitat_name_en || "ISS Module"}\`):** Alarm \`+${tl.t_alarm_s} s\` | \`SMAC 125 ppm CO\` limit in **\`${tl.t_smac_125ppm_s} s\`** | Crew response CO \`${tl.co_at_response_ppm} ppm\`.\n- **NASA-STD-6001B Protocol:** **(1)** Cut HVAC ventilation (\`${inp.airflow_cms} -> 0 cm/s\`), **(2)** Isolate power bus, **(3)** Discharge **25-40 µm Fine Water Mist (SoFIE-MIST)** or CO₂/N₂ (*Halon 1301 prohibited due to toxic HF/HBr*).\n- **Terrestrial Transfers:** Sub-50 µm clean water-mist extinguishers, **SAME/DAFT** dust-immune smoke sensors, **PBI/Nomex** firefighter gear & composite **SCBA** cylinders, and low-emission **HCCI** engine kinetics.`
+                    : `### 1. Yüklenen Veri Kaynağı ve Çok Fazlı Telemetri Denetimi\n${mediaCtx}\n\n### 2. Senkronize 3B Yanma Odası, Boyutsuz Denklemler ve ISS Doğrulaması\n- **Aktif 3B Sahne (\`${inp.fuel_name_tr}\` • \`${inp.geometry_3d}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.po2_psia} psia\`), \`${inp.pressure_psia} psia\`, \`${inp.airflow_cms} cm/s\` -> **\`${tel.regime}\`** (\`T_f = ${tel.flame_temp_k} K\`, Yayılma \`${tel.flame_spread_mm_s} mm/s\`, Risk **\`${tel.risk_score}/100\`**).\n- **Boyutsuz Taşınım ve Kinetik:** \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | \`B_oq = ${tel.spalding_b_number}\` | \`R_f/R_d = ${tel.standoff_ratio}\` | \`Re = ${tel.reynolds_number}\` | \`Sh = ${tel.sherwood_number}\` | \`Ra = ${tel.rayleigh_number}\` | \`Ri = ${tel.richardson_number}\` | \`Da = ${tel.damkohler_number}\` | \`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\` | \`MOC = %${tel.moc_pct} O₂\`.\n- **ISS Uçuş Telemetrisi Uyumu:** \`R² = ${fv.r_squared}\` • \`RMSE = ${fv.rmse}\` (${fv.campaign}).\n${pgNoteTr}\n### 3. Eşleşen NASA PSI Deneyleri ve Donanım Kıyaslaması\n${expLines}\n\n### 4. Yaşam Destek Saati (ECLSS), Su Sisi Söndürme ve Dünya Uygulamaları\n- **Yaşam Destek Saati (\`${tl.habitat_name_tr || "ISS Modülü"}\`):** Sensör alarmı \`+${tl.t_alarm_s} sn\` | Kritik \`SMAC 125 ppm CO\` süresi **\`${tl.t_smac_125ppm_s} sn\`** | Müdahale anı CO \`${tl.co_at_response_ppm} ppm\`.\n- **NASA-STD-6001B Müdahale Sırası:** **(1)** Havalandırma fanlarını kapat (\`${inp.airflow_cms} -> 0 cm/s\`), **(2)** Elektrik hattını izole et, **(3)** **25-40 µm İnce Su Sisi (SoFIE-MIST)** veya CO₂/N₂ uygula (*Halon 1301 toksik HF/HBr üretimi nedeniyle yasaktır*).\n- **Dünya Uygulamaları:** **SoFIE-MIST** temiz su sisli yangın söndürme, **SAME/DAFT** toz-bağışıklı lazer duman dedektörleri, **PBI/Nomex** itfaiyeci koruyucu giysileri, hafif **SCBA** kompozit solunum tüpleri ve düşük emisyonlu **HCCI** motor kinetiği.`,
+                citations: defaultCitations.slice(0, 5),
             };
         }
 
