@@ -548,7 +548,7 @@
                                 .join("")}</tr>`
                     )
                     .join("");
-                return `<div style="overflow-x:auto; margin:8px 0;"><table class="nasa-table" style="width:100%; border-collapse:collapse; font-size:12px;"><thead><tr>${thHtml}</tr></thead><tbody>${trHtml}</tbody></table></div>\n`;
+                return `<div class="chat-table-wrap"><table class="nasa-table" style="width:100%; border-collapse:collapse; font-size:12px;"><thead><tr>${thHtml}</tr></thead><tbody>${trHtml}</tbody></table></div>\n`;
             }
         );
 
@@ -2160,15 +2160,15 @@
         } else if (providers.gemini_ready) {
             dot.style.background = "#10b981";
             txt.textContent = isEn ? "Solver: Analytical + Gemini" : "Çözücü: Analitik + Gemini";
-        } else if (providers.antigravity_ready && pref === "auto") {
-            dot.style.background = "#10b981";
-            txt.textContent = isEn ? "Solver: Analytical + Hybrid" : "Çözücü: Analitik + Hibrit";
-        } else if (providers.ollama && providers.ollama.online) {
-            dot.style.background = "#38bdf8";
-            txt.textContent = isEn ? "Solver: Analytical + Local" : "Çözücü: Analitik + Yerel";
         } else if (providers.openrouter_ready) {
             dot.style.background = "#10b981";
             txt.textContent = isEn ? "Solver: Analytical + OpenRouter" : "Çözücü: Analitik + OpenRouter";
+        } else if (providers.ollama && providers.ollama.online) {
+            dot.style.background = "#38bdf8";
+            txt.textContent = isEn ? "Solver: Analytical + Local" : "Çözücü: Analitik + Yerel";
+        } else if (providers.antigravity_ready && pref === "auto") {
+            dot.style.background = "#10b981";
+            txt.textContent = isEn ? "Solver: Analytical + Hybrid" : "Çözücü: Analitik + Hibrit";
         } else if (window.ALTAR_SERVERLESS_MODE) {
             dot.style.background = "#38bdf8";
             txt.textContent = isEn ? "Solver: Browser Physics" : "Çözücü: Tarayıcı Motoru";

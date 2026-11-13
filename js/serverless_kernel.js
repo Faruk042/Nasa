@@ -103,9 +103,9 @@
 
         const gravityG = Math.max(0.0, Math.min(2.0, Number(params.gravity_g ?? 0.0)));
         const oxygenPct = Math.max(5.0, Math.min(100.0, Number(params.oxygen_pct ?? 21.0)));
-        const pressurePsia = Math.max(3.5, Math.min(20.0, Number(params.pressure_psia ?? 14.7)));
+        const pressurePsia = Math.max(3.0, Math.min(35.0, Number(params.pressure_psia ?? 14.7)));
         const airflowCms = Math.max(0.0, Math.min(50.0, Number(params.airflow_cms ?? 3.5)));
-        const dropletD0 = Math.max(0.8, Math.min(8.0, Number(params.droplet_d0_mm ?? 3.2)));
+        const dropletD0 = Math.max(0.6, Math.min(8.0, Number(params.droplet_d0_mm ?? 3.2)));
         let diluent = String(params.diluent || "N2");
         if (!DILUENT_FACTORS[diluent]) diluent = "N2";
         const dil = DILUENT_FACTORS[diluent];
@@ -169,7 +169,8 @@
         const tauChemMs = 1.85 / (Math.max(0.04, Math.pow(xO2, 1.45)) * Math.pow(Math.max(0.22, pAtm), 0.75));
         const damkohlerDa = roundN(Math.min(99.9, tauFlowMs / Math.max(0.05, tauChemMs)), 2);
 
-        const isBlowoff = airflowCms > fuel.blowoff_cms * Math.pow(oxygenPct / 21.0, 0.65) || damkohlerDa < 0.95;
+        const blowVelLimit = fuel.blowoff_cms * Math.pow(oxygenPct / 21.0, 0.65);
+        const isBlowoff = airflowCms > blowVelLimit || (damkohlerDa < 0.95 && airflowCms >= 10.0);
         const radQuench = gravityG < 0.08 && airflowCms < 1.8 && dropletD0 >= 3.4 && oxygenPct < mocCurrent + 3.2;
         const cfigCool = fuelId === "propane_cfig" && gravityG < 0.05 && airflowCms <= 0.6 && dropletD0 >= 4.4 && oxygenPct >= 82.0 && oxygenPct <= 88.0;
 
@@ -1737,11 +1738,11 @@
             const convO2 = (rawO2 >= 0.03 && rawO2 <= 1.0) ? rawO2 * 100.0 : rawO2;
             extracted.oxygen_pct = Number(Math.min(100, Math.max(5, convO2)).toFixed(2));
         }
-        if (pMatch) extracted.pressure_psia = Math.min(25, Math.max(3.0, parseFloat(pMatch[1])));
-        else if (atmMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(atmMatch[1]) * 14.6959)).toFixed(2));
-        else if (barMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(barMatch[1]) * 14.5038)).toFixed(2));
-        else if (kpaMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(kpaMatch[1]) / 6.89476)).toFixed(2));
-        else if (torrMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(torrMatch[1]) / 51.7149)).toFixed(2));
+        if (pMatch) extracted.pressure_psia = Math.min(35, Math.max(3.0, parseFloat(pMatch[1])));
+        else if (atmMatch) extracted.pressure_psia = Number(Math.min(35, Math.max(3.0, parseFloat(atmMatch[1]) * 14.6959)).toFixed(2));
+        else if (barMatch) extracted.pressure_psia = Number(Math.min(35, Math.max(3.0, parseFloat(barMatch[1]) * 14.5038)).toFixed(2));
+        else if (kpaMatch) extracted.pressure_psia = Number(Math.min(35, Math.max(3.0, parseFloat(kpaMatch[1]) / 6.89476)).toFixed(2));
+        else if (torrMatch) extracted.pressure_psia = Number(Math.min(35, Math.max(3.0, parseFloat(torrMatch[1]) / 51.7149)).toFixed(2));
         if (uMatch) extracted.airflow_cms = Math.min(45, Math.max(0, parseFloat(uMatch[1])));
 
         const lowTxt = `${name} ${trimmed}`.toLowerCase();
@@ -1801,6 +1802,15 @@
         return false;
     }
 
+    function truncateCleanJs(rawStr, maxChars) {
+        const clean = String(rawStr || "").trim().replace(/\s+/g, " ");
+        const lim = maxChars || 96;
+        if (clean.length <= lim) return clean;
+        const cut = clean.slice(0, lim);
+        const sp = cut.lastIndexOf(" ");
+        return (sp > 20 ? cut.slice(0, sp) : cut) + "...";
+    }
+
     function classifyBrowserIntent(rawMsg, mediaCtx) {
         const nq = normQueryAscii(rawMsg);
         if (
@@ -1813,8 +1823,8 @@
 
         if (
             mediaCtx &&
-            (hasAnyTerm(nq, ["yukledigim", "ekli", "dosya", "gorsel", "resim", "fotograf", "csv", "xlsx", "excel", "zip", "tsv", "pdf", "json", "veriyi", "tabloyu", "veri seti", "tum ozellik", "butun ozellik", "uploaded", "attached", "image", "dataset", "file"]) ||
-                ["analiz et", "bu veriyi analiz et", "incele", "degerlendir", "analyze", "analyze this", "evaluate"].includes(nq))
+            (hasAnyTerm(nq, ["yukledigim", "yuklenen", "ekli", "eklenen", "dosya", "gorsel", "goruntu", "resim", "fotograf", "csv", "xlsx", "excel", "zip", "tsv", "pdf", "json", "veri", "veriyi", "tablo", "tabloda", "tablosu", "tablosunda", "tabloyu", "grafik", "degerleri", "degerlerini", "mevcut analiz", "analiz deger", "faz", "fazlar", "veri seti", "tum ozellik", "butun ozellik", "uploaded", "attached", "image", "photo", "table", "phases", "values", "dataset", "file"]) ||
+                ["analiz et", "bu veriyi analiz et", "incele", "degerlendir", "ozetle", "analyze", "analyze this", "evaluate", "summarize"].includes(nq))
         ) {
             return "uploaded_media";
         }
@@ -2222,8 +2232,8 @@
             let sweepTitle = isEn ? "Ventilation Airflow Sweep (`0` → `30 cm/s`)" : "Kabin Havalandırma Akış Hızı Taraması (`0` → `30 cm/s`)";
             let variants = [0.0, 2.0, 6.0, 15.0, 30.0].map((u) => ({ lbl: `U = ${u} cm/s`, p: Object.assign({}, inp, { airflow_cms: u }) }));
             if (hasAnyTerm(nq, ["seyreltici", "diluent", "helyum", "helium", "argon", "co2", "azot"])) {
-                sweepTitle = isEn ? "Diluent Gas Comparison (`N₂` vs `CO₂` vs `He` vs `Ar`)" : "Seyreltici Kabin Gazı Kıyaslaması (`N₂` vs `CO₂` vs `He` vs `Ar`)";
-                variants = ["N2", "CO2", "He", "Ar"].map((dl) => ({ lbl: dl, p: Object.assign({}, inp, { diluent: dl }) }));
+                sweepTitle = isEn ? "Diluent Gas Comparison (`N₂` vs `CO₂` vs `He`)" : "Seyreltici Kabin Gazı Kıyaslaması (`N₂` vs `CO₂` vs `He`)";
+                variants = ["N2", "CO2", "He"].map((dl) => ({ lbl: dl, p: Object.assign({}, inp, { diluent: dl }) }));
             } else if (hasAnyTerm(nq, ["oksijen", "oxygen", "o2"])) {
                 sweepTitle = isEn ? "Oxygen Sweep (`14%` → `34% O₂`)" : "Oksijen Konsantrasyonu Taraması (`%14` → `%34 O₂`)";
                 variants = [14.0, 18.0, 21.0, 28.0, 34.0].map((ox) => ({ lbl: `${ox}% O₂`, p: Object.assign({}, inp, { oxygen_pct: ox }) }));
@@ -2342,32 +2352,66 @@
                 const fp = FUEL_PROPERTIES[fid];
                 const fSim = simulateCombustionClient(Object.assign({}, inp, { fuel_id: fid }));
                 const ft = fSim.telemetry;
+                const moc0B = fp.moc_0g_base ?? fp.moc_0g_pct ?? 13.8;
+                const moc1B = fp.moc_1g_base ?? fp.moc_1g_pct ?? 15.2;
                 fuelLine = isEn
-                    ? `- **Queried Fuel / Material (\`${fp.name_en}\`, \`${fp.formula}\`):** 3D Geometry \`${fp.geometry_3d}\`, \`0G MOC = ${fp.moc_0g_pct}% O₂\` vs \`1G MOC = ${fp.moc_1g_pct}% O₂\` → yields \`T_f = ${ft.flame_temp_k} K\`, **\`${ft.regime}\`**, Risk **\`${ft.risk_score}/100\`** under current cabin conditions.`
-                    : `- **Sorgulanan Yakıt / Malzeme (\`${fp.name_tr}\`, \`${fp.formula}\`):** 3B Geometri \`${fp.geometry_3d}\`, \`0G MOC = %${fp.moc_0g_pct} O₂\` vs \`1G MOC = %${fp.moc_1g_pct} O₂\` → mevcut kabin atmosferinizde \`T_f = ${ft.flame_temp_k} K\`, **\`${ft.regime}\`** rejimi ve **\`${ft.risk_score}/100\`** risk üretir.`;
+                    ? `- **Queried Fuel / Material (\`${fp.name_en}\`, \`${fp.formula}\`):** 3D Geometry \`${fp.geometry_3d}\`, \`0G MOC = ${moc0B}% O₂\` vs \`1G MOC = ${moc1B}% O₂\` → yields \`T_f = ${ft.flame_temp_k} K\`, **\`${ft.regime}\`**, Risk **\`${ft.risk_score}/100\`** under current cabin conditions.`
+                    : `- **Sorgulanan Yakıt / Malzeme (\`${fp.name_tr}\`, \`${fp.formula}\`):** 3B Geometri \`${fp.geometry_3d}\`, \`0G MOC = %${moc0B} O₂\` vs \`1G MOC = %${moc1B} O₂\` → mevcut kabin atmosferinizde \`T_f = ${ft.flame_temp_k} K\`, **\`${ft.regime}\`** rejimi ve **\`${ft.risk_score}/100\`** risk üretir.`;
                 break;
             }
         }
 
-        const bestDir = DIRECTIVES
-            .map((d) => ({ d, sc: computeTextSimilarity(msg, `${d.title_tr} ${d.rule_tr} ${d.title_en} ${d.rule_en}`) }))
-            .sort((a, b) => b.sc - a.sc)[0].d;
+        const dirStop = new Set([
+            "veri", "verisi", "verileri", "veritabaninda", "goruntu", "gorsel", "tablo", "tabloda", "tablosu", "tablosunda",
+            "grafik", "deger", "degerleri", "degerlerini", "mevcut", "analiz", "sade", "anlasilir", "bana", "gore",
+            "icin", "olan", "nedir", "nasil", "hangi", "soylermisin", "goster", "acikla", "data", "table", "chart",
+            "values", "current", "analysis", "what", "how", "show", "explain", "simple", "clear"
+        ]);
+        const qDirTokens = (nq.match(/[a-z0-9]{4,}/g) || []).filter((w) => !dirStop.has(w));
+        let bestDir = null;
+        let bestDirSc = 0;
+        DIRECTIVES.forEach((d) => {
+            const dWords = new Set(normQueryAscii(`${d.title_tr} ${d.rule_tr} ${d.title_en} ${d.rule_en}`).match(/[a-z0-9]+/g) || []);
+            let sc = 0;
+            qDirTokens.forEach((tok) => { if (dWords.has(tok)) sc += 1; });
+            if (sc > bestDirSc) { bestDirSc = sc; bestDir = d; }
+        });
+        if (!bestDir) {
+            const findDir = (cid) => DIRECTIVES.find((d) => d.id === cid) || DIRECTIVES[0];
+            if (tel.cool_flame_active || tel.regime === "COOL_FLAME_NTC") bestDir = findDir("CON-04");
+            else if (inp.gravity_g >= 0.03 && inp.gravity_g <= 0.88) bestDir = findDir("CON-07");
+            else if (inp.oxygen_pct >= 30.0 || inp.pressure_psia <= 10.6) bestDir = findDir("CON-06");
+            else if (inp.airflow_cms >= 1.5) bestDir = findDir("CON-03");
+            else bestDir = findDir("CON-01");
+        }
 
-        const topRag = ragDocs
-            .map((d) => ({ d, sc: computeTextSimilarity(msg, `${d.title} ${d.text}`) }))
-            .sort((a, b) => b.sc - a.sc)[0];
+        const customRagPool = ragDocs.filter((d) => String(d.doc_id || "").startsWith("DOC-"));
+        const topRag = customRagPool.length
+            ? customRagPool
+                  .map((d) => ({ d, sc: computeTextSimilarity(msg, `${d.title} ${d.text}`) }))
+                  .sort((a, b) => b.sc - a.sc)[0]
+            : null;
+
+        const wantsTable = hasAnyTerm(nq, ["tablo", "tabloda", "tablosu", "tablosunda", "grafik", "degerleri", "degerlerini", "table", "chart", "values"]);
+        let liveTblBlock = "";
+        if (wantsTable) {
+            liveTblBlock = isEn
+                ? `\n| Parameter / Dimensionless Metric | Active 3D Chamber Value | Safety & Regime Interpretation |\n| :--- | :--- | :--- |\n| **Fuel & Geometry** | \`${inp.fuel_name_en}\` (\`${inp.geometry_3d}\`) | Gravity \`${inp.gravity_g} G\`, Diluent \`${inp.diluent}\` |\n| **Atmosphere (\`O₂\` & Pressure)** | \`${inp.oxygen_pct}% O₂\` • \`${inp.pressure_psia} psia\` (\`P_O2 = ${tel.o2_partial_psia} psia\`) | Critical \`MOC = ${tel.moc_pct}% O₂\` |\n| **Flame Temp & Burn Rate** | \`T_f = ${tel.flame_temp_k} K\` • \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | Spread \`${tel.flame_spread_mm_s} mm/s\` • \`B_oq = ${tel.spalding_b_number}\` |\n| **Transport & Residence (\`Sh\`, \`Da\`)** | \`Sh = ${tel.sherwood_number}\` • \`Da = ${tel.damkohler_number}\` • \`Ra = ${tel.rayleigh_number}\` | Airflow \`U = ${inp.airflow_cms} cm/s\` (\`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\`) |\n| **Fire Risk & ECLSS SMAC** | **Risk \`${tel.risk_score}/100\`** • \`${tel.co_ppm} ppm CO\` | **${regBadge}** (\`125 ppm SMAC\`: \`${tl.t_smac_125ppm_s || 180} s\`) |\n`
+                : `\n| Parametre / Boyutsuz Büyüklük | Aktif 3B Oda Değeri | Fiziksel ve Güvenlik Yorumu |\n| :--- | :--- | :--- |\n| **Yakıt ve Numune Geometrisi** | \`${inp.fuel_name_tr}\` (\`${inp.geometry_3d}\`) | Yerçekimi \`${inp.gravity_g} G\`, Seyreltici \`${inp.diluent}\` |\n| **Atmosfer (\`O₂\` ve Basınç)** | \`%${inp.oxygen_pct} O₂\` • \`${inp.pressure_psia} psia\` (\`P_O2 = ${tel.o2_partial_psia} psia\`) | Kritik Tutuşma Sınırı \`MOC = %${tel.moc_pct} O₂\` |\n| **Alev Sıcaklığı ve Yanma Hızı** | \`T_f = ${tel.flame_temp_k} K\` • \`K = ${tel.burning_rate_k_mm2_s} mm²/s\` | Yayılma \`${tel.flame_spread_mm_s} mm/s\` • \`B_oq = ${tel.spalding_b_number}\` |\n| **Taşınım ve Kalış (\`Sh\`, \`Da\`, \`Ra\`)** | \`Sh = ${tel.sherwood_number}\` • \`Da = ${tel.damkohler_number}\` • \`Ra = ${tel.rayleigh_number}\` | Akış Hızı \`U = ${inp.airflow_cms} cm/s\` (\`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\`) |\n| **Yangın Riski ve ECLSS SMAC** | **Risk \`${tel.risk_score}/100\`** • \`${tel.co_ppm} ppm CO\` | **${regBadge}** (\`125 ppm SMAC\`: \`${tl.t_smac_125ppm_s || 180} sn\`) |\n`;
+        }
 
         const e1 = ranked[0] || NASA_CATALOG[0];
         const e2 = ranked[1] || NASA_CATALOG[1];
-        const qShort = String(msg || "").trim().slice(0, 110);
+        const qShort = truncateCleanJs(msg, 96);
 
         return {
             reply: isEn
                 ? [
                       `### Targeted Scientific Analysis — *"${qShort}"*`,
+                      liveTblBlock,
                       fuelLine,
                       `- **Governing Physical Constraint (\`${bestDir.id} • ${bestDir.code}\`):** ${bestDir.rule_en}`,
-                      topRag && topRag.sc > 0.05 ? `- **Corpus Match (\`${topRag.d.title}\`):** ${topRag.d.text.slice(0, 280)}` : ``,
+                      topRag && topRag.sc > 0.08 ? `- **Uploaded Document Match (\`${topRag.d.title}\`):** ${truncateCleanJs(topRag.d.text, 260)}` : ``,
                       `- **Live 3D Chamber Coupling (\`${inp.fuel_name_en}\`):** At \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\`, active regime is **${regBadge}** (\`T_f = ${tel.flame_temp_k} K\`, \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, \`Sh = ${tel.sherwood_number}\`, \`Da = ${tel.damkohler_number}\`, \`MOC = ${tel.moc_pct}% O₂\`, Risk **\`${tel.risk_score}/100\`**).`,
                       `- **Matched NASA PSI Investigations:**`,
                       `  1. **${e1.program} (\`${e1.exp_id}\` • [NTRS #${e1.ntrs_id}](${e1.ntrs_url}))** — ${e1.key_finding_en}`,
@@ -2375,9 +2419,10 @@
                   ].filter(Boolean).join("\n")
                 : [
                       `### Soru-Odaklı Bilimsel Analiz — *"${qShort}"*`,
+                      liveTblBlock,
                       fuelLine,
                       `- **İlgili Fiziksel Kısıt ve Yasa (\`${bestDir.id} • ${bestDir.code}\`):** ${bestDir.rule_tr}`,
-                      topRag && topRag.sc > 0.05 ? `- **Bilgi Tabanı Kanıt Eşleşmesi (\`${topRag.d.title}\`):** ${topRag.d.text.slice(0, 280)}` : ``,
+                      topRag && topRag.sc > 0.08 ? `- **Yüklenen Belge Kanıtı (\`${topRag.d.title}\`):** ${truncateCleanJs(topRag.d.text, 260)}` : ``,
                       `- **Aktif 3B Odanızla Sayısal Bağlantı (\`${inp.fuel_name_tr}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\` (\`P_O2 = ${tel.o2_partial_psia} psia\`), \`U = ${inp.airflow_cms} cm/s\` koşullarında **${regBadge}** rejimi aktiftir (\`T_f = ${tel.flame_temp_k} K\`, \`K = ${tel.burning_rate_k_mm2_s} mm²/s\`, \`Sh = ${tel.sherwood_number}\`, \`Da = ${tel.damkohler_number}\`, \`MOC = %${tel.moc_pct} O₂\`, Risk **\`${tel.risk_score}/100\`**).`,
                       `- **Doğrudan Eşleşen NASA PSI Bulguları:**`,
                       `  1. **${e1.program} (\`${e1.exp_id}\` • [NTRS #${e1.ntrs_id}](${e1.ntrs_url}))** — ${e1.key_finding_tr}`,
@@ -2398,8 +2443,8 @@
         const tel = sim.telemetry;
         const isEn = runtimeConfig.language === "en";
         const sys = isEn
-            ? "You are ALTAR-NASA v5.1 Spacecraft Fire Safety & Microgravity Combustion Synthesis Kernel (5 modules: [01] 3D WebGL Chamber + ISS Validation + ECLSS Clock, [02] 6-Layer Equation Cards, [03] 15 PSI Matrix & Live NTRS/OSDR Stream, [04] Evidence Synthesis Console, [05] Inference Architecture). Answer the user's exact question directly with quantitative depth and Markdown tables when comparing conditions. Never recommend Halon 1301 (strictly prohibited per NASA-STD-6001B due to lethal HF/HBr formation; use CO2, N2 depressurization, airflow cutoff U->0, or SoFIE-MIST fine water mist)."
-            : "Sen ALTAR-NASA v5.1 Uzay Aracı Yangın Güvenliği ve Mikroçekim Yanma Sentez Çekirdeğisin (5 modül: [01] 3B WebGL Yanma Odası + ISS Doğrulaması + ECLSS Saati, [02] 6-Katmanlı Fiziksel Denklemler, [03] 15 PSI Deney Matrisi & Canlı NTRS/OSDR Akışı, [04] Kanıt Sentezi Konsolu, [05] Çıkarım Mimarisi). Kullanıcının sorduğu soruyu şablon kopyalamadan doğrudan, sayısal derinlikle ve kıyaslamalarda Markdown tablolarıyla yanıtla. Halon 1301 önermek kesinlikle yasaktır (NASA-STD-6001B gereği ölümcül HF/HBr üretir; yerine CO2, N2 seyreltme, U->0 fan kesme veya SoFIE-MIST su sisi öner).";
+            ? "You are ALTAR-NASA v5.1 Spacecraft Fire Safety & Microgravity Combustion Synthesis Kernel (5 modules: [01] 3D WebGL Chamber + ISS Validation + ECLSS Clock, [02] 6-Layer Equation Cards, [03] 15 PSI Matrix & Live NTRS/OSDR Stream, [04] Evidence Synthesis Console, [05] Inference Architecture). Answer the user's exact question directly with quantitative depth and Markdown tables when comparing conditions. When a multi-phase dataset (Phase 1..N) is attached, include ALL phases completely without skipping earlier ones, and avoid decorative emojis. Never recommend Halon 1301 (strictly prohibited per NASA-STD-6001B due to lethal HF/HBr formation; use CO2, N2 depressurization, airflow cutoff U->0, or SoFIE-MIST fine water mist)."
+            : "Sen ALTAR-NASA v5.1 Uzay Aracı Yangın Güvenliği ve Mikroçekim Yanma Sentez Çekirdeğisin (5 modül: [01] 3B WebGL Yanma Odası + ISS Doğrulaması + ECLSS Saati, [02] 6-Katmanlı Fiziksel Denklemler, [03] 15 PSI Deney Matrisi & Canlı NTRS/OSDR Akışı, [04] Kanıt Sentezi Konsolu, [05] Çıkarım Mimarisi). Kullanıcının sorduğu soruyu şablon kopyalamadan doğrudan, sayısal derinlikle ve kıyaslamalarda Markdown tablolarıyla yanıtla. Çok fazlı bir deney verisi (Faz 1..N) bağlıysa ilk fazları atlamadan TÜM fazları eksiksiz tabloya dahil et ve dekoratif emoji kullanma. Halon 1301 önermek kesinlikle yasaktır (NASA-STD-6001B gereği ölümcül HF/HBr üretir; yerine CO2, N2 seyreltme, U->0 fan kesme veya SoFIE-MIST su sisi öner).";
         const auditHalon = (txt) => {
             if (!txt) return txt;
             if (/\bhalon\b/i.test(txt) && !/yasak|prohibit|banned|toksik|toxic|hf\/hbr|6001b/i.test(txt)) {
@@ -2673,7 +2718,10 @@
 
     window.ALTAR_SERVERLESS_FETCH = async function (url, options) {
         const opts = options || {};
-        const u = new URL(url, window.location.origin);
+        const baseOrigin = (window.location && window.location.origin && window.location.origin !== "null")
+            ? window.location.origin
+            : "http://127.0.0.1";
+        const u = new URL(url, baseOrigin);
         const path = u.pathname;
         const method = String(opts.method || "GET").toUpperCase();
         let jsonBody = {};
