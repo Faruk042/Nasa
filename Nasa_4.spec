@@ -1,9 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-ALTAR-NASA: Flame in Freefall (v5.1 Zero-Trust Mission Control Edition) — İzole Tek Dosya (One-File) PyInstaller Yapılandırması.
-- .env, parola veya API anahtarları ASLA pakete dahil edilmez.
-- Yalnızca 127.0.0.1 yerel döngü arayüzünde (CSRF + CSP + SSRF korumalı) çalışır; dış ağlara port açmaz.
-- Masaüstüne tek başına kopyalandığında (_internal klasörü gerektirmeden) %100 bağımsız çalışır.
+ALTAR-NASA: Flame in Freefall (v5.1) — Tek Dosya (One-File) PyInstaller Yapılandırması.
+- .env, parola veya API anahtarları pakete dahil edilmez.
+- Yalnızca 127.0.0.1 yerel arayüzünde çalışır; dış ağlara port açmaz.
+- Masaüstüne tek başına kopyalandığında (_internal klasörü gerektirmeden) bağımsız çalışır.
 """
 
 from pathlib import Path
@@ -15,6 +15,7 @@ added_datas = [
     (str(project_root / "web" / "templates"), "web/templates"),
     (str(project_root / "web" / "static"), "web/static"),
     (str(project_root / "web_serverless"), "web_serverless"),
+    (str(project_root / "sample_data"), "sample_data"),
 ]
 
 hidden_imports = [

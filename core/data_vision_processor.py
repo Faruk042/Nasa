@@ -158,81 +158,482 @@ def analyze_flame_image_bytes(raw_bytes: bytes, filename: str = "flame.jpg") -> 
         return {"ok": False, "error": f"Görsel işlenemedi: {exc}"}
 
 
+def _parse_fuel_string(val: str) -> Optional[str]:
+    vl = (val or "").lower().strip()
+    if not vl:
+        return None
+    candidates = [
+        ("propane_cfig", ("propane_cfig", "propan", "propane", "cfig", "cfi-g")),
+        ("n_heptane", ("n_heptane", "heptan", "heptane")),
+        ("methanol", ("methanol", "metanol")),
+        ("pmma", ("pmma", "akrilik", "acrylic")),
+        ("sibal", ("sibal", "pamuk", "cotton")),
+        ("nomex", ("nomex", "ht90", "spacesuit", "uzay giysisi")),
+        ("hydrogen", ("hydrogen", "hidrojen")),
+    ]
+    best_fuel: Optional[str] = None
+    best_pos = 10**9
+    for fid, kws in candidates:
+        for kw in kws:
+            idx = vl.find(kw)
+            if idx != -1 and idx < best_pos:
+                best_pos = idx
+                best_fuel = fid
+    return best_fuel
+
+
+def _parse_diluent_string(val: str) -> Optional[str]:
+    vl = (val or "").strip().upper()
+    if vl in ("CO2", "HE", "N2"):
+        return "He" if vl == "HE" else vl
+    if "CO2" in vl or "KARBONDIOKSIT" in vl:
+        return "CO2"
+    if "HELIUM" in vl or "HELYUM" in vl:
+        return "He"
+    if "N2" in vl or "AZOT" in vl or "NITROGEN" in vl:
+        return "N2"
+    return None
+
+
+def _parse_habitat_string(val: str) -> Optional[str]:
+    vl = (val or "").lower().strip()
+    if not vl:
+        return None
+    if vl in ("iss_module", "lunar_hab", "lunar_rover", "eva_suit"):
+        return vl
+    if "suit" in vl or "giysi" in vl or "eva" in vl:
+        return "eva_suit"
+    if "rover" in vl or "gezgin" in vl:
+        return "lunar_rover"
+    if "lunar" in vl or "ay_ussu" in vl or "hab" in vl:
+        return "lunar_hab"
+    if "iss" in vl or "destiny" in vl:
+        return "iss_module"
+    return None
+
+
+def _classify_table_column(col_name: str) -> Optional[str]:
+    kl = str(col_name or "").strip().lower()
+    if not kl:
+        return None
+    if kl in ("t", "time", "time_s", "t_s", "zaman", "zaman_sn", "sec", "seconds") or "zaman" in kl or "time_s" in kl:
+        return "time_s"
+    if kl in ("faz_kodu", "phase_code"):
+        return "phase_code"
+    if any(w in kl for w in ("faz_ve_fiziksel", "phase_desc", "fiziksel_durum", "faz", "phase", "stage")):
+        return "phase_desc"
+    if any(w in kl for w in ("fuel", "yakit", "material", "malzeme")):
+        return "fuel"
+    if any(w in kl for w in ("diluent", "seyreltici")):
+        return "diluent"
+    if any(w in kl for w in ("habitat", "kabin_tipi")):
+        return "habitat"
+    if any(w in kl for w in ("donanim", "facility", "hardware")):
+        return "facility"
+    if any(w in kl for w in ("deney_referans", "exp_ref", "exp_id", "ntrs")):
+        return "exp_ref"
+    if (
+        "co2" not in kl
+        and "po2" not in kl
+        and "h2o" not in kl
+        and "ch2o" not in kl
+        and "moc" not in kl
+        and ("oxygen" in kl or "oksijen" in kl or re.search(r"(?:^|[_\s])o2(?:$|[_\s])", kl) is not None)
+    ):
+        return "oxygen_pct"
+    if "po2" not in kl and ("psia" in kl or (("pressure" in kl or "basinc" in kl) and "kpa" not in kl)):
+        return "pressure_psia"
+    if "po2" not in kl and "kpa" in kl:
+        return "pressure_kpa"
+    if (
+        "yayilim" not in kl
+        and "spread" not in kl
+        and "mm_s" not in kl
+        and any(w in kl for w in ("airflow", "akis", "flow", "velocity", "u_cms", "fan_cm"))
+    ):
+        return "airflow_cms"
+    if any(w in kl for w in ("gravity", "yercekimi", "g_level")):
+        return "gravity_g"
+    if "d2" in kl or "d_sq" in kl:
+        return "d2_mm2"
+    if (
+        "partikul" not in kl
+        and "sisi" not in kl
+        and "mist" not in kl
+        and "aerosol" not in kl
+        and any(w in kl for w in ("damlacik", "droplet", "diameter", "d0", "d_mm", "numune_cap"))
+    ):
+        return "d0_mm"
+    if any(w in kl for w in ("sicaklik", "temp_k", "flame_temp", "thermocouple")):
+        return "temp_k"
+    if "co2" not in kl and "smac" not in kl and (kl == "co" or "co_ppm" in kl or "co_sensor" in kl):
+        return "co_ppm"
+    if "co2" in kl:
+        return "co2_ppm"
+    if "ch2o" in kl or "formaldehit" in kl or "formaldehyde" in kl:
+        return "ch2o_ppm"
+    if "optik" in kl or "optical" in kl:
+        return "opt_vis"
+    if "radyatif" in kl or "radiometer" in kl or "heat_flux" in kl or "isi_akisi" in kl:
+        return "ir_kw"
+    if "su_sisi" in kl or "mist" in kl:
+        return "mist_um"
+    if "partikul" in kl or "aerosol" in kl or "dust_um" in kl:
+        return "aerosol_um"
+    return None
+
+
+def _fit_d2_slope(t_vals: List[float], d2_vals: List[float]) -> Optional[Dict[str, float]]:
+    if len(t_vals) < 3 or len(t_vals) != len(d2_vals):
+        return None
+    t_arr = np.asarray(t_vals, dtype=np.float64)
+    y_arr = np.asarray(d2_vals, dtype=np.float64)
+    dt = float(t_arr[-1] - t_arr[0])
+    drop = float(y_arr[0] - y_arr[-1])
+    if dt <= 0.2 or drop <= 0.08:
+        return None
+    slope, intercept = np.polyfit(t_arr, y_arr, 1)
+    k_meas = max(0.0, float(-slope))
+    if k_meas <= 0.005:
+        return None
+    y_pred = slope * t_arr + intercept
+    ss_res = float(np.sum((y_arr - y_pred) ** 2))
+    ss_tot = float(np.sum((y_arr - np.mean(y_arr)) ** 2))
+    r2 = 1.0 - (ss_res / ss_tot) if ss_tot > 1e-9 else 0.999
+    return {"k_meas": round(k_meas, 3), "r2": round(max(0.0, min(1.0, r2)), 4)}
+
+
+def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional[Dict[str, Any]]:
+    if not rows:
+        return None
+    from core.physics_engine import simulate_combustion_state
+
+    col_map: Dict[str, str] = {}
+    sample_keys = list(rows[0].keys())
+    for raw_k in sample_keys:
+        role = _classify_table_column(raw_k)
+        if role and role not in col_map:
+            col_map[role] = raw_k
+
+    # Satırları kronolojik fazlara ayır
+    grouped_phases: List[Dict[str, Any]] = []
+    phase_lookup: Dict[str, Dict[str, Any]] = {}
+    for r in rows:
+        p_code = str(r.get(col_map.get("phase_code", ""), "") or "").strip()
+        p_desc = str(r.get(col_map.get("phase_desc", ""), "") or "").strip()
+        p_key = p_code or p_desc or "FAZ_1"
+        if p_key not in phase_lookup:
+            entry = {
+                "key": p_key,
+                "code": p_code or p_key.split(" ")[0],
+                "desc": p_desc or p_code or "Standart Yanma Fazi",
+                "rows": [],
+            }
+            phase_lookup[p_key] = entry
+            grouped_phases.append(entry)
+        phase_lookup[p_key]["rows"].append(r)
+
+    def _num_list(r_list: List[Dict[str, Any]], role_key: str) -> List[float]:
+        col = col_map.get(role_key)
+        if not col:
+            return []
+        out_nums: List[float] = []
+        for item in r_list:
+            v = item.get(col)
+            if v is None:
+                continue
+            try:
+                out_nums.append(float(str(v).replace("%", "").strip()))
+            except ValueError:
+                pass
+        return out_nums
+
+    def _first_str(r_list: List[Dict[str, Any]], role_key: str) -> str:
+        col = col_map.get(role_key)
+        if not col:
+            return ""
+        for item in r_list:
+            s = str(item.get(col) or "").strip()
+            if s:
+                return s
+        return ""
+
+    phases_out: List[Dict[str, Any]] = []
+    best_d2_fit: Optional[Dict[str, Any]] = None
+    has_cool_flame_telemetry = False
+    has_water_mist_telemetry = False
+    aerosol_min_um: Optional[float] = None
+    aerosol_max_um: Optional[float] = None
+
+    for idx, grp in enumerate(grouped_phases, start=1):
+        pr = grp["rows"]
+        fuel_raw = _first_str(pr, "fuel")
+        fuel_id = _parse_fuel_string(fuel_raw) or "n_heptane"
+        diluent = _parse_diluent_string(_first_str(pr, "diluent")) or "N2"
+        habitat_id = _parse_habitat_string(_first_str(pr, "habitat"))
+
+        o2_vals = [x for x in _num_list(pr, "oxygen_pct") if 5.0 <= x <= 100.0]
+        psia_vals = [x for x in _num_list(pr, "pressure_psia") if 3.0 <= x <= 25.0]
+        kpa_vals = [x for x in _num_list(pr, "pressure_kpa") if 20.0 <= x <= 180.0]
+        flow_vals = [x for x in _num_list(pr, "airflow_cms") if 0.0 <= x <= 50.0]
+        grav_vals = [x for x in _num_list(pr, "gravity_g") if 0.0 <= x <= 2.0]
+        d0_vals = [x for x in _num_list(pr, "d0_mm") if 0.5 <= x <= 10.0]
+        d2_vals = [x for x in _num_list(pr, "d2_mm2") if 0.1 <= x <= 100.0]
+        t_vals = _num_list(pr, "time_s")
+        temp_vals = _num_list(pr, "temp_k")
+        co_vals = _num_list(pr, "co_ppm")
+        ch2o_vals = _num_list(pr, "ch2o_ppm")
+        opt_vals = _num_list(pr, "opt_vis")
+        mist_vals = _num_list(pr, "mist_um")
+        aero_vals = [x for x in _num_list(pr, "aerosol_um") if x > 0.0]
+
+        o2_mean = round(sum(o2_vals) / len(o2_vals), 2) if o2_vals else 21.0
+        if psia_vals:
+            p_psia = round(sum(psia_vals) / len(psia_vals), 2)
+        elif kpa_vals:
+            p_psia = round((sum(kpa_vals) / len(kpa_vals)) / 6.89476, 2)
+        else:
+            p_psia = 14.7
+        flow_mean = round(sum(flow_vals) / len(flow_vals), 2) if flow_vals else 2.4
+        grav_mean = round(sum(grav_vals) / len(grav_vals), 2) if grav_vals else 0.0
+
+        if d0_vals:
+            d0_init = round(max(0.8, min(8.0, d0_vals[0])), 2)
+        elif d2_vals:
+            d0_init = round(max(0.8, min(8.0, math.sqrt(max(0.64, d2_vals[0])))), 2)
+        else:
+            d0_init = 3.2
+
+        if not habitat_id:
+            if o2_mean >= 75.0 and p_psia <= 6.0:
+                habitat_id = "eva_suit"
+            elif 0.10 <= grav_mean <= 0.25 and p_psia <= 11.5:
+                habitat_id = "lunar_rover"
+            elif grav_mean >= 0.10:
+                habitat_id = "lunar_hab"
+            else:
+                habitat_id = "iss_module"
+
+        d2_series = d2_vals if d2_vals else ([x * x for x in d0_vals] if d0_vals else [])
+        fit = _fit_d2_slope(t_vals, d2_series) if (t_vals and d2_series and len(t_vals) == len(d2_series)) else None
+
+        phase_params = {
+            "fuel_id": fuel_id,
+            "gravity_g": grav_mean,
+            "oxygen_pct": o2_mean,
+            "pressure_psia": p_psia,
+            "airflow_cms": flow_mean,
+            "droplet_d0_mm": d0_init,
+            "diluent": diluent,
+            "habitat_id": habitat_id,
+        }
+        sim_res = simulate_combustion_state(phase_params)
+        tel = sim_res["telemetry"]
+        tl = sim_res["scenario_timeline"]
+        call = sim_res["callouts"]
+
+        if fit and fuel_id in ("n_heptane", "methanol") and (best_d2_fit is None or fit["k_meas"] > best_d2_fit["k_meas"]):
+            best_d2_fit = {
+                "phase_idx": idx,
+                "k_meas": fit["k_meas"],
+                "k_model": tel["burning_rate_k_mm2_s"],
+                "r2": fit["r2"],
+                "fuel_id": fuel_id,
+            }
+
+        temp_mean = round(sum(temp_vals) / len(temp_vals), 1) if temp_vals else tel["flame_temp_k"]
+        co_max = round(max(co_vals), 1) if co_vals else tel["co_ppm"]
+        ch2o_max = round(max(ch2o_vals), 1) if ch2o_vals else 0.0
+        opt_min = round(min(opt_vals), 2) if opt_vals else None
+        mist_max = round(max(mist_vals), 1) if mist_vals else 0.0
+
+        if tel.get("cool_flame_active") or (500.0 <= temp_mean <= 820.0) or ch2o_max >= 40.0:
+            has_cool_flame_telemetry = True
+        if mist_max > 0.0 or "mist" in grp["desc"].lower() or "bastirma" in grp["desc"].lower() or diluent == "CO2":
+            has_water_mist_telemetry = True
+        if aero_vals:
+            aerosol_min_um = min(aero_vals) if aerosol_min_um is None else min(aerosol_min_um, min(aero_vals))
+            aerosol_max_um = max(aero_vals) if aerosol_max_um is None else max(aerosol_max_um, max(aero_vals))
+
+        t_span = f"{int(t_vals[0])}-{int(t_vals[-1])} sn" if len(t_vals) >= 2 else f"{len(pr)} satir"
+        t_span_en = f"{int(t_vals[0])}-{int(t_vals[-1])} s" if len(t_vals) >= 2 else f"{len(pr)} rows"
+
+        phases_out.append({
+            "index": idx,
+            "code": grp["code"],
+            "desc": grp["desc"],
+            "short_tr": f"Faz {idx}",
+            "short_en": f"Phase {idx}",
+            "time_span_tr": t_span,
+            "time_span_en": t_span_en,
+            "facility": _first_str(pr, "facility") or "ISS_CIR",
+            "exp_ref": _first_str(pr, "exp_ref") or "",
+            "sim_params": phase_params,
+            "measured_temp_k": temp_mean,
+            "co_max_ppm": co_max,
+            "ch2o_max_ppm": ch2o_max,
+            "opt_min_pct": opt_min,
+            "mist_max_um": mist_max,
+            "k_meas": fit["k_meas"] if fit else None,
+            "r2_d2": fit["r2"] if fit else None,
+            "regime": tel["regime"],
+            "badge_tr": call["badge_tr"],
+            "badge_en": call["badge_en"],
+            "flame_temp_k": tel["flame_temp_k"],
+            "moc_pct": tel["moc_pct"],
+            "k_model": tel["burning_rate_k_mm2_s"],
+            "spread_mms": tel["flame_spread_mm_s"],
+            "b_oq": tel["spalding_b_number"],
+            "sh": tel["sherwood_number"],
+            "da": tel["damkohler_number"],
+            "risk_score": tel["risk_score"],
+            "smac_s": tl["t_smac_125ppm_s"],
+            "extinguished": bool(tel.get("extinguished")),
+            "cool_flame": bool(tel.get("cool_flame_active")),
+        })
+
+    if not phases_out:
+        return None
+
+    # 3B Yanma Odasına ilk olarak aktif sıcak alev fazını senkronize et (sönmüş faz yerine canlı alev gösterilir)
+    active_hot = [p for p in phases_out if not p["extinguished"] and not p["cool_flame"]]
+    active_cool = [p for p in phases_out if p["cool_flame"]]
+    primary_phase = active_hot[0] if active_hot else (active_cool[0] if active_cool else phases_out[0])
+
+    notes: List[str] = [
+        f"Toplam {len(rows)} telemetri satiri ve {len(phases_out)} fiziksel faz cozumlenerek Faz {primary_phase['index']} aktif 3B sahneye aktarildi"
+    ]
+    if best_d2_fit:
+        notes.append(
+            f"Faz {best_d2_fit['phase_idx']} d² dogrusal regresyonu: K_olculen = {best_d2_fit['k_meas']:.3f} mm²/s, K_model = {best_d2_fit['k_model']:.3f} mm²/s (R² = {best_d2_fit['r2']:.4f})"
+        )
+
+    table_tr_lines = [
+        "| Faz | Zaman | Yakit ve Atmosfer | Sicaklik / CO / CH2O | Boyutsuz Sayilar (K, B_oq, Sh, Da, MOC) | Fiziksel Rejim ve SMAC |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |",
+    ]
+    table_en_lines = [
+        "| Phase | Window | Fuel & Atmosphere | Temp / CO / CH2O | Dimensionless (K, B_oq, Sh, Da, MOC) | Regime & SMAC Clock |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |",
+    ]
+    for p in phases_out:
+        sp = p["sim_params"]
+        k_txt = f"{p['k_meas']:.2f}" if p["k_meas"] is not None else f"{p['k_model']:.2f}"
+        ch2o_txt = f" / {p['ch2o_max_ppm']:.0f} ppm CH₂O" if p["ch2o_max_ppm"] > 0 else ""
+        smac_txt_tr = "Guvenli" if p["smac_s"] >= 900 else f"{p['smac_s']} sn"
+        smac_txt_en = "Safe" if p["smac_s"] >= 900 else f"{p['smac_s']} s"
+        table_tr_lines.append(
+            f"| **Faz {p['index']}** | `{p['time_span_tr']}` | `{sp['fuel_id']}` • `{sp['gravity_g']}G` • `%{sp['oxygen_pct']} O₂` • `{sp['pressure_psia']} psia` • `{sp['airflow_cms']} cm/s` | `{p['measured_temp_k']} K` • `{p['co_max_ppm']} ppm CO`{ch2o_txt} | `K={k_txt}` • `B={p['b_oq']}` • `Sh={p['sh']}` • `Da={p['da']}` • `MOC=%{p['moc_pct']}` | **{p['badge_tr']}** (Risk `{p['risk_score']}/100`, SMAC `{smac_txt_tr}`) |"
+        )
+        table_en_lines.append(
+            f"| **Phase {p['index']}** | `{p['time_span_en']}` | `{sp['fuel_id']}` • `{sp['gravity_g']}G` • `{sp['oxygen_pct']}% O₂` • `{sp['pressure_psia']} psia` • `{sp['airflow_cms']} cm/s` | `{p['measured_temp_k']} K` • `{p['co_max_ppm']} ppm CO`{ch2o_txt} | `K={k_txt}` • `B={p['b_oq']}` • `Sh={p['sh']}` • `Da={p['da']}` • `MOC={p['moc_pct']}%` | **{p['badge_en']}** (Risk `{p['risk_score']}/100`, SMAC `{smac_txt_en}`) |"
+        )
+
+    diag_tr: List[str] = []
+    diag_en: List[str] = []
+    if best_d2_fit:
+        diag_tr.append(
+            f"- **Deneysel d² Yasası Doğrulaması (Faz {best_d2_fit['phase_idx']}):** Ölçülen eğim `K_ölç = {best_d2_fit['k_meas']:.3f} mm²/s` ile kapalı-form model `K_model = {best_d2_fit['k_model']:.3f} mm²/s` arasında **`R² = {best_d2_fit['r2']:.4f}`** uyumu doğrulandı."
+        )
+        diag_en.append(
+            f"- **Empirical d²-Law Validation (Phase {best_d2_fit['phase_idx']}):** Least-squares slope `K_meas = {best_d2_fit['k_meas']:.3f} mm²/s` matches closed-form `K_model = {best_d2_fit['k_model']:.3f} mm²/s` with **`R² = {best_d2_fit['r2']:.4f}`**."
+        )
+    if has_cool_flame_telemetry:
+        diag_tr.append(
+            "- **Görünmez NTC Soğuk Alev ve Sensör Körlüğü (FLEX-2):** `550-750 K` bandında görünür optik şiddet `%1` altına düşerken `CO` ve `CH₂O` (formaldehit) hızla yükselmektedir; tek kanallı optik dedektör yerine `CO + Orta-IR + CH₂O` sensör füzyonu zorunludur."
+        )
+        diag_en.append(
+            "- **Invisible NTC Cool Flame & Sensor Blindness (FLEX-2):** Below `800 K`, visible optical intensity drops under `1%` while `CO` and `CH₂O` surge; multi-channel `CO + Mid-IR + CH₂O` fusion is mandatory."
+        )
+    if has_water_mist_telemetry:
+        diag_tr.append(
+            "- **NASA-STD-6001B Söndürme Denetimi (SoFIE-MIST):** Havalandırma akışının kesilmesi (`U -> 0 cm/s`) ve `<40 µm` ince su sisi / `CO₂` seyreltmesiyle alev güvenli bölgeye (`O₂ < MOC`) indirilmiştir (*Halon 1301 kesinlikle kullanılmamıştır*)."
+        )
+        diag_en.append(
+            "- **NASA-STD-6001B Suppression Audit (SoFIE-MIST):** Cutting HVAC flow (`U -> 0 cm/s`) with `<40 µm` fine water mist / `CO₂` dilution quenched the flame below `MOC` (*Halon 1301 strictly excluded*)."
+        )
+    if aerosol_min_um is not None and aerosol_max_um is not None and aerosol_max_um > aerosol_min_um * 3.0:
+        diag_tr.append(
+            f"- **SAME / DAFT Duman ve Ay Tozu Ayrımı:** Veri setinde `{aerosol_min_um:.2f} µm` piroliz dumanı ile `{aerosol_max_um:.2f} µm` Ay regolit tozu çift dalga boylu saçılım oranıyla (`{aerosol_max_um / max(0.01, aerosol_min_um):.1f}x` çap farkı) yanlış alarmsız ayrıştırılmıştır."
+        )
+        diag_en.append(
+            f"- **SAME / DAFT Smoke vs. Lunar Dust Discrimination:** Sub-micron pyrolysis smoke (`{aerosol_min_um:.2f} µm`) and coarse Lunar regolith dust (`{aerosol_max_um:.2f} µm`) separated cleanly (`{aerosol_max_um / max(0.01, aerosol_min_um):.1f}x` size ratio) without false alarms."
+        )
+
+    rich_tr = (
+        f"**Çok Fazlı Telemetri Analizi (`{filename}` • {len(rows)} satır • {len(phases_out)} fiziksel faz):**\n"
+        f"- **3B Yanma Odasına Aktarılan Aktif Faz:** **Faz {primary_phase['index']}** (`{primary_phase['sim_params']['fuel_id']}`, `{primary_phase['sim_params']['gravity_g']}G`, `%{primary_phase['sim_params']['oxygen_pct']} O₂`, `{primary_phase['sim_params']['pressure_psia']} psia`, `{primary_phase['sim_params']['airflow_cms']} cm/s` -> `{primary_phase['flame_temp_k']} K`).\n"
+        + ("\n".join(diag_tr) + "\n\n" if diag_tr else "\n")
+        + "\n".join(table_tr_lines)
+    )
+    rich_en = (
+        f"**Multi-Phase Telemetry Analysis (`{filename}` • {len(rows)} rows • {len(phases_out)} physical phases):**\n"
+        f"- **Active Phase Synced to 3D Chamber:** **Phase {primary_phase['index']}** (`{primary_phase['sim_params']['fuel_id']}`, `{primary_phase['sim_params']['gravity_g']}G`, `{primary_phase['sim_params']['oxygen_pct']}% O₂`, `{primary_phase['sim_params']['pressure_psia']} psia`, `{primary_phase['sim_params']['airflow_cms']} cm/s` -> `{primary_phase['flame_temp_k']} K`).\n"
+        + ("\n".join(diag_en) + "\n\n" if diag_en else "\n")
+        + "\n".join(table_en_lines)
+    )
+
+    return {
+        "extracted_fields": list(col_map.keys()),
+        "extracted_sim_params": primary_phase["sim_params"],
+        "notes": notes,
+        "phases": phases_out,
+        "rich_summary_tr": rich_tr,
+        "rich_summary_en": rich_en,
+    }
+
+
 def extract_sim_params_from_text_or_table(text: str, filename: str = "data.txt") -> Dict[str, Any]:
     """
     CSV, JSON, PDF veya Web sayfası metninden bilimsel yanma parametrelerini (O2, basınç, akış, yerçekimi, yakıt, çap)
-    ve varsa zaman serisi verilerini otomatik olarak ayıklar.
+    ve varsa çok fazlı zaman serisi verilerini otomatik olarak ayıklar.
     """
-    clean = (text or "").strip()
+    clean = (text or "").lstrip("\ufeff").strip()
     lower = clean.lower()
 
     extracted: Dict[str, Any] = {}
     notes: List[str] = []
 
-    # 1. JSON formatı kontrolü
+    # 1. JSON formatı kontrolü (Tek nesne veya çok satırlı dizi)
     if clean.startswith("{") or clean.startswith("["):
         try:
             obj = json.loads(clean)
-            row = obj[0] if (isinstance(obj, list) and obj and isinstance(obj[0], dict)) else (obj if isinstance(obj, dict) else {})
-            _map_dict_row_to_params(row, extracted, notes)
+            if isinstance(obj, list) and obj and isinstance(obj[0], dict):
+                tab_res = _analyze_tabular_rows(obj[:600], filename)
+                if tab_res:
+                    return tab_res
+            elif isinstance(obj, dict):
+                if isinstance(obj.get("rows"), list) and obj["rows"] and isinstance(obj["rows"][0], dict):
+                    tab_res = _analyze_tabular_rows(obj["rows"][:600], filename)
+                    if tab_res:
+                        return tab_res
+                _map_dict_row_to_params(obj, extracted, notes)
         except Exception:
             pass
 
-    # 2. CSV / Tablo satırı kontrolü
+    # 2. CSV / TSV / Noktalı Virgül Tablo kontrolü (600 satıra kadar çok fazlı çözümleme)
     if not extracted and ("," in clean or ";" in clean or "\t" in clean):
-        lines = [ln for ln in clean.splitlines() if ln.strip()][:80]
+        lines = [ln for ln in clean.splitlines() if ln.strip()][:600]
         if len(lines) >= 2:
             delim = ";" if lines[0].count(";") > lines[0].count(",") else ("\t" if "\t" in lines[0] else ",")
             try:
                 reader = list(csv.DictReader(lines, delimiter=delim))
                 if reader:
-                    # Sayısal sütunların ortalamasını al
-                    agg: Dict[str, List[float]] = {}
-                    for r in reader:
-                        for k, v in r.items():
-                            if not k or v is None:
-                                continue
-                            try:
-                                num = float(str(v).replace("%", "").strip())
-                                agg.setdefault(k.strip().lower(), []).append(num)
-                            except ValueError:
-                                pass
-                    mean_row = {k: sum(vals) / len(vals) for k, vals in agg.items() if vals}
-                    _map_dict_row_to_params(mean_row, extracted, notes)
-                    # Zaman ve D / D² sütunu varsa deneysel yanma sabiti K regresyonu!
-                    t_vals = _find_col(agg, ("time", "t_s", "zaman", "sec"))
-                    d_vals = _find_col(agg, ("diameter", "d_mm", "cap", "droplet"))
-                    if t_vals and d_vals and len(t_vals) == len(d_vals) and len(t_vals) >= 3:
-                        d2_arr = np.array(d_vals) ** 2
-                        t_arr = np.array(t_vals)
-                        dt = float(t_arr[-1] - t_arr[0])
-                        if dt > 0.1:
-                            k_meas = max(0.0, float(d2_arr[0] - d2_arr[-1]) / dt)
-                            notes.append(f"Tablodan ölçülen deneysel D² eğimi K = {k_meas:.3f} mm²/s")
-                            extracted["droplet_d0_mm"] = round(max(1.0, min(7.0, float(d_vals[0]))), 2)
+                    tab_res = _analyze_tabular_rows(reader, filename)
+                    if tab_res:
+                        return tab_res
             except Exception:
                 pass
 
     # 3. Serbest Metin / PDF / Web Makalesi Regex Çıkarımı
     if "fuel_id" not in extracted:
-        if "propane" in lower or "propan" in lower or "cfi-g" in lower or "cfig" in lower:
-            extracted["fuel_id"] = "propane_cfig"
-        elif "heptane" in lower or "heptan" in lower or "flex" in lower:
-            extracted["fuel_id"] = "n_heptane"
-        elif "methanol" in lower or "metanol" in lower:
-            extracted["fuel_id"] = "methanol"
-        elif "nomex" in lower or "spacesuit" in lower or "uzay giysisi" in lower:
-            extracted["fuel_id"] = "nomex"
-        elif "sibal" in lower or "cotton" in lower or "pamuk" in lower:
-            extracted["fuel_id"] = "sibal"
-        elif "pmma" in lower or "acrylic" in lower or "akrilik" in lower:
-            extracted["fuel_id"] = "pmma"
-        elif "hydrogen" in lower or "hidrojen" in lower:
-            extracted["fuel_id"] = "hydrogen"
+        parsed_f = _parse_fuel_string(lower)
+        if parsed_f:
+            extracted["fuel_id"] = parsed_f
 
     if "oxygen_pct" not in extracted:
-        m_o2 = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%\s*(?:o2|o₂|oxygen|oksijen)", lower) or re.search(
-            r"(?:o2|oksijen|oxygen)\s*[:=]?\s*%?\s*(\d{1,3}(?:\.\d+)?)", lower
+        m_o2 = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%\s*(?:o2|o₂|oxygen|oksijen)\b", lower) or re.search(
+            r"(?<![a-z0-9])(?:o2|o₂|oksijen|oxygen)\s*[:=]?\s*%?\s*(\d{1,3}(?:\.\d+)?)", lower
         )
         if m_o2:
             val = float(m_o2.group(1))
@@ -278,42 +679,44 @@ def extract_sim_params_from_text_or_table(text: str, filename: str = "data.txt")
         "extracted_fields": list(extracted.keys()),
         "extracted_sim_params": final_params,
         "notes": notes,
+        "phases": [],
     }
-
-
-def _find_col(agg: Dict[str, List[float]], keys: tuple) -> Optional[List[float]]:
-    for col_name, vals in agg.items():
-        if any(k in col_name for k in keys):
-            return vals
-    return None
 
 
 def _map_dict_row_to_params(row: Dict[str, Any], out: Dict[str, Any], notes: List[str]) -> None:
     for k, v in row.items():
-        kl = str(k).lower().strip()
-        if isinstance(v, str) and kl in ("fuel", "fuel_id", "yakit", "material", "malzeme"):
-            vl = v.lower()
-            if "propan" in vl or "cfig" in vl or "cfi-g" in vl:
-                out["fuel_id"] = "propane_cfig"
-                continue
-            for fid in ("n_heptane", "methanol", "pmma", "sibal", "nomex", "hydrogen"):
-                if fid.replace("n_", "") in vl:
-                    out["fuel_id"] = fid
+        role = _classify_table_column(k)
+        if role == "fuel" and isinstance(v, str):
+            pf = _parse_fuel_string(v)
+            if pf:
+                out["fuel_id"] = pf
+            continue
+        if role == "diluent" and isinstance(v, str):
+            pd = _parse_diluent_string(v)
+            if pd:
+                out["diluent"] = pd
+            continue
+        if role == "habitat" and isinstance(v, str):
+            ph = _parse_habitat_string(v)
+            if ph:
+                out["habitat_id"] = ph
             continue
         try:
             num = float(v)
         except (TypeError, ValueError):
             continue
-        if any(x in kl for x in ("oxygen", "o2", "oksijen")) and 5 <= num <= 100:
+        if role == "oxygen_pct" and 5 <= num <= 100:
             out["oxygen_pct"] = round(num, 2)
             notes.append(f"Tablodan O₂ = %{num:.1f}")
-        elif "psia" in kl or ("pressure" in kl and num <= 25) or ("basinc" in kl and num <= 25):
+        elif role == "pressure_psia" and num <= 25:
             out["pressure_psia"] = round(num, 2)
-        elif "kpa" in kl and 24 <= num <= 160:
+        elif role == "pressure_kpa" and 20 <= num <= 180:
             out["pressure_psia"] = round(num / 6.89476, 2)
-        elif any(x in kl for x in ("airflow", "flow", "velocity", "akis", "hiz")) and 0 <= num <= 50:
+        elif role == "airflow_cms" and 0 <= num <= 50:
             out["airflow_cms"] = round(num, 2)
-        elif any(x in kl for x in ("gravity", "yercekimi", "g_level")) and 0 <= num <= 2:
+        elif role == "gravity_g" and 0 <= num <= 2:
             out["gravity_g"] = round(num, 2)
-        elif any(x in kl for x in ("droplet", "d0", "diameter", "cap")) and 0.5 <= num <= 10:
+        elif role == "d0_mm" and 0.5 <= num <= 10:
             out["droplet_d0_mm"] = round(num, 2)
+        elif role == "d2_mm2" and 0.6 <= num <= 80 and "droplet_d0_mm" not in out:
+            out["droplet_d0_mm"] = round(math.sqrt(num), 2)

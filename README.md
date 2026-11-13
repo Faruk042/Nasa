@@ -114,6 +114,8 @@ python main_nasa.py
 python main_nasa.py --self-test
 ```
 
+Uygulamadaki tüm 3B numune geometrilerini, taşınım denklemlerini, görünmez soğuk alev teşhisini, `SoFIE-MIST` su sisi bastırmasını ve `SAME/DAFT` duman-toz ayrımını tek seferde test etmek için `sample_data/ALTAR_NASA_Tam_Kapsamli_Deney_Verisi.csv` dosyasını **Mühendislik Analizi** veya **NASA Arşivi** sekmesinden yükleyebilirsiniz.
+
 ### 3. Tek Dosya Masaüstü Paketi (`.exe`) Derleme ve Statik Web Üretimi
 
 ```bash
@@ -155,6 +157,7 @@ Nasa/
 │           ├── charts_and_audio.js  # MOC haritası, sensör grafikleri ve alev seslendirme
 │           └── app_controller.js    # İstemci durum yönetimi, TR/EN çeviri ve veri ihracı
 ├── web_serverless/              # GitHub Pages üzerinde doğrudan çalışan sunucusuz statik web paketi
+├── sample_data/                 # 7 fazlı kapsamlı NASA PSI ve Artemis telemetri doğrulama veri seti (.csv)
 └── docs/screenshots/            # Güncel uygulama arayüzü ekran görüntüleri
 ```
 

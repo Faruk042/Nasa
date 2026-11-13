@@ -178,7 +178,7 @@ class NasaLiveFetcher:
             resp = self.session.get(
                 self.NTRS_SEARCH_URL,
                 params={"q": effective_q},
-                timeout=8,
+                timeout=(3.0, 5.0),
             )
             resp.raise_for_status()
             payload = resp.json()
@@ -500,6 +500,9 @@ class NasaLiveFetcher:
                 "extracted_sim_params": parsed_sim["extracted_sim_params"],
                 "extracted_fields": parsed_sim["extracted_fields"],
                 "extraction_notes": parsed_sim["notes"],
+                "phases": parsed_sim.get("phases") or [],
+                "rich_summary_tr": parsed_sim.get("rich_summary_tr") or "",
+                "rich_summary_en": parsed_sim.get("rich_summary_en") or "",
             }
         except Exception as exc:
             return {"ok": False, "error": f"Belge ayrıştırılamadı: {exc}"}

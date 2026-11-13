@@ -228,19 +228,24 @@ def create_nasa_web_app() -> Flask:
         )
         notes_list = parsed.get("extraction_notes") or []
         fields_list = parsed.get("extracted_fields") or []
-        summary_tr = (
-            f"**Veri Dosyası Analizi ({fname} • {parsed.get('pages', 1)} sayfa, {parsed.get('char_count', 0)} karakter):**\n"
-            f"- **Otomatik Saptanan Alanlar:** `{', '.join(fields_list) if fields_list else 'Standart Mikroçekim Profili'}`\n"
-            + (f"- **Ölçüm Notları:** {'; '.join(notes_list)}\n" if notes_list else "")
-            + f"- **3B Simülasyona Aktarılan Koşullar:** Yakıt `{sim_params.get('fuel_id')}`, Yerçekimi `{sim_params.get('gravity_g')}G`, O₂ `%{sim_params.get('oxygen_pct')}`, Basınç `{sim_params.get('pressure_psia')} psia`, Akış `{sim_params.get('airflow_cms')} cm/s`.\n"
-            + f"- **Belge Özeti (İlk Kesit):** {(parsed.get('content') or '')[:420]}..."
-        )
-        summary_en = (
-            f"**Dataset & Document Analysis ({fname} • {parsed.get('pages', 1)} page(s), {parsed.get('char_count', 0)} chars):**\n"
-            f"- **Detected Fields:** `{', '.join(fields_list) if fields_list else 'Standard Microgravity Profile'}`\n"
-            + f"- **3D Chamber Conditions Applied:** Fuel `{sim_params.get('fuel_id')}`, Gravity `{sim_params.get('gravity_g')}G`, O₂ `{sim_params.get('oxygen_pct')}%`, Pressure `{sim_params.get('pressure_psia')} psia`, Airflow `{sim_params.get('airflow_cms')} cm/s`.\n"
-            + f"- **Document Excerpt:** {(parsed.get('content') or '')[:420]}..."
-        )
+        phases_list = parsed.get("phases") or []
+        if parsed.get("rich_summary_tr"):
+            summary_tr = parsed["rich_summary_tr"]
+            summary_en = parsed.get("rich_summary_en") or summary_tr
+        else:
+            summary_tr = (
+                f"**Veri Dosyası Analizi ({fname} • {parsed.get('pages', 1)} sayfa, {parsed.get('char_count', 0)} karakter):**\n"
+                f"- **Otomatik Saptanan Alanlar:** `{', '.join(fields_list) if fields_list else 'Standart Mikroçekim Profili'}`\n"
+                + (f"- **Ölçüm Notları:** {'; '.join(notes_list)}\n" if notes_list else "")
+                + f"- **3B Simülasyona Aktarılan Koşullar:** Yakıt `{sim_params.get('fuel_id')}`, Yerçekimi `{sim_params.get('gravity_g')}G`, O₂ `%{sim_params.get('oxygen_pct')}`, Basınç `{sim_params.get('pressure_psia')} psia`, Akış `{sim_params.get('airflow_cms')} cm/s`.\n"
+                + f"- **Belge Özeti (İlk Kesit):** {(parsed.get('content') or '')[:420]}..."
+            )
+            summary_en = (
+                f"**Dataset & Document Analysis ({fname} • {parsed.get('pages', 1)} page(s), {parsed.get('char_count', 0)} chars):**\n"
+                f"- **Detected Fields:** `{', '.join(fields_list) if fields_list else 'Standard Microgravity Profile'}`\n"
+                + f"- **3D Chamber Conditions Applied:** Fuel `{sim_params.get('fuel_id')}`, Gravity `{sim_params.get('gravity_g')}G`, O₂ `{sim_params.get('oxygen_pct')}%`, Pressure `{sim_params.get('pressure_psia')} psia`, Airflow `{sim_params.get('airflow_cms')} cm/s`.\n"
+                + f"- **Document Excerpt:** {(parsed.get('content') or '')[:420]}..."
+            )
         return jsonify({
             "ok": True,
             "media_type": "document",
@@ -249,6 +254,7 @@ def create_nasa_web_app() -> Flask:
             "chunks": chunks,
             "extracted_fields": fields_list,
             "extraction_notes": notes_list,
+            "phases": phases_list,
             "summary_tr": summary_tr,
             "summary_en": summary_en,
             "extracted_sim_params": sim_params,

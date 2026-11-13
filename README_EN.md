@@ -114,6 +114,8 @@ python main_nasa.py
 python main_nasa.py --self-test
 ```
 
+To test all simulation geometries, governing equations, cool-flame diagnostics, `SoFIE-MIST` suppression, and `SAME/DAFT` aerosol discrimination in a single file upload, attach `sample_data/ALTAR_NASA_Tam_Kapsamli_Deney_Verisi.csv` inside the **Engineering Analysis** or **NASA Archive** module.
+
 ### 3. Build Standalone `.exe` & Serverless Static Web Bundle
 
 ```bash

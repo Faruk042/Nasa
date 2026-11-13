@@ -494,7 +494,8 @@ class HybridNasaAIEngine:
         is_meta_intent = query_intent in ("capabilities_guide", "platform_features", "greeting_identity")
 
         live_ntrs_snippets: List[Dict[str, Any]] = []
-        if include_live_nasa and not is_meta_intent and len(user_message.strip()) > 3:
+        is_physics_only = str(cfg.get("active_provider", "auto")).lower() in ("physics", "deterministic")
+        if include_live_nasa and not is_meta_intent and not is_physics_only and len(user_message.strip()) > 3:
             if on_stage:
                 on_stage(
                     "[2/4] Querying live NASA NTRS & PSI databases..."
@@ -671,7 +672,7 @@ class HybridNasaAIEngine:
             lines.append(f"- NASA Özel Atmosfer & Kısmi Yerçekimi Notu: {pg_info['tr']}")
         if media_context:
             lines.append("\n=== YÜKLENEN DOSYA / ALEV GÖRSELİ / CANLI WEB AKIŞI ÖZEL VERİSİ ===")
-            lines.append(media_context[:1800])
+            lines.append(media_context[:4500])
 
         lines.append("\n=== GÖREVLE EŞLEŞEN EN KRİTİK NASA PSI DENEYLERİ (TERMODİNAMİK & TF-IDF SIRALI) ===")
         for e in top_exps:

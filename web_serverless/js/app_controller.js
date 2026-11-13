@@ -351,6 +351,9 @@
         chatHistory: [],
         attachedImageB64: null,
         attachedMediaSummary: "",
+        attachedMediaSummaryTr: "",
+        attachedMediaSummaryEn: "",
+        attachedMediaPhases: [],
         attachedMediaName: "",
         activeChatJobId: null,
         chamber3D: null,
@@ -433,6 +436,12 @@
 
         if (!state.streamEnabled && $("header-stream-text")) {
             $("header-stream-text").textContent = state.lang === "en" ? "Stream: Ready" : "Akış: Hazır";
+        }
+        if (state.attachedMediaName && (state.attachedMediaSummaryTr || state.attachedMediaSummaryEn)) {
+            state.attachedMediaSummary = state.lang === "en"
+                ? (state.attachedMediaSummaryEn || state.attachedMediaSummaryTr)
+                : (state.attachedMediaSummaryTr || state.attachedMediaSummaryEn);
+            renderUploadedMediaUI();
         }
         renderAudienceBanner();
     }
@@ -832,6 +841,113 @@
     // =========================================================================
     // DOSYA (.CSV/.JSON/.PDF/.TXT) VE ALEV FOTOĞRAFI (.PNG/.JPG) İŞLEYİCİ
     // =========================================================================
+    function activateUploadedPhase(ph, jumpToLab) {
+        if (!ph || !ph.sim_params) return;
+        const isEn = state.lang === "en";
+        applyParamsToSliders(ph.sim_params);
+        if (state.chamber3D) state.chamber3D.reigniteDroplet();
+        const phTag = isEn
+            ? `${state.attachedMediaName} (${ph.short_en || "Phase " + ph.index})`
+            : `${state.attachedMediaName} (${ph.short_tr || "Faz " + ph.index})`;
+        runSimulationUpdate(phTag);
+        refreshRankingTable();
+        if (jumpToLab) {
+            switchTab("tab-lab");
+        }
+        showToast(
+            isEn
+                ? `${ph.short_en || "Phase " + ph.index} loaded into 3D Chamber (${ph.flame_temp_k} K).`
+                : `${ph.short_tr || "Faz " + ph.index} 3B Yanma Odasına yüklendi (${ph.flame_temp_k} K).`
+        );
+    }
+
+    function renderUploadedMediaUI() {
+        const isEn = state.lang === "en";
+        if (!state.attachedMediaName) return;
+
+        if ($("copilot-live-context-tag")) {
+            $("copilot-live-context-tag").textContent = isEn
+                ? `Active File: ${state.attachedMediaName} + 3D Chamber`
+                : `Aktif Dosya: ${state.attachedMediaName} + 3B Oda`;
+        }
+
+        const phases = state.attachedMediaPhases || [];
+        const makePhasePillsHtml = (prefix) => {
+            if (phases.length <= 1) return "";
+            const lbl = isEn ? "3D Phase:" : "3B Faz Seç:";
+            const btns = phases
+                .map((p) => {
+                    const bTxt = isEn ? (p.short_en || `Phase ${p.index}`) : (p.short_tr || `Faz ${p.index}`);
+                    const tip = `${p.desc || bTxt} (${p.flame_temp_k} K)`;
+                    return `<button type="button" class="btn-secondary ${prefix}-phase-btn" data-pidx="${p.index}" title="${escapeHtml(tip)}" style="padding:2px 7px; font-size:10.8px;">${escapeHtml(bTxt)}</button>`;
+                })
+                .join("");
+            return `<div style="margin-top:6px; display:flex; gap:5px; flex-wrap:wrap; align-items:center;"><span style="font-size:11px; color:#94a3b8;">${lbl}</span>${btns}</div>`;
+        };
+
+        const previewBox = $("media-analysis-result-box");
+        if (previewBox && state.attachedMediaSummary) {
+            const thumbHtml = state.attachedImageB64
+                ? `<img src="${state.attachedImageB64}" alt="Flame Preview" />`
+                : "";
+            previewBox.innerHTML = `
+                <div class="media-preview-card">
+                    ${thumbHtml}
+                    <div style="flex:1; font-size:12px;">
+                        <div>${renderSafeMarkdown(state.attachedMediaSummary)}</div>
+                        ${makePhasePillsHtml("prev")}
+                        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn-primary" id="btn-preview-goto-3d" style="padding:4px 10px; font-size:11.5px;">${isEn ? "View in 3D" : "3B Sahneyi Gör"}</button>
+                            <button class="btn-secondary" id="btn-preview-ask-ai" style="padding:4px 10px; font-size:11.5px;">${isEn ? "Detailed Analysis" : "Detaylı Analiz"}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $("btn-preview-goto-3d").addEventListener("click", () => switchTab("tab-lab"));
+            $("btn-preview-ask-ai").addEventListener("click", () => {
+                switchTab("tab-copilot");
+                sendChatMessage(
+                    isEn
+                        ? `Analyze my uploaded '${state.attachedMediaName}' data via governing combustion laws (d²-law, Spalding B_oq, Sherwood Sh, MOC) and rank matching NASA PSI experiments.`
+                        : `Yüklediğim '${state.attachedMediaName}' verisini formüllerle (D² yasası, Spalding B_oq, Sherwood Sh, MOC) analiz et; ilgili NASA PSI deneylerini sırala ve yangın güvenliği önerilerini sun.`
+                );
+            });
+            previewBox.querySelectorAll(".prev-phase-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const idx = parseInt(btn.getAttribute("data-pidx"), 10);
+                    const found = phases.find((x) => x.index === idx);
+                    if (found) activateUploadedPhase(found, true);
+                });
+            });
+        }
+
+        const chatSt = $("chat-image-status");
+        if (chatSt) {
+            chatSt.innerHTML = `<div><strong>${escapeHtml(state.attachedMediaName)}</strong> <button class="btn-secondary" id="btn-clear-chat-media" style="padding:1px 6px; font-size:10.5px; margin-left:5px;">${isEn ? "Clear" : "Temizle"}</button></div>${makePhasePillsHtml("chat")}`;
+            const clr = $("btn-clear-chat-media");
+            if (clr) {
+                clr.addEventListener("click", () => {
+                    state.attachedImageB64 = null;
+                    state.attachedMediaSummary = "";
+                    state.attachedMediaSummaryTr = "";
+                    state.attachedMediaSummaryEn = "";
+                    state.attachedMediaPhases = [];
+                    state.attachedMediaName = "";
+                    chatSt.textContent = "";
+                    $("inp-chat-image").value = "";
+                    $("copilot-live-context-tag").textContent = tStr("copilot_ctx_tag");
+                });
+            }
+            chatSt.querySelectorAll(".chat-phase-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const idx = parseInt(btn.getAttribute("data-pidx"), 10);
+                    const found = phases.find((x) => x.index === idx);
+                    if (found) activateUploadedPhase(found, false);
+                });
+            });
+        }
+    }
+
     async function ingestMediaFile(fileObj, syncTo3D, targetStatusElId) {
         if (!fileObj) return;
         const isEn = state.lang === "en";
@@ -859,18 +975,17 @@
                 return;
             }
 
-            const pickedSummary = isEn ? (data.summary_en || data.summary_tr || "") : (data.summary_tr || "");
+            state.attachedMediaSummaryTr = data.summary_tr || "";
+            state.attachedMediaSummaryEn = data.summary_en || data.summary_tr || "";
+            const pickedSummary = isEn ? state.attachedMediaSummaryEn : state.attachedMediaSummaryTr;
             state.attachedMediaName = data.filename || fileObj.name;
             state.attachedMediaSummary = pickedSummary;
+            state.attachedMediaPhases = data.phases || [];
             if (data.media_type === "image" && data.image_base64) {
                 state.attachedImageB64 = data.image_base64;
             } else {
                 state.attachedImageB64 = null;
             }
-
-            $("copilot-live-context-tag").textContent = isEn
-                ? `Active File: ${state.attachedMediaName} + 3D Chamber`
-                : `Aktif Dosya: ${state.attachedMediaName} + 3B Oda`;
 
             if (syncTo3D && data.extracted_sim_params) {
                 applyParamsToSliders(data.extracted_sim_params);
@@ -881,15 +996,19 @@
                 } else {
                     await runSimulationUpdate(srcTag);
                 }
+                refreshRankingTable();
             }
 
             const detectedReg = data.metrics
                 ? (isEn ? (data.metrics.detected_regime_en || data.metrics.detected_regime_tr) : data.metrics.detected_regime_tr)
                 : "";
+            const phaseNote = state.attachedMediaPhases.length > 1
+                ? (isEn ? `${state.attachedMediaPhases.length} phases` : `${state.attachedMediaPhases.length} faz`)
+                : `${data.chunks || 1} blok`;
             const shortInfo =
                 data.media_type === "image"
                     ? `${state.attachedMediaName} -> ${detectedReg}`
-                    : `${state.attachedMediaName} (${data.chunks} blok) -> O₂:%${data.extracted_sim_params.oxygen_pct}, ${data.extracted_sim_params.airflow_cms} cm/s`;
+                    : `${state.attachedMediaName} (${phaseNote}) -> O₂:%${data.extracted_sim_params.oxygen_pct}, ${data.extracted_sim_params.airflow_cms} cm/s`;
 
             if (statusEl) {
                 statusEl.style.color = "#6ee7b7";
@@ -908,50 +1027,7 @@
                 }
             }
 
-            const previewBox = $("media-analysis-result-box");
-            if (previewBox) {
-                const thumbHtml =
-                    data.media_type === "image" && data.image_base64
-                        ? `<img src="${data.image_base64}" alt="Flame Preview" />`
-                        : "";
-                previewBox.innerHTML = `
-                    <div class="media-preview-card">
-                        ${thumbHtml}
-                        <div style="flex:1; font-size:12px;">
-                            <div>${renderSafeMarkdown(pickedSummary)}</div>
-                            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                                <button class="btn-primary" id="btn-preview-goto-3d" style="padding:4px 10px; font-size:11.5px;">${isEn ? "View in 3D" : "3B Sahneyi Gör"}</button>
-                                <button class="btn-secondary" id="btn-preview-ask-ai" style="padding:4px 10px; font-size:11.5px;">${isEn ? "Detailed Analysis" : "Detaylı Analiz"}</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                $("btn-preview-goto-3d").addEventListener("click", () => switchTab("tab-lab"));
-                $("btn-preview-ask-ai").addEventListener("click", () => {
-                    switchTab("tab-copilot");
-                    sendChatMessage(
-                        isEn
-                            ? `Analyze my uploaded '${state.attachedMediaName}' data via governing combustion laws (d²-law, Spalding B_oq, Sherwood Sh, MOC) and rank matching NASA PSI experiments.`
-                            : `Yüklediğim '${state.attachedMediaName}' verisini formüllerle (D² yasası, Spalding B_oq, Sherwood Sh, MOC) analiz et; ilgili NASA PSI deneylerini sırala ve yangın güvenliği önerilerini sun.`
-                    );
-                });
-            }
-
-            const chatSt = $("chat-image-status");
-            if (chatSt) {
-                chatSt.innerHTML = `<strong>${escapeHtml(state.attachedMediaName)}</strong> <button class="btn-secondary" id="btn-clear-chat-media" style="padding:1px 6px; font-size:10.5px; margin-left:5px;">${isEn ? "Clear" : "Temizle"}</button>`;
-                const clr = $("btn-clear-chat-media");
-                if (clr) {
-                    clr.addEventListener("click", () => {
-                        state.attachedImageB64 = null;
-                        state.attachedMediaSummary = "";
-                        state.attachedMediaName = "";
-                        chatSt.textContent = "";
-                        $("inp-chat-image").value = "";
-                        $("copilot-live-context-tag").textContent = tStr("copilot_ctx_tag");
-                    });
-                }
-            }
+            renderUploadedMediaUI();
 
             showToast(
                 isEn
@@ -1712,7 +1788,7 @@
         const isEn = state.lang === "en";
         const activeProv = cfg.active_provider || "auto";
         $("cfg-active-provider").value = activeProv;
-        if ($("sel-copilot-provider") && ["auto", "ollama", "antigravity", "gemini", "openrouter"].includes(activeProv)) {
+        if ($("sel-copilot-provider") && ["auto", "physics", "ollama", "antigravity", "gemini", "openrouter"].includes(activeProv)) {
             $("sel-copilot-provider").value = activeProv;
         }
         $("cfg-ollama-host").value = cfg.ollama_host || "http://127.0.0.1:11434";
