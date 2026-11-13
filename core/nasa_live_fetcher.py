@@ -17,10 +17,13 @@ import threading
 import time
 from typing import Any, Dict, List, Optional
 from bs4 import BeautifulSoup
-from urllib.parse import quote_plus, urljoin
+from urllib.parse import parse_qs, quote, quote_plus, urljoin, urlparse
 
 from core.config_manager import create_secure_http_session, get_user_data_dir
-from core.data_vision_processor import extract_sim_params_from_text_or_table
+from core.data_vision_processor import (
+    extract_sim_params_from_text_or_table,
+    extract_tabular_or_text_from_archive_bytes,
+)
 from core.nasa_datasets import NASA_EXPERIMENTS_CATALOG
 from core.security_guard import validate_external_url_strict
 
@@ -129,9 +132,12 @@ def build_english_nasa_query(raw_query: str) -> str:
 
 
 class NasaLiveFetcher:
-    """NASA NTRS, NASA OSDR/PSI ve bilimsel URL/JSON/CSV/PDF kaynaklarından canlı veri çeker ve önbellekler."""
+    """NASA NTRS, NASA PSI (psi.nasa.gov), OSDR ve bilimsel URL/JSON/CSV/XLSX/ZIP/PDF kaynaklarından canlı veri çeker."""
 
     NTRS_SEARCH_URL = "https://ntrs.nasa.gov/api/citations/search"
+    PSI_SEARCH_URL = "https://psi.nasa.gov/geode-py/ws/repo/search"
+    PSI_INV_URL = "https://psi.nasa.gov/geode-py/ws/repo/investigations"
+    PSI_STUDY_DL_URL = "https://psi.nasa.gov/geode-py/ws/studies"
     OSDR_SEARCH_URL = "https://osdr.nasa.gov/osdr/data/search"
 
     def __init__(self) -> None:
@@ -297,10 +303,11 @@ class NasaLiveFetcher:
 
     def search_osdr_psi_live(self, query: str, limit: int = 6, force_refresh: bool = False) -> Dict[str, Any]:
         """
-        NASA OSDR / PSI (Open Science Data Repository & Physical Sciences Informatics) API üzerinden canlı arama yapar.
+        Öncelikle doğrudan resmi NASA Physical Sciences Informatics (psi.nasa.gov/geode-py/ws) REST servisini,
+        ardından NASA OSDR servisini sorgulayarak gerçek PSI yanma araştırmalarını getirir.
         """
         clean_q = build_english_nasa_query(query)
-        cache_key = f"osdr::{clean_q.lower()}::{limit}"
+        cache_key = f"psi_v2::{clean_q.lower()}::{limit}"
         now = time.time()
 
         if not force_refresh:
@@ -310,41 +317,78 @@ class NasaLiveFetcher:
                     cached["source_status"] = "cached_live"
                     return cached
 
+        items: List[Dict[str, Any]] = []
+        last_exc: Optional[Exception] = None
+
+        # 1. Resmi psi.nasa.gov Geode PSI Investigation API sorgusu
         try:
-            resp = self.session.get(
-                self.OSDR_SEARCH_URL,
-                params={"term": clean_q, "size": limit},
-                timeout=8,
+            psi_resp = self.session.get(
+                self.PSI_SEARCH_URL,
+                params={"term": clean_q, "source": "psi", "type": "investigation"},
+                timeout=(3.5, 6.5),
             )
-            resp.raise_for_status()
-            data = resp.json()
-            hits = data.get("hits", {}).get("hits", [])
+            if psi_resp.status_code == 200:
+                psi_data = psi_resp.json()
+                psi_hits = psi_data.get("hits", {}).get("hits", [])
+                for h in psi_hits[:limit]:
+                    src = h.get("_source", {}) if isinstance(h, dict) else {}
+                    acc = str(src.get("Accession") or "PSI").strip()
+                    raw_title = str(src.get("Title") or src.get("Study Title") or "NASA PSI Investigation").strip()
+                    acro = str(src.get("Acronym") or "").strip()
+                    full_title = f"{acc} ({acro}) — {raw_title}" if (acro and acro.lower() not in raw_title.lower()) else f"{acc} — {raw_title}"
+                    desc = str(
+                        src.get("Objectives")
+                        or src.get("Study Description")
+                        or src.get("Approach")
+                        or ""
+                    ).strip()
+                    hw = str(src.get("Experiment Hardware") or "").strip()
+                    plat = str(src.get("Flight Platform") or src.get("Flight Program") or "ISS").strip()
+                    mission_str = f"{plat} • {hw}" if hw else plat
+                    items.append({
+                        "id": acc,
+                        "source": "NASA PSI Repository (psi.nasa.gov)",
+                        "title": full_title,
+                        "abstract": desc[:850] if desc else "NASA Physical Sciences Informatics (PSI) deneysel veri kaydı.",
+                        "mission": mission_str,
+                        "date": str(src.get("Public Release Date") or plat)[:16],
+                        "url": f"https://psi.nasa.gov/physci/repo/data/investigations/{acc}" if acc.startswith("PSI-") else f"https://psi.nasa.gov/physci/repo/search?q={quote_plus(clean_q)}",
+                    })
+        except Exception as exc_psi:
+            last_exc = exc_psi
 
-            items: List[Dict[str, Any]] = []
-            for h in hits[:limit]:
-                src = h.get("_source", {}) if isinstance(h, dict) else {}
-                acc = str(src.get("Accession") or src.get("Authoritative Source URL") or "OSDR-PSI")
-                title = str(src.get("Study Title") or src.get("Project Title") or "NASA OSDR/PSI Investigation").strip()
-                desc = str(src.get("Study Description") or src.get("Experiment Description") or "").strip()
-                mission = str(src.get("Flight Program") or src.get("Space Program") or "NASA Spaceflight / Ground").strip()
-                items.append({
-                    "id": acc,
-                    "source": "NASA OSDR / PSI Live API",
-                    "title": title,
-                    "abstract": desc[:800] if desc else "NASA OSDR/PSI açık bilim veri seti kaydı.",
-                    "mission": mission,
-                    "url": f"https://osdr.nasa.gov/bio/repo/search?q={quote_plus(clean_q)}",
-                })
+        # 2. Yedek olarak osdr.nasa.gov açık bilim API'sini dene
+        if not items:
+            try:
+                resp = self.session.get(
+                    self.OSDR_SEARCH_URL,
+                    params={"term": clean_q, "size": limit},
+                    timeout=(3.5, 6.5),
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                hits = data.get("hits", {}).get("hits", [])
+                for h in hits[:limit]:
+                    src = h.get("_source", {}) if isinstance(h, dict) else {}
+                    acc = str(src.get("Accession") or src.get("Authoritative Source URL") or "OSDR-PSI")
+                    title = str(src.get("Study Title") or src.get("Project Title") or "NASA OSDR/PSI Investigation").strip()
+                    desc = str(src.get("Study Description") or src.get("Experiment Description") or "").strip()
+                    mission = str(src.get("Flight Program") or src.get("Space Program") or "NASA Spaceflight / Ground").strip()
+                    items.append({
+                        "id": acc,
+                        "source": "NASA OSDR / PSI Live API",
+                        "title": title,
+                        "abstract": desc[:800] if desc else "NASA OSDR/PSI açık bilim veri seti kaydı.",
+                        "mission": mission,
+                        "url": f"https://psi.nasa.gov/physci/repo/search?q={quote_plus(clean_q)}",
+                    })
+            except Exception as exc_osdr:
+                last_exc = exc_osdr
 
-            if not items:
-                items = self._catalog_fallback_items(clean_q, limit=limit, source_tag="NASA OSDR / PSI Archive")
-                status_tag = "cached_live"
-            else:
-                status_tag = "live_online"
-
+        if items:
             out = {
                 "ok": True,
-                "source_status": status_tag,
+                "source_status": "live_online",
                 "query_used": clean_q,
                 "count": len(items),
                 "items": items,
@@ -354,26 +398,164 @@ class NasaLiveFetcher:
                 self._cache[cache_key] = out
             self._save_cache()
             return out
-        except Exception as exc:
-            with self._cache_lock:
-                if cache_key in self._cache and self._cache[cache_key].get("items"):
-                    fallback = dict(self._cache[cache_key])
-                    fallback["source_status"] = "offline_cache"
-                    return fallback
-            fb_items = self._catalog_fallback_items(clean_q, limit=limit, source_tag="NASA OSDR / PSI Verified Archive")
-            return {
-                "ok": True,
-                "source_status": "offline_cache",
-                "query_used": clean_q,
-                "count": len(fb_items),
-                "items": fb_items,
-                "note": str(exc),
-            }
+
+        with self._cache_lock:
+            if cache_key in self._cache and self._cache[cache_key].get("items"):
+                fallback = dict(self._cache[cache_key])
+                fallback["source_status"] = "offline_cache"
+                return fallback
+        fb_items = self._catalog_fallback_items(clean_q, limit=limit, source_tag="NASA PSI Verified Archive")
+        return {
+            "ok": True,
+            "source_status": "offline_cache",
+            "query_used": clean_q,
+            "count": len(fb_items),
+            "items": fb_items,
+            "note": str(last_exc) if last_exc else "",
+        }
+
+    def _safe_get_bytes(self, start_url: str, max_bytes: int = 10 * 1024 * 1024) -> Dict[str, Any]:
+        current_url = start_url
+        resp = None
+        for _ in range(5):
+            ok_hop, hop_msg = validate_external_url_strict(current_url)
+            if not ok_hop:
+                return {"ok": False, "error": hop_msg}
+            resp = self.session.get(current_url, timeout=12, allow_redirects=False, stream=True)
+            if resp.status_code in (301, 302, 303, 307, 308) and resp.headers.get("Location"):
+                next_loc = urljoin(current_url, resp.headers["Location"])
+                resp.close()
+                current_url = next_loc
+                continue
+            break
+
+        if resp is None:
+            return {"ok": False, "error": "Bağlantı yanıtı alınamadı."}
+        resp.raise_for_status()
+
+        chunks_buf: List[bytes] = []
+        total_read = 0
+        try:
+            for chunk in resp.iter_content(chunk_size=65536):
+                if not chunk:
+                    continue
+                total_read += len(chunk)
+                if total_read > max_bytes:
+                    return {"ok": False, "error": "Güvenlik sınırı: Uzak dosya boyutu 10 MB limitini aşıyor."}
+                chunks_buf.append(chunk)
+        finally:
+            ctype = (resp.headers.get("Content-Type") or "").lower()
+            encoding = resp.encoding or "utf-8"
+            resp.close()
+
+        return {
+            "ok": True,
+            "final_url": current_url,
+            "content_type": ctype,
+            "encoding": encoding,
+            "bytes": b"".join(chunks_buf),
+        }
+
+    def _scrape_psi_portal_url(self, clean_url: str) -> Optional[Dict[str, Any]]:
+        """
+        psi.nasa.gov (Angular SPA) bağlantılarını yakalar ve arka plandaki resmi Geode REST API'den
+        doğrudan meta veriyi + varsa Experimental Table (.csv) uçuş tablosunu indirip çözümler.
+        """
+        parsed_u = urlparse(clean_url)
+        host = (parsed_u.hostname or "").lower()
+        if "psi.nasa.gov" not in host:
+            return None
+
+        m_inv = re.search(r"\b(PSI-\d+)\b", clean_url, re.IGNORECASE)
+        psi_id = m_inv.group(1).upper() if m_inv else ""
+
+        if not psi_id:
+            qs = parse_qs(parsed_u.query or "")
+            q_term = (qs.get("q") or qs.get("term") or ["combustion"])[0]
+            srch = self.search_osdr_psi_live(q_term, limit=8)
+            srch_items = srch.get("items") or []
+            if not srch_items:
+                return None
+            first_id = str(srch_items[0].get("id") or "")
+            if first_id.startswith("PSI-"):
+                psi_id = first_id
+            else:
+                joined = "\n\n".join(f"{it.get('id')}: {it.get('title')}\n{it.get('abstract')}" for it in srch_items)
+                parsed_sim = extract_sim_params_from_text_or_table(joined, f"psi_search_{q_term}.txt")
+                return {
+                    "ok": True,
+                    "title": f"NASA PSI Arama Sonuçları ({q_term})",
+                    "url": clean_url,
+                    "char_count": len(joined),
+                    "content": joined[:20000],
+                    "extracted_sim_params": parsed_sim["extracted_sim_params"],
+                    "extracted_fields": parsed_sim["extracted_fields"],
+                    "extraction_notes": parsed_sim["notes"],
+                    "phases": parsed_sim.get("phases") or [],
+                    "rich_summary_tr": parsed_sim.get("rich_summary_tr") or "",
+                    "rich_summary_en": parsed_sim.get("rich_summary_en") or "",
+                }
+
+        inv_api_url = f"{self.PSI_INV_URL}/{psi_id}"
+        fetched = self._safe_get_bytes(inv_api_url)
+        if not fetched.get("ok"):
+            return None
+
+        inv_json = json.loads(fetched["bytes"].decode("utf-8", errors="replace"))
+        title = str(
+            inv_json.get("title")
+            or inv_json.get("Title")
+            or inv_json.get("proposalTitle")
+            or psi_id
+        ).strip()
+        objectives = str(inv_json.get("objectives") or inv_json.get("Objectives") or "").strip()
+        approach = str(inv_json.get("approach") or inv_json.get("Approach") or "").strip()
+        exp_tables = inv_json.get("experimentalTable") or []
+
+        if isinstance(exp_tables, list) and exp_tables:
+            first_tbl = exp_tables[0] if isinstance(exp_tables[0], dict) else {}
+            tbl_fname = str(first_tbl.get("file_name") or "").strip()
+            if tbl_fname:
+                dl_url = f"{self.PSI_STUDY_DL_URL}/{psi_id}/download?file={quote(tbl_fname)}&redirect=true"
+                dl_res = self._safe_get_bytes(dl_url)
+                if dl_res.get("ok") and dl_res.get("bytes"):
+                    csv_txt = dl_res["bytes"].decode("utf-8", errors="replace")
+                    parsed_tbl = extract_sim_params_from_text_or_table(csv_txt, tbl_fname)
+                    combined_txt = f"[{psi_id}] {title}\n\nObjectives:\n{objectives}\n\nExperimental Table ({tbl_fname}):\n{csv_txt[:16000]}"
+                    return {
+                        "ok": True,
+                        "title": f"{psi_id}: {title} ({tbl_fname})",
+                        "url": clean_url,
+                        "char_count": len(combined_txt),
+                        "content": combined_txt[:22000],
+                        "extracted_sim_params": parsed_tbl["extracted_sim_params"],
+                        "extracted_fields": parsed_tbl["extracted_fields"],
+                        "extraction_notes": parsed_tbl["notes"],
+                        "phases": parsed_tbl.get("phases") or [],
+                        "rich_summary_tr": parsed_tbl.get("rich_summary_tr") or "",
+                        "rich_summary_en": parsed_tbl.get("rich_summary_en") or "",
+                    }
+
+        meta_txt = f"{psi_id} — {title}\n\n{objectives}\n\n{approach}".strip()
+        parsed_meta = extract_sim_params_from_text_or_table(meta_txt, f"{psi_id}.txt")
+        return {
+            "ok": True,
+            "title": f"{psi_id}: {title}",
+            "url": clean_url,
+            "char_count": len(meta_txt),
+            "content": meta_txt[:20000],
+            "extracted_sim_params": parsed_meta["extracted_sim_params"],
+            "extracted_fields": parsed_meta["extracted_fields"],
+            "extraction_notes": parsed_meta["notes"],
+            "phases": parsed_meta.get("phases") or [],
+            "rich_summary_tr": parsed_meta.get("rich_summary_tr") or "",
+            "rich_summary_en": parsed_meta.get("rich_summary_en") or "",
+        }
 
     def scrape_scientific_url(self, url: str) -> Dict[str, Any]:
         """
-        Kullanıcının verdiği herhangi bir NASA / bilimsel web sayfasını, canlı JSON/CSV API'sini veya PDF bağlantısını
-        SSRF ve DNS Rebinding kalkanı altında güvenle okur, metne çevirir ve yanma parametrelerini çıkarır.
+        Kullanıcının verdiği herhangi bir NASA (psi.nasa.gov / ntrs.nasa.gov / osdr.nasa.gov) veya bilimsel web sayfasını,
+        canlı JSON/CSV/XLSX/ZIP/PDF bağlantısını SSRF kalkanı altında güvenle okur ve yanma parametrelerini çıkarır.
         """
         is_safe, clean_or_err = validate_external_url_strict(url)
         if not is_safe:
@@ -381,70 +563,59 @@ class NasaLiveFetcher:
         clean_url = clean_or_err
 
         try:
-            # Yönlendirmeleri (301/302) her adımda SSRF kalkanından geçirerek doğrula (DNS Rebinding / Redirect SSRF engeli)
-            current_url = clean_url
-            resp = None
-            for _ in range(4):
-                ok_hop, hop_msg = validate_external_url_strict(current_url)
-                if not ok_hop:
-                    return {"ok": False, "error": hop_msg}
-                resp = self.session.get(current_url, timeout=12, allow_redirects=False, stream=True)
-                if resp.status_code in (301, 302, 303, 307, 308) and resp.headers.get("Location"):
-                    next_loc = urljoin(current_url, resp.headers["Location"])
-                    resp.close()
-                    current_url = next_loc
-                    continue
-                break
+            psi_direct = self._scrape_psi_portal_url(clean_url)
+            if psi_direct and psi_direct.get("ok"):
+                return psi_direct
+        except Exception:
+            pass
 
-            if resp is None:
-                return {"ok": False, "error": "Bağlantı yanıtı alınamadı."}
-            resp.raise_for_status()
+        try:
+            fetched = self._safe_get_bytes(clean_url)
+            if not fetched.get("ok"):
+                return fetched
 
-            # Bellek taşması (DoS) koruması: En fazla 10 MB veri oku
-            max_bytes = 10 * 1024 * 1024
-            chunks_buf: List[bytes] = []
-            total_read = 0
-            try:
-                for chunk in resp.iter_content(chunk_size=65536):
-                    if not chunk:
-                        continue
-                    total_read += len(chunk)
-                    if total_read > max_bytes:
-                        return {"ok": False, "error": "Güvenlik sınırı: Uzak dosya boyutu 10 MB limitini aşıyor."}
-                    chunks_buf.append(chunk)
-            finally:
-                ctype = (resp.headers.get("Content-Type") or "").lower()
-                encoding = resp.encoding or "utf-8"
-                resp.close()
+            current_url = fetched["final_url"]
+            ctype = fetched["content_type"]
+            encoding = fetched["encoding"]
+            raw_content = fetched["bytes"]
+            url_low = current_url.lower().split("?")[0]
 
-            raw_content = b"".join(chunks_buf)
-
-            if "application/pdf" in ctype or current_url.lower().endswith(".pdf"):
-                doc_res = self.extract_document_bytes(raw_content, filename=current_url.split("/")[-1] or "remote.pdf")
+            if (
+                "application/pdf" in ctype
+                or "spreadsheetml" in ctype
+                or "application/zip" in ctype
+                or url_low.endswith((".pdf", ".xlsx", ".zip"))
+            ):
+                fname_guess = url_low.split("/")[-1] or "remote_data.pdf"
+                doc_res = self.extract_document_bytes(raw_content, filename=fname_guess)
                 if doc_res.get("ok"):
-                    parsed_sim = extract_sim_params_from_text_or_table(doc_res.get("content", ""), doc_res.get("filename", "remote.pdf"))
                     doc_res["url"] = current_url
                     doc_res["title"] = doc_res.get("filename", current_url)
-                    doc_res["extracted_sim_params"] = parsed_sim["extracted_sim_params"]
-                    doc_res["extracted_fields"] = parsed_sim["extracted_fields"]
-                    doc_res["extraction_notes"] = parsed_sim["notes"]
                 return doc_res
 
             raw_txt_decoded = raw_content.decode(encoding, errors="replace")
 
-            # JSON veya CSV doğrudan veri akışıysa ham metni koru
-            if "application/json" in ctype or "text/csv" in ctype or current_url.lower().endswith((".json", ".csv")):
+            # JSON, CSV veya TSV doğrudan veri akışıysa ham metni koru
+            if (
+                "application/json" in ctype
+                or "text/csv" in ctype
+                or "tab-separated" in ctype
+                or url_low.endswith((".json", ".csv", ".tsv"))
+            ):
                 raw_txt = raw_txt_decoded.strip()
-                parsed_sim = extract_sim_params_from_text_or_table(raw_txt, current_url.split("/")[-1] or "feed.json")
+                parsed_sim = extract_sim_params_from_text_or_table(raw_txt, url_low.split("/")[-1] or "feed.csv")
                 return {
                     "ok": True,
-                    "title": f"Canlı Veri Akışı ({current_url.split('/')[-1] or current_url})",
+                    "title": f"Canlı Veri Akışı ({url_low.split('/')[-1] or current_url})",
                     "url": current_url,
                     "char_count": len(raw_txt),
                     "content": raw_txt[:22000],
                     "extracted_sim_params": parsed_sim["extracted_sim_params"],
                     "extracted_fields": parsed_sim["extracted_fields"],
                     "extraction_notes": parsed_sim["notes"],
+                    "phases": parsed_sim.get("phases") or [],
+                    "rich_summary_tr": parsed_sim.get("rich_summary_tr") or "",
+                    "rich_summary_en": parsed_sim.get("rich_summary_en") or "",
                 }
 
             soup = BeautifulSoup(raw_txt_decoded, "html.parser")
@@ -464,15 +635,19 @@ class NasaLiveFetcher:
                 "extracted_sim_params": parsed_sim["extracted_sim_params"],
                 "extracted_fields": parsed_sim["extracted_fields"],
                 "extraction_notes": parsed_sim["notes"],
+                "phases": parsed_sim.get("phases") or [],
+                "rich_summary_tr": parsed_sim.get("rich_summary_tr") or "",
+                "rich_summary_en": parsed_sim.get("rich_summary_en") or "",
             }
         except Exception as exc:
             return {"ok": False, "error": f"Web sayfası okunamadı: {exc}"}
 
     def extract_document_bytes(self, raw_bytes: bytes, filename: str) -> Dict[str, Any]:
-        """Yüklenen PDF, CSV, JSON veya TXT bilimsel belgelerinden bellek korumalı metin ve parametre çıkarır."""
+        """Yüklenen PDF, CSV, TSV, XLSX, ZIP, JSON veya TXT bilimsel belgelerinden bellek korumalı metin ve parametre çıkarır."""
         if len(raw_bytes) > 25 * 1024 * 1024:
             return {"ok": False, "error": "Güvenlik sınırı: Dosya boyutu 25 MB limitini aşıyor."}
         ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else "txt"
+        effective_name = filename
         try:
             if ext == "pdf":
                 if not PDF_SUPPORT or fitz is None:
@@ -483,6 +658,12 @@ class NasaLiveFetcher:
                 pages_count = len(doc)
                 doc.close()
                 full_text = "\n\n".join(pages).strip()
+            elif ext in ("xlsx", "zip"):
+                full_text, inner_name, pages_count = extract_tabular_or_text_from_archive_bytes(raw_bytes, filename)
+                if ext == "zip" and inner_name and inner_name != filename:
+                    effective_name = f"{filename} ({inner_name})"
+                if not full_text.strip():
+                    return {"ok": False, "error": f"{filename} arşivinden okunabilir veri tablosu çıkarılamadı."}
             else:
                 try:
                     full_text = raw_bytes.decode("utf-8")
@@ -490,10 +671,10 @@ class NasaLiveFetcher:
                     full_text = raw_bytes.decode("latin-1", errors="ignore")
                 pages_count = 1
 
-            parsed_sim = extract_sim_params_from_text_or_table(full_text, filename)
+            parsed_sim = extract_sim_params_from_text_or_table(full_text, effective_name)
             return {
                 "ok": True,
-                "filename": filename,
+                "filename": effective_name,
                 "pages": pages_count,
                 "char_count": len(full_text),
                 "content": full_text[:25000],

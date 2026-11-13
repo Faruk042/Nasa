@@ -96,10 +96,10 @@
             chk_stream_sync: "Yeni verileri 3B Yanma Odasına otomatik uygula",
             stream_not_started: "Henüz akış başlatılmadı.",
             live_search_title: "NASA Arşiv Sorgusu",
-            live_search_desc: "Doğrudan resmi ntrs.nasa.gov ve osdr.nasa.gov servislerinden gerçek zamanlı bilimsel rapor ve deney kayıtlarını sorgulayın.",
+            live_search_desc: "Doğrudan resmi psi.nasa.gov, ntrs.nasa.gov ve osdr.nasa.gov servislerinden gerçek zamanlı bilimsel rapor ve deney kayıtlarını sorgulayın.",
             btn_fetch_live: "Arşivde Ara",
             ingest_panel_title: "Dosya ve Fotoğraf Analizi",
-            ingest_panel_desc: "Alev fotoğraflarını (.png, .jpg) veya veri tablolarını (.csv, .json, .pdf, .txt) yükleyin; çıkarılan parametreler 3B odaya aktarılır.",
+            ingest_panel_desc: "Alev fotoğraflarını (.png, .jpg) veya NASA PSI veri tablolarını (.csv, .xlsx, .zip, .pdf, .json) yükleyin; çıkarılan parametreler 3B odaya aktarılır.",
             lbl_scrape_url: "Web Bağlantısı Çözümle",
             btn_scrape_url: "3B'ye Aktar",
             lbl_choose_file: "Veri Dosyası veya Fotoğraf Seç",
@@ -115,7 +115,7 @@
             cp_btn_4: "Soğuk Alev ve Sensörler",
             cp_btn_5: "Su Sisi ve İtfaiye",
             copilot_attach_title: "Dosya Ekle",
-            copilot_attach_desc: "Alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.pdf/.json/.txt) seçtiğinizde hem 3B simülasyon güncellenir hem de denklemlerle değerlendirilir:",
+            copilot_attach_desc: "Alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.xlsx/.zip/.pdf/.json) seçtiğinizde hem 3B simülasyon güncellenir hem de denklemlerle değerlendirilir:",
             chk_6stage: "NASA-STD-6001B Güvenlik Denetimi Aktif",
             lbl_active_engine: "Hesaplama Modu:",
             copilot_ctx_tag: "3B Yanma Odası ve 15 PSI Deneyi Bağlı",
@@ -257,10 +257,10 @@
             chk_stream_sync: "Automatically apply incoming data to 3D Chamber",
             stream_not_started: "Stream has not started yet.",
             live_search_title: "NASA Archive Search",
-            live_search_desc: "Search official ntrs.nasa.gov and osdr.nasa.gov services in real time for scientific reports and experiment records.",
+            live_search_desc: "Search official psi.nasa.gov, ntrs.nasa.gov, and osdr.nasa.gov services in real time for scientific reports and experiment records.",
             btn_fetch_live: "Search Archive",
             ingest_panel_title: "File & Flame Analysis",
-            ingest_panel_desc: "Upload flame photos (.png, .jpg) or data files (.csv, .json, .pdf, .txt); extracted parameters sync directly to the 3D chamber.",
+            ingest_panel_desc: "Upload flame photos (.png, .jpg) or NASA PSI data files (.csv, .xlsx, .zip, .pdf, .json); extracted parameters sync directly to the 3D chamber.",
             lbl_scrape_url: "Parse Web Link",
             btn_scrape_url: "Sync to 3D",
             lbl_choose_file: "Choose Data File or Photo",
@@ -276,7 +276,7 @@
             cp_btn_4: "Cool Flame & Sensors",
             cp_btn_5: "Water Mist & Spinoffs",
             copilot_attach_title: "Attach File",
-            copilot_attach_desc: "Selecting a flame photo (.png/.jpg) or data file (.csv/.pdf/.json/.txt) updates both the 3D simulation and governing equation analysis:",
+            copilot_attach_desc: "Selecting a flame photo (.png/.jpg) or data file (.csv/.xlsx/.zip/.pdf/.json) updates both the 3D simulation and governing equation analysis:",
             chk_6stage: "NASA-STD-6001B Safety Check Active",
             lbl_active_engine: "Analysis Mode:",
             copilot_ctx_tag: "3D Chamber & 15 PSI Experiments Linked",
@@ -2464,14 +2464,22 @@
                 });
                 const data = await res.json();
                 if (data.ok) {
+                    const isEn = state.lang === "en";
+                    state.attachedImageB64 = null;
                     state.attachedMediaName = data.title || url;
-                    state.attachedMediaSummary = `**Web (${url}):** ${data.title}\n${data.preview || ""}`;
+                    state.attachedMediaSummaryTr = data.summary_tr || `**Web (${url}):** ${data.title}\n${data.preview || ""}`;
+                    state.attachedMediaSummaryEn = data.summary_en || `**Web (${url}):** ${data.title}\n${data.preview || ""}`;
+                    state.attachedMediaSummary = isEn ? state.attachedMediaSummaryEn : state.attachedMediaSummaryTr;
+                    state.attachedMediaPhases = data.phases || [];
                     if ($("chk-media-autosync").checked && data.extracted_sim_params) {
                         applyParamsToSliders(data.extracted_sim_params);
+                        if (state.chamber3D) state.chamber3D.reigniteDroplet();
                         if (data.simulation) {
                             applySimulationStateEverywhere(data.simulation, `Web (${(data.title || url).slice(0, 35)})`);
                         }
+                        refreshRankingTable();
                     }
+                    renderUploadedMediaUI();
                     showToast(`'${data.title}' (${data.chunks} chunks) synced.`);
                 } else {
                     showToast(`${data.error || "Failed"}`);
@@ -2486,8 +2494,8 @@
             if (!fileInput.files || !fileInput.files[0]) {
                 showToast(
                     state.lang === "en"
-                        ? "Please select a flame photo (.png/.jpg) or data file (.csv/.pdf/.json/.txt) first."
-                        : "Lütfen önce bir alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.pdf/.json/.txt) seçin."
+                        ? "Please select a flame photo (.png/.jpg) or data file (.csv/.xlsx/.zip/.pdf/.json) first."
+                        : "Lütfen önce bir alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.xlsx/.zip/.pdf/.json) seçin."
                 );
                 return;
             }

@@ -17,7 +17,9 @@ import io
 import json
 import math
 import re
-from typing import Any, Dict, List, Optional
+import xml.etree.ElementTree as ET
+import zipfile
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
@@ -158,17 +160,241 @@ def analyze_flame_image_bytes(raw_bytes: bytes, filename: str = "flame.jpg") -> 
         return {"ok": False, "error": f"Görsel işlenemedi: {exc}"}
 
 
+def _xlsx_bytes_to_csv_text(raw_bytes: bytes, max_rows: int = 650) -> str:
+    """Harici kütüphane gerektirmeden standart .xlsx (OpenXML) çalışma sayfasını güvenli CSV metnine dönüştürür."""
+    with zipfile.ZipFile(io.BytesIO(raw_bytes), "r") as zf:
+        names = set(zf.namelist())
+        shared_strings: List[str] = []
+        if "xl/sharedStrings.xml" in names:
+            ss_info = zf.getinfo("xl/sharedStrings.xml")
+            if ss_info.file_size <= 15 * 1024 * 1024:
+                ss_root = ET.fromstring(zf.read("xl/sharedStrings.xml"))
+                for si in ss_root.iter():
+                    if si.tag.endswith("}si") or si.tag == "si":
+                        parts = [
+                            (t.text or "")
+                            for t in si.iter()
+                            if t.tag.endswith("}t") or t.tag == "t"
+                        ]
+                        shared_strings.append("".join(parts))
+
+        sheet_candidates = sorted(
+            n for n in names if n.startswith("xl/worksheets/sheet") and n.endswith(".xml")
+        )
+        if not sheet_candidates:
+            return ""
+
+        sheet_name = "xl/worksheets/sheet1.xml" if "xl/worksheets/sheet1.xml" in names else sheet_candidates[0]
+        sh_info = zf.getinfo(sheet_name)
+        if sh_info.file_size > 25 * 1024 * 1024:
+            return ""
+        sh_root = ET.fromstring(zf.read(sheet_name))
+
+        def _col_ref_to_idx(cell_ref: str) -> int:
+            letters = ""
+            for ch in cell_ref:
+                if ch.isalpha():
+                    letters += ch.upper()
+                else:
+                    break
+            if not letters:
+                return -1
+            idx_val = 0
+            for ch in letters:
+                idx_val = idx_val * 26 + (ord(ch) - ord("A") + 1)
+            return idx_val - 1
+
+        grid_rows: List[List[str]] = []
+        max_cols = 0
+        for elem in sh_root.iter():
+            if not (elem.tag.endswith("}row") or elem.tag == "row"):
+                continue
+            row_cells: Dict[int, str] = {}
+            next_col = 0
+            for cell in elem:
+                if not (cell.tag.endswith("}c") or cell.tag == "c"):
+                    continue
+                c_ref = cell.attrib.get("r", "")
+                c_type = cell.attrib.get("t", "")
+                c_idx = _col_ref_to_idx(c_ref)
+                if c_idx < 0:
+                    c_idx = next_col
+                next_col = c_idx + 1
+
+                val_str = ""
+                if c_type == "inlineStr":
+                    t_parts = [
+                        (t.text or "")
+                        for t in cell.iter()
+                        if t.tag.endswith("}t") or t.tag == "t"
+                    ]
+                    val_str = "".join(t_parts)
+                else:
+                    raw_v = ""
+                    for sub in cell:
+                        if sub.tag.endswith("}v") or sub.tag == "v":
+                            raw_v = sub.text or ""
+                            break
+                    if c_type == "s" and raw_v.isdigit():
+                        s_i = int(raw_v)
+                        val_str = shared_strings[s_i] if 0 <= s_i < len(shared_strings) else raw_v
+                    else:
+                        val_str = raw_v
+                row_cells[c_idx] = val_str.strip()
+
+            if row_cells:
+                row_len = min(80, max(row_cells.keys()) + 1)
+                row_list = [row_cells.get(ci, "") for ci in range(row_len)]
+                if any(x for x in row_list):
+                    max_cols = max(max_cols, len(row_list))
+                    grid_rows.append(row_list)
+                    if len(grid_rows) >= max_rows:
+                        break
+
+        if not grid_rows:
+            return ""
+        buf = io.StringIO()
+        writer = csv.writer(buf, lineterminator="\n")
+        for r in grid_rows:
+            padded = r + [""] * max(0, max_cols - len(r))
+            writer.writerow(padded)
+        return buf.getvalue()
+
+
+def extract_tabular_or_text_from_archive_bytes(raw_bytes: bytes, filename: str) -> Tuple[str, str, int]:
+    """
+    .xlsx çalışma kitaplarını veya NASA PSI .zip veri paketlerini (içindeki .csv/.tsv/.xlsx/.json/.txt)
+    bellek sınırı (Zip-Bomb koruması) altında güvenli biçimde düz metin/CSV formatına açar.
+    Dönüş: (metin, etkin_dosya_adı, taranan_dosya_sayısı)
+    """
+    ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
+    if ext == "xlsx":
+        csv_txt = _xlsx_bytes_to_csv_text(raw_bytes)
+        return (csv_txt, filename, 1)
+
+    if ext == "zip":
+        with zipfile.ZipFile(io.BytesIO(raw_bytes), "r") as zf:
+            valid_infos = [
+                inf for inf in zf.infolist()
+                if not inf.is_dir()
+                and not inf.filename.startswith("__MACOSX/")
+                and not inf.filename.split("/")[-1].startswith(".")
+                and inf.file_size <= 25 * 1024 * 1024
+            ]
+            if not valid_infos:
+                return ("", filename, 0)
+
+            def _priority(inf: zipfile.ZipInfo) -> Tuple[int, int]:
+                low = inf.filename.lower()
+                is_exp_tbl = 0 if ("experimental" in low or "table" in low or "telemetry" in low) else 1
+                if low.endswith(".csv"):
+                    return (0, is_exp_tbl)
+                if low.endswith(".tsv"):
+                    return (1, is_exp_tbl)
+                if low.endswith(".xlsx"):
+                    return (2, is_exp_tbl)
+                if low.endswith(".json"):
+                    return (3, is_exp_tbl)
+                if low.endswith((".txt", ".md", ".dat")):
+                    return (4, is_exp_tbl)
+                return (9, is_exp_tbl)
+
+            valid_infos.sort(key=_priority)
+            chosen = valid_infos[0]
+            chosen_low = chosen.filename.lower()
+            inner_bytes = zf.read(chosen.filename)
+            short_inner = chosen.filename.split("/")[-1]
+            if chosen_low.endswith(".xlsx"):
+                return (_xlsx_bytes_to_csv_text(inner_bytes), short_inner, len(valid_infos))
+            try:
+                decoded = inner_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                decoded = inner_bytes.decode("latin-1", errors="ignore")
+            return (decoded, short_inner, len(valid_infos))
+
+    try:
+        return (raw_bytes.decode("utf-8"), filename, 1)
+    except UnicodeDecodeError:
+        return (raw_bytes.decode("latin-1", errors="ignore"), filename, 1)
+
+
+def _parse_cell_number(raw_val: Any) -> Optional[float]:
+    """
+    NASA PSI tablolarındaki aralık ('21.5 - 21.7'), çoklu değer ('21; 26.5; 40') ve
+    birimli hücreleri ('1 atm', '757.7 mmHg', '21%') güvenli sayısal değere çevirir.
+    """
+    if raw_val is None:
+        return None
+    if isinstance(raw_val, (int, float)):
+        return None if math.isnan(float(raw_val)) else float(raw_val)
+    s = str(raw_val).strip()
+    if not s or s.lower() in ("na", "n/a", "nan", "none", "null", "-", "--", "tbd"):
+        return None
+    m_range = re.match(
+        r"^\s*(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)\s*(?:%|atm|bar|psia|psi|kpa|mmhg|torr|cm/s|mm|cm|k|c)?\s*$",
+        s,
+        re.IGNORECASE,
+    )
+    if m_range:
+        return (float(m_range.group(1)) + float(m_range.group(2))) / 2.0
+    try:
+        return float(s.replace("%", "").strip())
+    except ValueError:
+        pass
+    m_unit = re.match(
+        r"^\s*([-+]?\d+(?:\.\d+)?)\s*(?:;|,|\s*(?:%|atm|bar|psia|psi|kpa|mmhg|torr|cm/s|m/s|mm|cm|um|k|c|sec|s)\b)",
+        s,
+        re.IGNORECASE,
+    )
+    if m_unit:
+        return float(m_unit.group(1))
+    return None
+
+
 def _parse_fuel_string(val: str) -> Optional[str]:
     vl = (val or "").lower().strip()
     if not vl:
         return None
     candidates = [
-        ("propane_cfig", ("propane_cfig", "propan", "propane", "cfig", "cfi-g")),
-        ("n_heptane", ("n_heptane", "heptan", "heptane")),
-        ("methanol", ("methanol", "metanol")),
-        ("pmma", ("pmma", "akrilik", "acrylic")),
-        ("sibal", ("sibal", "pamuk", "cotton")),
-        ("nomex", ("nomex", "ht90", "spacesuit", "uzay giysisi")),
+        (
+            "propane_cfig",
+            (
+                "propane_cfig", "propan", "propane", "c3h8", "cfig", "cfi-g",
+                "ethane", "c2h6", "ethylene", "ethene", "c2h4", "propene", "propylene",
+                "butane", "n-butane", "isobutane", "c4h10", "methane", "ch4", "acetylene", "c2h2",
+            ),
+        ),
+        (
+            "n_heptane",
+            (
+                "n_heptane", "heptan", "heptane", "c7h16", "dodecane", "c12h26",
+                "decane", "c10h22", "octane", "isooctane", "c8h18", "hexadecane",
+                "nonane", "hexane", "pentane", "jp-8", "jp8", "kerosene",
+            ),
+        ),
+        (
+            "methanol",
+            (
+                "methanol", "metanol", "ch3oh", "ethanol", "etanol", "c2h5oh",
+                "propanol", "isopropanol", "ipa", "butanol", "glycerol",
+            ),
+        ),
+        (
+            "pmma",
+            (
+                "pmma", "akrilik", "acrylic", "plexiglas", "lucite", "teflon", "ptfe",
+                "delrin", "acetal", "pom", "polyethylene", "hdpe", "ldpe",
+                "polypropylene", "polycarbonate", "lexan", "ultem", "silicone",
+            ),
+        ),
+        (
+            "sibal",
+            ("sibal", "pamuk", "cotton", "cellulose", "whatman", "paper", "fiberglass", "fabric"),
+        ),
+        (
+            "nomex",
+            ("nomex", "ht90", "kevlar", "aramid", "kapton", "gore-tex", "pbi", "orthofabric", "spacesuit", "uzay giysisi"),
+        ),
         ("hydrogen", ("hydrogen", "hidrojen")),
     ]
     best_fuel: Optional[str] = None
@@ -179,6 +405,8 @@ def _parse_fuel_string(val: str) -> Optional[str]:
             if idx != -1 and idx < best_pos:
                 best_pos = idx
                 best_fuel = fid
+    if best_fuel is None and re.search(r"(?:^|[^a-z0-9])h2(?:$|[^a-z0-9])", vl):
+        return "hydrogen"
     return best_fuel
 
 
@@ -213,7 +441,7 @@ def _parse_habitat_string(val: str) -> Optional[str]:
 
 
 def _classify_table_column(col_name: str) -> Optional[str]:
-    kl = str(col_name or "").strip().lower()
+    kl = re.sub(r"\s+", " ", str(col_name or "").lstrip("\ufeff").strip().lower())
     if not kl:
         return None
     if kl in ("t", "time", "time_s", "t_s", "zaman", "zaman_sn", "sec", "seconds") or "zaman" in kl or "time_s" in kl:
@@ -222,10 +450,18 @@ def _classify_table_column(col_name: str) -> Optional[str]:
         return "phase_code"
     if any(w in kl for w in ("faz_ve_fiziksel", "phase_desc", "fiziksel_durum", "faz", "phase", "stage")):
         return "phase_desc"
-    if any(w in kl for w in ("fuel", "yakit", "material", "malzeme")):
+    if "cool flame" in kl:
+        return "cool_flag"
+    if any(w in kl for w in ("fuel", "yakit", "material", "malzeme")) and not any(
+        bad in kl for bad in ("rate", "sccm", "mg/s", "mg/min", "flow", "temp")
+    ):
         return "fuel"
     if any(w in kl for w in ("diluent", "seyreltici")):
         return "diluent"
+    if kl in ("he", "xhe", "x_he") or "helium" in kl or kl.startswith("he initial") or kl.startswith("he "):
+        return "he_frac"
+    if kl in ("xco2", "x_co2") or kl.startswith("co initial ambient") or "initial co2" in kl:
+        return "co2_amb"
     if any(w in kl for w in ("habitat", "kabin_tipi")):
         return "habitat"
     if any(w in kl for w in ("donanim", "facility", "hardware")):
@@ -238,18 +474,48 @@ def _classify_table_column(col_name: str) -> Optional[str]:
         and "h2o" not in kl
         and "ch2o" not in kl
         and "moc" not in kl
-        and ("oxygen" in kl or "oksijen" in kl or re.search(r"(?:^|[_\s])o2(?:$|[_\s])", kl) is not None)
+        and "flow rate" not in kl
+        and "final o2" not in kl
+        and "after test" not in kl
+        and (
+            "oxygen" in kl
+            or "oksijen" in kl
+            or "xo2" in kl
+            or "percent o2" in kl
+            or kl.startswith("o initial ambient")
+            or re.search(r"(?:^|[_\s(%])o2(?:$|[_\s)%])", kl) is not None
+        )
     ):
         return "oxygen_pct"
-    if "po2" not in kl and ("psia" in kl or (("pressure" in kl or "basinc" in kl) and "kpa" not in kl)):
-        return "pressure_psia"
-    if "po2" not in kl and "kpa" in kl:
-        return "pressure_kpa"
-    if (
-        "yayilim" not in kl
-        and "spread" not in kl
-        and "mm_s" not in kl
-        and any(w in kl for w in ("airflow", "akis", "flow", "velocity", "u_cms", "fan_cm"))
+    if "po2" not in kl and "partial" not in kl:
+        if "mmhg" in kl or "torr" in kl:
+            return "pressure_mmhg"
+        if re.search(r"\bbar\b", kl):
+            return "pressure_bar"
+        if re.search(r"\batm\b", kl):
+            return "pressure_atm"
+        if "kpa" in kl:
+            return "pressure_kpa"
+        if "psia" in kl or "psi" in kl:
+            return "pressure_psia"
+        if "pressure" in kl or "basinc" in kl:
+            return "pressure_any"
+    if not any(
+        bad in kl
+        for bad in (
+            "yayilim", "spread", "mm_s", "restrictor", "direction", "term",
+            "fuel rate", "hc fuel", "sccm", "mg/s", "mg/min", "o2 flow", "fan display",
+        )
+    ) and (
+        any(
+            w in kl
+            for w in (
+                "airflow", "air flow", "air rate", "air display", "air velocity",
+                "flow velocity", "flow speed", "akis", "u_cms", "fan_cm", "coflow",
+            )
+        )
+        or ("cm/s" in kl and any(w in kl for w in ("air", "flow", "vel", "gas", "oxidizer")))
+        or kl in ("flow", "velocity")
     ):
         return "airflow_cms"
     if any(w in kl for w in ("gravity", "yercekimi", "g_level")):
@@ -261,12 +527,20 @@ def _classify_table_column(col_name: str) -> Optional[str]:
         and "sisi" not in kl
         and "mist" not in kl
         and "aerosol" not in kl
-        and any(w in kl for w in ("damlacik", "droplet", "diameter", "d0", "d_mm", "numune_cap"))
+        and "length" not in kl
+        and "width" not in kl
+        and (
+            any(w in kl for w in ("damlacik", "droplet", "diameter", "d0", "d_mm", "numune_cap", "nozzle", "burner size"))
+        )
     ):
         return "d0_mm"
-    if any(w in kl for w in ("sicaklik", "temp_k", "flame_temp", "thermocouple")):
+    if any(w in kl for w in ("sicaklik", "temp_k", "flame_temp", "thermocouple", "tad (k)", "temp (k)")):
         return "temp_k"
-    if "co2" not in kl and "smac" not in kl and (kl == "co" or "co_ppm" in kl or "co_sensor" in kl):
+    if any(w in kl for w in ("temp (c", "t (c", "temperature (c", "celsius")):
+        return "temp_c"
+    if "co2" not in kl and "smac" not in kl and "initial ambient" not in kl and (
+        kl == "co" or "co_ppm" in kl or "co_sensor" in kl or "co (ppm)" in kl
+    ):
         return "co_ppm"
     if "co2" in kl:
         return "co2_ppm"
@@ -274,7 +548,7 @@ def _classify_table_column(col_name: str) -> Optional[str]:
         return "ch2o_ppm"
     if "optik" in kl or "optical" in kl:
         return "opt_vis"
-    if "radyatif" in kl or "radiometer" in kl or "heat_flux" in kl or "isi_akisi" in kl:
+    if "gain" not in kl and ("radyatif" in kl or "radiometer" in kl or "heat_flux" in kl or "isi_akisi" in kl):
         return "ir_kw"
     if "su_sisi" in kl or "mist" in kl:
         return "mist_um"
@@ -303,7 +577,110 @@ def _fit_d2_slope(t_vals: List[float], d2_vals: List[float]) -> Optional[Dict[st
     return {"k_meas": round(k_meas, 3), "r2": round(max(0.0, min(1.0, r2)), 4)}
 
 
+def _convert_o2_number(raw_val: Any, col_header: str = "") -> Optional[float]:
+    num = _parse_cell_number(raw_val)
+    if num is None:
+        return None
+    s = str(raw_val or "")
+    hl = (col_header or "").lower()
+    if 0.03 <= num <= 1.0 and "%" not in s and "percent" not in hl and "yuzde" not in hl and "% by vol" not in hl:
+        num = num * 100.0
+    if 4.0 <= num <= 100.0:
+        return round(num, 2)
+    return None
+
+
+def _extract_pressure_psia_values(r_list: List[Dict[str, Any]], col_map: Dict[str, str]) -> List[float]:
+    out_p: List[float] = []
+    if "pressure_psia" in col_map:
+        c = col_map["pressure_psia"]
+        for it in r_list:
+            v = _parse_cell_number(it.get(c))
+            if v is not None and 2.5 <= v <= 30.0:
+                out_p.append(v)
+    if not out_p and "pressure_kpa" in col_map:
+        c = col_map["pressure_kpa"]
+        for it in r_list:
+            v = _parse_cell_number(it.get(c))
+            if v is not None and 18.0 <= v <= 240.0:
+                out_p.append(v / 6.89476)
+    if not out_p and "pressure_mmhg" in col_map:
+        c = col_map["pressure_mmhg"]
+        for it in r_list:
+            v = _parse_cell_number(it.get(c))
+            if v is not None and 120.0 <= v <= 1600.0:
+                out_p.append(v / 51.7149)
+    if not out_p and "pressure_bar" in col_map:
+        c = col_map["pressure_bar"]
+        for it in r_list:
+            v = _parse_cell_number(it.get(c))
+            if v is not None and 0.18 <= v <= 3.0:
+                out_p.append(v * 14.5038)
+    if not out_p and "pressure_atm" in col_map:
+        c = col_map["pressure_atm"]
+        for it in r_list:
+            v = _parse_cell_number(it.get(c))
+            if v is not None and 0.18 <= v <= 3.0:
+                out_p.append(v * 14.6959)
+    if not out_p and "pressure_any" in col_map:
+        c = col_map["pressure_any"]
+        for it in r_list:
+            raw_v = it.get(c)
+            v = _parse_cell_number(raw_v)
+            if v is None:
+                continue
+            sl = str(raw_v or "").lower()
+            if "atm" in sl:
+                conv = v * 14.6959
+            elif "bar" in sl:
+                conv = v * 14.5038
+            elif "kpa" in sl:
+                conv = v / 6.89476
+            elif "mmhg" in sl or "torr" in sl:
+                conv = v / 51.7149
+            elif 0.18 <= v <= 2.4:
+                conv = v * 14.6959
+            elif 2.5 <= v <= 28.0:
+                conv = v
+            elif 28.0 < v <= 220.0:
+                conv = v / 6.89476
+            elif 220.0 < v <= 1600.0:
+                conv = v / 51.7149
+            else:
+                continue
+            if 2.5 <= conv <= 30.0:
+                out_p.append(conv)
+    return out_p
+
+
+def _is_truthy_cool_flag(val: Any) -> bool:
+    s = str(val or "").strip().lower()
+    return s in ("yes", "y", "true", "1", "cool", "cool flame", "evet")
+
+
+def _is_high_diluent_fraction(val: Optional[float], col_header: str = "") -> bool:
+    if val is None:
+        return False
+    hl = (col_header or "").lower()
+    is_pct = ("%" in hl) or ("percent" in hl) or ("by vol" in hl) or ("yuzde" in hl)
+    pct = val if is_pct else (val * 100.0 if val <= 1.05 else val)
+    return 15.0 <= pct <= 96.0
+
+
+def _infer_filename_fuel(filename: str) -> Optional[str]:
+    fl = (filename or "").lower()
+    parsed = _parse_fuel_string(fl)
+    if parsed:
+        return parsed
+    if "bass" in fl or "sofie" in fl or "same" in fl:
+        return "pmma"
+    if "saffire" in fl:
+        return "sibal"
+    return None
+
+
 def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional[Dict[str, Any]]:
+    rows = [r for r in (rows or []) if any(str(v or "").strip() for v in r.values())]
     if not rows:
         return None
     from core.physics_engine import simulate_combustion_state
@@ -315,23 +692,124 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
         if role and role not in col_map:
             col_map[role] = raw_k
 
-    # Satırları kronolojik fazlara ayır
+    fuel_counts: Dict[str, int] = {}
+    if "fuel" in col_map:
+        f_col = col_map["fuel"]
+        for r in rows:
+            pf = _parse_fuel_string(str(r.get(f_col) or ""))
+            if pf:
+                fuel_counts[pf] = fuel_counts.get(pf, 0) + 1
+    dominant_fuel = (
+        max(fuel_counts.items(), key=lambda kv: kv[1])[0]
+        if fuel_counts
+        else (_infer_filename_fuel(filename) or "n_heptane")
+    )
+    he_col_hdr = col_map.get("he_frac", "")
+    co2_amb_hdr = col_map.get("co2_amb", "")
+
+    has_explicit_phase = bool(col_map.get("phase_code") or col_map.get("phase_desc"))
     grouped_phases: List[Dict[str, Any]] = []
-    phase_lookup: Dict[str, Dict[str, Any]] = {}
-    for r in rows:
-        p_code = str(r.get(col_map.get("phase_code", ""), "") or "").strip()
-        p_desc = str(r.get(col_map.get("phase_desc", ""), "") or "").strip()
-        p_key = p_code or p_desc or "FAZ_1"
-        if p_key not in phase_lookup:
-            entry = {
-                "key": p_key,
-                "code": p_code or p_key.split(" ")[0],
-                "desc": p_desc or p_code or "Standart Yanma Fazi",
-                "rows": [],
-            }
-            phase_lookup[p_key] = entry
-            grouped_phases.append(entry)
-        phase_lookup[p_key]["rows"].append(r)
+
+    if has_explicit_phase:
+        phase_lookup: Dict[str, Dict[str, Any]] = {}
+        for r in rows:
+            p_code = str(r.get(col_map.get("phase_code", ""), "") or "").strip()
+            p_desc = str(r.get(col_map.get("phase_desc", ""), "") or "").strip()
+            p_key = p_code or p_desc or "FAZ_1"
+            if p_key not in phase_lookup:
+                entry = {
+                    "key": p_key,
+                    "code": p_code or p_key.split(" ")[0],
+                    "desc": p_desc or p_code or "Standart Yanma Fazi",
+                    "rows": [],
+                }
+                phase_lookup[p_key] = entry
+                grouped_phases.append(entry)
+            phase_lookup[p_key]["rows"].append(r)
+    else:
+        # Tekil damlacık d²(t) zaman serisi mi yoksa çoklu NASA PSI deney kataloğu mu?
+        t_col = col_map.get("time_s")
+        d_col = col_map.get("d2_mm2") or col_map.get("d0_mm")
+        is_monotonic_ts = False
+        if t_col and d_col and len(rows) >= 3:
+            t_probe = [_parse_cell_number(r.get(t_col)) for r in rows[:25]]
+            t_clean = [x for x in t_probe if x is not None]
+            if len(t_clean) >= 3 and all(t_clean[i + 1] >= t_clean[i] for i in range(len(t_clean) - 1)) and t_clean[-1] > t_clean[0]:
+                is_monotonic_ts = True
+
+        if is_monotonic_ts or len(rows) == 1:
+            grouped_phases.append({
+                "key": "FAZ_1",
+                "code": "FAZ_1",
+                "desc": "Zaman Serisi Yanma Kaydi",
+                "rows": rows,
+            })
+        elif len(rows) <= 7:
+            for r_idx, r in enumerate(rows, start=1):
+                f_str = str(r.get(col_map.get("fuel", ""), "") or "").strip()
+                grouped_phases.append({
+                    "key": f"TEST_{r_idx}",
+                    "code": f"TEST_{r_idx}",
+                    "desc": f"Test {r_idx}" + (f" ({f_str[:26]})" if f_str else ""),
+                    "rows": [r],
+                })
+        else:
+            # NASA PSI Experimental Table: Fiziksel rejime göre en fazla 7 temsili test grubuna ayır
+            o2_hdr = col_map.get("oxygen_pct", "")
+            buckets: Dict[str, Dict[str, Any]] = {}
+            for r_idx, r in enumerate(rows):
+                f_raw = str(r.get(col_map.get("fuel", ""), "") or "").strip()
+                f_id = _parse_fuel_string(f_raw) or dominant_fuel
+                f_tok = re.sub(r"[^a-z0-9]", "", f_raw.lower().split()[0])[:10] if f_raw else f_id
+                if f_tok.isdigit():
+                    f_tok = f_id
+                cool_b = "COOL" if ("cool_flag" in col_map and _is_truthy_cool_flag(r.get(col_map["cool_flag"]))) else "HOT"
+                he_v = _parse_cell_number(r.get(he_col_hdr)) if he_col_hdr else None
+                co2_v = _parse_cell_number(r.get(co2_amb_hdr)) if co2_amb_hdr else None
+                dil_b = "He" if _is_high_diluent_fraction(he_v, he_col_hdr) else ("CO2" if _is_high_diluent_fraction(co2_v, co2_amb_hdr) else "N2")
+                o2_v = _convert_o2_number(r.get(o2_hdr), o2_hdr) if o2_hdr else None
+                if o2_v is None:
+                    o2_b = "O2_STD"
+                elif o2_v < 17.0:
+                    o2_b = "O2_LOW"
+                elif o2_v <= 23.5:
+                    o2_b = "O2_AIR"
+                elif o2_v <= 45.0:
+                    o2_b = "O2_ENR"
+                else:
+                    o2_b = "O2_HIGH"
+
+                fl_v = _parse_cell_number(r.get(col_map.get("airflow_cms", ""))) if "airflow_cms" in col_map else None
+                if fl_v is None:
+                    fl_b = "FL_DEF"
+                elif fl_v < 4.0:
+                    fl_b = "FL_QUIES"
+                elif fl_v <= 16.0:
+                    fl_b = "FL_MID"
+                else:
+                    fl_b = "FL_HIGH"
+
+                b_key = f"{f_id}|{f_tok}|{cool_b}|{dil_b}|{o2_b}|{fl_b}"
+                if b_key not in buckets:
+                    desc_label = f"{f_raw[:22] or f_id}"
+                    if cool_b == "COOL":
+                        desc_label += " • Cool Flame"
+                    if dil_b != "N2":
+                        desc_label += f" • {dil_b}"
+                    buckets[b_key] = {
+                        "key": b_key,
+                        "code": f"GRUP_{len(buckets) + 1}",
+                        "desc": desc_label,
+                        "first_idx": r_idx,
+                        "rows": [],
+                    }
+                buckets[b_key]["rows"].append(r)
+
+            top_buckets = sorted(buckets.values(), key=lambda b: (-len(b["rows"]), b["first_idx"]))[:7]
+            top_buckets.sort(key=lambda b: b["first_idx"])
+            for g_i, b_obj in enumerate(top_buckets, start=1):
+                b_obj["code"] = f"GRUP_{g_i}"
+                grouped_phases.append(b_obj)
 
     def _num_list(r_list: List[Dict[str, Any]], role_key: str) -> List[float]:
         col = col_map.get(role_key)
@@ -339,13 +817,9 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
             return []
         out_nums: List[float] = []
         for item in r_list:
-            v = item.get(col)
-            if v is None:
-                continue
-            try:
-                out_nums.append(float(str(v).replace("%", "").strip()))
-            except ValueError:
-                pass
+            v = _parse_cell_number(item.get(col))
+            if v is not None:
+                out_nums.append(v)
         return out_nums
 
     def _first_str(r_list: List[Dict[str, Any]], role_key: str) -> str:
@@ -364,43 +838,58 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
     has_water_mist_telemetry = False
     aerosol_min_um: Optional[float] = None
     aerosol_max_um: Optional[float] = None
+    o2_col_name = col_map.get("oxygen_pct", "")
 
     for idx, grp in enumerate(grouped_phases, start=1):
         pr = grp["rows"]
         fuel_raw = _first_str(pr, "fuel")
-        fuel_id = _parse_fuel_string(fuel_raw) or "n_heptane"
-        diluent = _parse_diluent_string(_first_str(pr, "diluent")) or "N2"
+        fuel_id = _parse_fuel_string(fuel_raw) or dominant_fuel
+        diluent = _parse_diluent_string(_first_str(pr, "diluent"))
+        if not diluent:
+            he_vals = _num_list(pr, "he_frac")
+            co2_amb_vals = _num_list(pr, "co2_amb")
+            he_mean = (sum(he_vals) / len(he_vals)) if he_vals else None
+            co2_mean = (sum(co2_amb_vals) / len(co2_amb_vals)) if co2_amb_vals else None
+            if _is_high_diluent_fraction(he_mean, he_col_hdr):
+                diluent = "He"
+            elif _is_high_diluent_fraction(co2_mean, co2_amb_hdr):
+                diluent = "CO2"
+            else:
+                diluent = "N2"
         habitat_id = _parse_habitat_string(_first_str(pr, "habitat"))
 
-        o2_vals = [x for x in _num_list(pr, "oxygen_pct") if 5.0 <= x <= 100.0]
-        psia_vals = [x for x in _num_list(pr, "pressure_psia") if 3.0 <= x <= 25.0]
-        kpa_vals = [x for x in _num_list(pr, "pressure_kpa") if 20.0 <= x <= 180.0]
-        flow_vals = [x for x in _num_list(pr, "airflow_cms") if 0.0 <= x <= 50.0]
+        o2_vals: List[float] = []
+        if o2_col_name:
+            for item in pr:
+                cv = _convert_o2_number(item.get(o2_col_name), o2_col_name)
+                if cv is not None:
+                    o2_vals.append(cv)
+
+        p_vals = _extract_pressure_psia_values(pr, col_map)
+        flow_vals = [x for x in _num_list(pr, "airflow_cms") if 0.0 <= x <= 55.0]
         grav_vals = [x for x in _num_list(pr, "gravity_g") if 0.0 <= x <= 2.0]
-        d0_vals = [x for x in _num_list(pr, "d0_mm") if 0.5 <= x <= 10.0]
+        d0_vals = [x for x in _num_list(pr, "d0_mm") if 0.4 <= x <= 30.0]
         d2_vals = [x for x in _num_list(pr, "d2_mm2") if 0.1 <= x <= 100.0]
         t_vals = _num_list(pr, "time_s")
-        temp_vals = _num_list(pr, "temp_k")
-        co_vals = _num_list(pr, "co_ppm")
-        ch2o_vals = _num_list(pr, "ch2o_ppm")
+        temp_k_vals = [x for x in _num_list(pr, "temp_k") if 250.0 <= x <= 3600.0]
+        temp_c_vals = [x + 273.15 for x in _num_list(pr, "temp_c") if -50.0 <= x <= 3200.0]
+        temp_vals = temp_k_vals if temp_k_vals else temp_c_vals
+        co_vals = [x for x in _num_list(pr, "co_ppm") if x >= 0.0]
+        ch2o_vals = [x for x in _num_list(pr, "ch2o_ppm") if x >= 0.0]
         opt_vals = _num_list(pr, "opt_vis")
         mist_vals = _num_list(pr, "mist_um")
         aero_vals = [x for x in _num_list(pr, "aerosol_um") if x > 0.0]
+        explicit_cool = "cool_flag" in col_map and any(_is_truthy_cool_flag(it.get(col_map["cool_flag"])) for it in pr)
 
         o2_mean = round(sum(o2_vals) / len(o2_vals), 2) if o2_vals else 21.0
-        if psia_vals:
-            p_psia = round(sum(psia_vals) / len(psia_vals), 2)
-        elif kpa_vals:
-            p_psia = round((sum(kpa_vals) / len(kpa_vals)) / 6.89476, 2)
-        else:
-            p_psia = 14.7
-        flow_mean = round(sum(flow_vals) / len(flow_vals), 2) if flow_vals else 2.4
+        p_psia = round(sum(p_vals) / len(p_vals), 2) if p_vals else 14.7
+        flow_mean = round(min(40.0, sum(flow_vals) / len(flow_vals)), 2) if flow_vals else 2.4
         grav_mean = round(sum(grav_vals) / len(grav_vals), 2) if grav_vals else 0.0
 
         if d0_vals:
-            d0_init = round(max(0.8, min(8.0, d0_vals[0])), 2)
+            d0_init = round(max(0.8, min(6.0, d0_vals[0])), 2)
         elif d2_vals:
-            d0_init = round(max(0.8, min(8.0, math.sqrt(max(0.64, d2_vals[0])))), 2)
+            d0_init = round(max(0.8, min(6.0, math.sqrt(max(0.64, d2_vals[0])))), 2)
         else:
             d0_init = 3.2
 
@@ -447,7 +936,7 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
         opt_min = round(min(opt_vals), 2) if opt_vals else None
         mist_max = round(max(mist_vals), 1) if mist_vals else 0.0
 
-        if tel.get("cool_flame_active") or (500.0 <= temp_mean <= 820.0) or ch2o_max >= 40.0:
+        if explicit_cool or tel.get("cool_flame_active") or (500.0 <= temp_mean <= 820.0) or ch2o_max >= 40.0:
             has_cool_flame_telemetry = True
         if mist_max > 0.0 or "mist" in grp["desc"].lower() or "bastirma" in grp["desc"].lower() or diluent == "CO2":
             has_water_mist_telemetry = True
@@ -455,8 +944,8 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
             aerosol_min_um = min(aero_vals) if aerosol_min_um is None else min(aerosol_min_um, min(aero_vals))
             aerosol_max_um = max(aero_vals) if aerosol_max_um is None else max(aerosol_max_um, max(aero_vals))
 
-        t_span = f"{int(t_vals[0])}-{int(t_vals[-1])} sn" if len(t_vals) >= 2 else f"{len(pr)} satir"
-        t_span_en = f"{int(t_vals[0])}-{int(t_vals[-1])} s" if len(t_vals) >= 2 else f"{len(pr)} rows"
+        t_span = f"{int(t_vals[0])}-{int(t_vals[-1])} sn" if (has_explicit_phase and len(t_vals) >= 2) else f"{len(pr)} satir"
+        t_span_en = f"{int(t_vals[0])}-{int(t_vals[-1])} s" if (has_explicit_phase and len(t_vals) >= 2) else f"{len(pr)} rows"
 
         phases_out.append({
             "index": idx,
@@ -489,7 +978,7 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
             "risk_score": tel["risk_score"],
             "smac_s": tl["t_smac_125ppm_s"],
             "extinguished": bool(tel.get("extinguished")),
-            "cool_flame": bool(tel.get("cool_flame_active")),
+            "cool_flame": bool(tel.get("cool_flame_active") or explicit_cool),
         })
 
     if not phases_out:
@@ -520,13 +1009,14 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
         sp = p["sim_params"]
         k_txt = f"{p['k_meas']:.2f}" if p["k_meas"] is not None else f"{p['k_model']:.2f}"
         ch2o_txt = f" / {p['ch2o_max_ppm']:.0f} ppm CH₂O" if p["ch2o_max_ppm"] > 0 else ""
+        dil_txt = f" • `{sp['diluent']}`" if sp.get("diluent") and sp["diluent"] != "N2" else ""
         smac_txt_tr = "Guvenli" if p["smac_s"] >= 900 else f"{p['smac_s']} sn"
         smac_txt_en = "Safe" if p["smac_s"] >= 900 else f"{p['smac_s']} s"
         table_tr_lines.append(
-            f"| **Faz {p['index']}** | `{p['time_span_tr']}` | `{sp['fuel_id']}` • `{sp['gravity_g']}G` • `%{sp['oxygen_pct']} O₂` • `{sp['pressure_psia']} psia` • `{sp['airflow_cms']} cm/s` | `{p['measured_temp_k']} K` • `{p['co_max_ppm']} ppm CO`{ch2o_txt} | `K={k_txt}` • `B={p['b_oq']}` • `Sh={p['sh']}` • `Da={p['da']}` • `MOC=%{p['moc_pct']}` | **{p['badge_tr']}** (Risk `{p['risk_score']}/100`, SMAC `{smac_txt_tr}`) |"
+            f"| **Faz {p['index']}** | `{p['time_span_tr']}` | `{sp['fuel_id']}`{dil_txt} • `{sp['gravity_g']}G` • `%{sp['oxygen_pct']} O₂` • `{sp['pressure_psia']} psia` • `{sp['airflow_cms']} cm/s` | `{p['measured_temp_k']} K` • `{p['co_max_ppm']} ppm CO`{ch2o_txt} | `K={k_txt}` • `B={p['b_oq']}` • `Sh={p['sh']}` • `Da={p['da']}` • `MOC=%{p['moc_pct']}` | **{p['badge_tr']}** (Risk `{p['risk_score']}/100`, SMAC `{smac_txt_tr}`) |"
         )
         table_en_lines.append(
-            f"| **Phase {p['index']}** | `{p['time_span_en']}` | `{sp['fuel_id']}` • `{sp['gravity_g']}G` • `{sp['oxygen_pct']}% O₂` • `{sp['pressure_psia']} psia` • `{sp['airflow_cms']} cm/s` | `{p['measured_temp_k']} K` • `{p['co_max_ppm']} ppm CO`{ch2o_txt} | `K={k_txt}` • `B={p['b_oq']}` • `Sh={p['sh']}` • `Da={p['da']}` • `MOC={p['moc_pct']}%` | **{p['badge_en']}** (Risk `{p['risk_score']}/100`, SMAC `{smac_txt_en}`) |"
+            f"| **Phase {p['index']}** | `{p['time_span_en']}` | `{sp['fuel_id']}`{dil_txt} • `{sp['gravity_g']}G` • `{sp['oxygen_pct']}% O₂` • `{sp['pressure_psia']} psia` • `{sp['airflow_cms']} cm/s` | `{p['measured_temp_k']} K` • `{p['co_max_ppm']} ppm CO`{ch2o_txt} | `K={k_txt}` • `B={p['b_oq']}` • `Sh={p['sh']}` • `Da={p['da']}` • `MOC={p['moc_pct']}%` | **{p['badge_en']}** (Risk `{p['risk_score']}/100`, SMAC `{smac_txt_en}`) |"
         )
 
     diag_tr: List[str] = []
@@ -540,10 +1030,10 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
         )
     if has_cool_flame_telemetry:
         diag_tr.append(
-            "- **Görünmez NTC Soğuk Alev ve Sensör Körlüğü (FLEX-2):** `550-750 K` bandında görünür optik şiddet `%1` altına düşerken `CO` ve `CH₂O` (formaldehit) hızla yükselmektedir; tek kanallı optik dedektör yerine `CO + Orta-IR + CH₂O` sensör füzyonu zorunludur."
+            "- **Görünmez NTC Soğuk Alev ve Sensör Körlüğü (FLEX / CFI / CFI-G):** `550-750 K` bandında görünür optik şiddet `%1` altına düşerken `CO` ve `CH₂O` (formaldehit) hızla yükselmektedir; tek kanallı optik dedektör yerine `CO + Orta-IR + CH₂O` sensör füzyonu zorunludur."
         )
         diag_en.append(
-            "- **Invisible NTC Cool Flame & Sensor Blindness (FLEX-2):** Below `800 K`, visible optical intensity drops under `1%` while `CO` and `CH₂O` surge; multi-channel `CO + Mid-IR + CH₂O` fusion is mandatory."
+            "- **Invisible NTC Cool Flame & Sensor Blindness (FLEX / CFI / CFI-G):** Below `800 K`, visible optical intensity drops under `1%` while `CO` and `CH₂O` surge; multi-channel `CO + Mid-IR + CH₂O` fusion is mandatory."
         )
     if has_water_mist_telemetry:
         diag_tr.append(
@@ -585,8 +1075,8 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
 
 def extract_sim_params_from_text_or_table(text: str, filename: str = "data.txt") -> Dict[str, Any]:
     """
-    CSV, JSON, PDF veya Web sayfası metninden bilimsel yanma parametrelerini (O2, basınç, akış, yerçekimi, yakıt, çap)
-    ve varsa çok fazlı zaman serisi verilerini otomatik olarak ayıklar.
+    CSV, TSV, XLSX, JSON, PDF veya Web sayfası metninden bilimsel yanma parametrelerini
+    (O2 %, mole fraction, psia/kPa/mmHg/bar/atm, akış, yerçekimi, yakıt, çap) ve çoklu deney fazlarını ayıklar.
     """
     clean = (text or "").lstrip("\ufeff").strip()
     lower = clean.lower()
@@ -615,10 +1105,10 @@ def extract_sim_params_from_text_or_table(text: str, filename: str = "data.txt")
     if not extracted and ("," in clean or ";" in clean or "\t" in clean):
         lines = [ln for ln in clean.splitlines() if ln.strip()][:600]
         if len(lines) >= 2:
-            delim = ";" if lines[0].count(";") > lines[0].count(",") else ("\t" if "\t" in lines[0] else ",")
+            delim = "\t" if lines[0].count("\t") >= 2 else (";" if lines[0].count(";") > lines[0].count(",") else ",")
             try:
                 reader = list(csv.DictReader(lines, delimiter=delim))
-                if reader:
+                if reader and len(reader[0]) >= 2:
                     tab_res = _analyze_tabular_rows(reader, filename)
                     if tab_res:
                         return tab_res
@@ -633,21 +1123,32 @@ def extract_sim_params_from_text_or_table(text: str, filename: str = "data.txt")
 
     if "oxygen_pct" not in extracted:
         m_o2 = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%\s*(?:o2|o₂|oxygen|oksijen)\b", lower) or re.search(
-            r"(?<![a-z0-9])(?:o2|o₂|oksijen|oxygen)\s*[:=]?\s*%?\s*(\d{1,3}(?:\.\d+)?)", lower
+            r"(?<![a-z0-9])(?:o2|o₂|oksijen|oxygen|xo2)\s*[:=]\s*%?\s*(\d{1,3}(?:\.\d+)?)", lower
         )
         if m_o2:
             val = float(m_o2.group(1))
+            if 0.04 <= val <= 1.0:
+                val = round(val * 100.0, 2)
             if 5.0 <= val <= 100.0:
                 extracted["oxygen_pct"] = val
                 notes.append(f"Metinden O₂ = %{val} saptandı")
 
     if "pressure_psia" not in extracted:
-        m_psia = re.search(r"(\d{1,2}(?:\.\d+)?)\s*psi(?:a)?", lower)
-        m_kpa = re.search(r"(\d{2,3}(?:\.\d+)?)\s*kpa", lower)
+        m_psia = re.search(r"(\d{1,2}(?:\.\d+)?)\s*psi(?:a)?\b", lower)
+        m_kpa = re.search(r"(\d{2,3}(?:\.\d+)?)\s*kpa\b", lower)
+        m_mmhg = re.search(r"(\d{3,4}(?:\.\d+)?)\s*(?:mmhg|torr)\b", lower)
+        m_bar = re.search(r"(\d(?:\.\d+)?)\s*bar\b", lower)
+        m_atm = re.search(r"(\d(?:\.\d+)?)\s*atm\b", lower)
         if m_psia:
             extracted["pressure_psia"] = round(float(m_psia.group(1)), 2)
         elif m_kpa:
             extracted["pressure_psia"] = round(float(m_kpa.group(1)) / 6.89476, 2)
+        elif m_mmhg:
+            extracted["pressure_psia"] = round(float(m_mmhg.group(1)) / 51.7149, 2)
+        elif m_bar:
+            extracted["pressure_psia"] = round(float(m_bar.group(1)) * 14.5038, 2)
+        elif m_atm:
+            extracted["pressure_psia"] = round(float(m_atm.group(1)) * 14.6959, 2)
 
     if "airflow_cms" not in extracted:
         m_flow = re.search(r"(\d{1,2}(?:\.\d+)?)\s*cm\s*/\s*s", lower)
@@ -701,22 +1202,30 @@ def _map_dict_row_to_params(row: Dict[str, Any], out: Dict[str, Any], notes: Lis
             if ph:
                 out["habitat_id"] = ph
             continue
-        try:
-            num = float(v)
-        except (TypeError, ValueError):
+        if role == "oxygen_pct":
+            o2_c = _convert_o2_number(v, str(k))
+            if o2_c is not None:
+                out["oxygen_pct"] = o2_c
+                notes.append(f"Tablodan O₂ = %{o2_c:.1f}")
             continue
-        if role == "oxygen_pct" and 5 <= num <= 100:
-            out["oxygen_pct"] = round(num, 2)
-            notes.append(f"Tablodan O₂ = %{num:.1f}")
-        elif role == "pressure_psia" and num <= 25:
+        num = _parse_cell_number(v)
+        if num is None:
+            continue
+        if role == "pressure_psia" and 2.5 <= num <= 30.0:
             out["pressure_psia"] = round(num, 2)
-        elif role == "pressure_kpa" and 20 <= num <= 180:
+        elif role == "pressure_kpa" and 18.0 <= num <= 240.0:
             out["pressure_psia"] = round(num / 6.89476, 2)
-        elif role == "airflow_cms" and 0 <= num <= 50:
-            out["airflow_cms"] = round(num, 2)
-        elif role == "gravity_g" and 0 <= num <= 2:
+        elif role == "pressure_mmhg" and 120.0 <= num <= 1600.0:
+            out["pressure_psia"] = round(num / 51.7149, 2)
+        elif role == "pressure_bar" and 0.18 <= num <= 3.0:
+            out["pressure_psia"] = round(num * 14.5038, 2)
+        elif role == "pressure_atm" and 0.18 <= num <= 3.0:
+            out["pressure_psia"] = round(num * 14.6959, 2)
+        elif role == "airflow_cms" and 0.0 <= num <= 50.0:
+            out["airflow_cms"] = round(min(40.0, num), 2)
+        elif role == "gravity_g" and 0.0 <= num <= 2.0:
             out["gravity_g"] = round(num, 2)
-        elif role == "d0_mm" and 0.5 <= num <= 10:
-            out["droplet_d0_mm"] = round(num, 2)
-        elif role == "d2_mm2" and 0.6 <= num <= 80 and "droplet_d0_mm" not in out:
-            out["droplet_d0_mm"] = round(math.sqrt(num), 2)
+        elif role == "d0_mm" and 0.5 <= num <= 25.0:
+            out["droplet_d0_mm"] = round(max(0.8, min(6.0, num)), 2)
+        elif role == "d2_mm2" and 0.6 <= num <= 80.0 and "droplet_d0_mm" not in out:
+            out["droplet_d0_mm"] = round(max(0.8, min(6.0, math.sqrt(num))), 2)

@@ -277,6 +277,9 @@ def create_nasa_web_app() -> Flask:
         )
         sim_params = scraped.get("extracted_sim_params") or {}
         sim_state = simulate_combustion_state(sim_params)
+        preview = (scraped.get("content") or "")[:450]
+        summary_tr = scraped.get("rich_summary_tr") or f"**Web ({url}):** {scraped.get('title')}\n{preview}"
+        summary_en = scraped.get("rich_summary_en") or f"**Web ({url}):** {scraped.get('title')}\n{preview}"
         return jsonify({
             "ok": True,
             "title": scraped.get("title"),
@@ -284,9 +287,12 @@ def create_nasa_web_app() -> Flask:
             "chunks": chunks,
             "extracted_fields": scraped.get("extracted_fields", []),
             "extraction_notes": scraped.get("extraction_notes", []),
+            "phases": scraped.get("phases") or [],
+            "summary_tr": summary_tr,
+            "summary_en": summary_en,
             "extracted_sim_params": sim_params,
             "simulation": sim_state,
-            "preview": (scraped.get("content") or "")[:450],
+            "preview": preview,
         })
 
     @app.route("/api/upload-doc", methods=["POST"])

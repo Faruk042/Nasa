@@ -17,7 +17,7 @@
 
 Platform iki tamamlayıcı çalışma modu sunar:
 
-1. **Çevrimdışı Masaüstü ve Yerel Sürüm (`main_nasa.py`, `core/` ve `Nasa_4.exe`):** Kapalı-form analitik fizik çözücüsü (`d²`, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, `MOC`), 15 NASA PSI deney sıralama motoru, canlı NTRS/OSDR veri akışı ve RGB/HSV alev piksel çözümleyicisiyle internet bağlantısı gerektirmeden yerel bilgisayarda çalışır.
+1. **Çevrimdışı Masaüstü ve Yerel Sürüm (`main_nasa.py`, `core/` ve `Nasa_4.exe`):** Kapalı-form analitik fizik çözücüsü (`d²`, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, `MOC`), 15 NASA PSI deney sıralama motoru, canlı `psi.nasa.gov` / `ntrs.nasa.gov` / `osdr.nasa.gov` veri akışı, NASA PSI `Experimental Table` (`.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, `.json`) birim dönüştürücüsü ve RGB/HSV alev piksel çözümleyicisiyle yerel bilgisayarda çalışır.
 2. **Tarayıcı İçi Kurulumsuz Web Sürümü (`web_serverless/`):** GitHub Pages üzerinde hiçbir arka plan sunucusu veya kurulum gerektirmeden doğrudan ziyaretçinin tarayıcısında çalışan istemci-içi sürümdür (`build_serverless_web.py` ile üretilir).
 
 ---
@@ -52,12 +52,12 @@ Uygulama üst çubuğunda her özelliği en sade haliyle anlatan **5 ana modül*
 
 ---
 
-### 3. Veri ve Görüntü — Canlı NASA Akışı ve Dosya/Alev Çözümleyicisi
+### 3. Veri ve Görüntü — Canlı NASA PSI/NTRS Akışı ve Veri Tablosu/Alev Çözümleyicisi
 
 ![Veri ve Görüntü — Canlı NASA Akışı ve Alev Fotoğrafı Analizi](docs/screenshots/04_live_nasa_stream_and_rag.png)
 
-- **Canlı NASA Akışı ve Arşiv Sorgusu:** Resmi `ntrs.nasa.gov` ve `osdr.nasa.gov` servislerinden güncel bilimsel makale ve deney kayıtlarını sorgular; metin içindeki oksijen, basınç ve akış değerlerini ayıklayarak 3B Yanma Odasına aktarabilir.
-- **Dosya ve Fotoğraf Analizi:** Yüklenen alev fotoğraflarını (`.png`, `.jpg`) RGB/HSV renk uzayında piksel düzeyinde tarayarak mavi `CH*` kemilüminesans oranını, sarı kurum ışımasını ve en/boy (`H/W`) küresellik indeksini hesaplar; `.csv`, `.pdf` ve `.json` deney tablolarından doğrusal regresyonla `d²` yanma sabitini (`K`) çıkarır.
+- **Canlı NASA PSI ve NTRS Arşiv Sorgusu:** Resmi `psi.nasa.gov`, `ntrs.nasa.gov` ve `osdr.nasa.gov` servislerinden güncel bilimsel makale ve deney kayıtlarını sorgular; doğrudan `https://psi.nasa.gov/physci/repo/data/investigations/PSI-XX` soruşturma bağlantılarını çözümleyerek deneysel tablosunu indirir ve 3B Yanma Odasına aktarır.
+- **NASA PSI Deney Tablosu ve Alev Fotoğrafı Analizi:** NASA PSI veri deposundan indirilen ham `Experimental Table` dosyalarını (`.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, `.json`) doğrudan okur; oksijen mol kesrini (`X_O2 -> %O₂`), basınç birimlerini (`mmHg`/`torr`, `bar`, `atm`, `kPa -> psia`), sıcaklıkları (`°C -> K`) ve helyum/karbondioksit seyrelticilerini otomatik dönüştürerek çoklu test satırlarını etkileşimli `Faz 1..N` adımlarına ayırır. Yüklenen alev fotoğraflarını (`.png`, `.jpg`) RGB/HSV renk uzayında tarayarak mavi `CH*` kemilüminesans oranını, sarı kurum ışımasını ve en/boy (`H/W`) küresellik indeksini hesaplar.
 
 ---
 
@@ -114,7 +114,7 @@ python main_nasa.py
 python main_nasa.py --self-test
 ```
 
-Uygulamadaki tüm 3B numune geometrilerini, taşınım denklemlerini, görünmez soğuk alev teşhisini, `SoFIE-MIST` su sisi bastırmasını ve `SAME/DAFT` duman-toz ayrımını tek seferde test etmek için `sample_data/ALTAR_NASA_Tam_Kapsamli_Deney_Verisi.csv` dosyasını **Mühendislik Analizi** veya **NASA Arşivi** sekmesinden yükleyebilirsiniz.
+Uygulamadaki tüm 3B numune geometrilerini, taşınım denklemlerini, görünmez soğuk alev teşhisini, `SoFIE-MIST` su sisi bastırmasını ve `SAME/DAFT` duman-toz ayrımını tek seferde test etmek için `sample_data/ALTAR_NASA_Tam_Kapsamli_Deney_Verisi.csv` dosyasını veya `psi.nasa.gov` üzerinden indirilen herhangi bir `Experimental Table` (`.csv`, `.xlsx`, `.zip`) dosyasını **Mühendislik Analizi** ya da **Veri ve Görüntü** sekmesinden yükleyebilirsiniz.
 
 ### 3. Tek Dosya Masaüstü Paketi (`.exe`) Derleme ve Statik Web Üretimi
 
@@ -143,8 +143,8 @@ Nasa/
 │   ├── nasa_datasets.py         # 15 NASA PSI araştırması, alt test matrisleri, 8 görev senaryosu ve 7 yakıt
 │   ├── ranking_engine.py        # Öklid uzaklığı + TF-IDF önceliklendirme ve karşılaştırma motoru
 │   ├── smart_synthesizer.py     # Çok noktalı parametre taraması ve çift dilli (TR/EN) mühendislik analizi
-│   ├── data_vision_processor.py # RGB/HSV alev fotoğrafı piksel analizi ve CSV/PDF/JSON veri okuyucu
-│   ├── nasa_live_fetcher.py     # Resmi NASA NTRS ve OSDR REST API istemcisi
+│   ├── data_vision_processor.py # RGB/HSV alev piksel analizi ve NASA PSI CSV/XLSX/ZIP/PDF/JSON okuyucu
+│   ├── nasa_live_fetcher.py     # Resmi NASA PSI (psi.nasa.gov), NTRS ve OSDR REST API istemcisi
 │   ├── ai_engine.py             # Analitik çözücü ve isteğe bağlı yerel model yönlendiricisi
 │   ├── directives.py            # CON-01..CON-09 fiziksel doğrulama ve NASA-STD-6001B kuralları
 │   └── security_guard.py        # Yerel ağ ve girdi doğrulama yardımcıları
@@ -165,7 +165,7 @@ Nasa/
 
 ## Bilimsel Kaynaklar
 
-1. **NASA Physical Sciences Informatics (PSI) & OSDR:** [https://osdr.nasa.gov/bio/repo/](https://osdr.nasa.gov/bio/repo/)
+1. **NASA Physical Sciences Informatics (PSI) Yanma Arşivi:** [https://psi.nasa.gov/physci/repo/search?q=combustion](https://psi.nasa.gov/physci/repo/search?q=combustion) & [https://osdr.nasa.gov/bio/repo/](https://osdr.nasa.gov/bio/repo/)
 2. **NASA Technical Reports Server (NTRS):** [https://ntrs.nasa.gov/](https://ntrs.nasa.gov/) (FLEX, BASS-II, Saffire I–VI, SoFIE, SAME/DAFT raporları)
 3. **NASA Glenn Research Center — Combustion Science:** *Combustion Integrated Rack (CIR), Microgravity Science Glovebox (MSG), Cool Flames Investigation (CFI) & ACME.*
 4. **NASA-STD-6001B & NASA-STD-3001:** *Flammability, Offgassing, and Compatibility Requirements* & *Spaceflight Human-System Standard (SMAC CO Limits).*

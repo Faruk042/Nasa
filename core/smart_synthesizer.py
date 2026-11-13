@@ -73,6 +73,10 @@ def classify_user_intent(user_message: str, media_context: str = "") -> str:
                 "veriyi",
                 "tabloyu",
                 "veri seti",
+                "xlsx",
+                "excel",
+                "zip",
+                "tsv",
                 "tum ozellik",
                 "butun ozellik",
                 "uploaded",
@@ -424,6 +428,8 @@ def synthesize_question_driven_report(
     tel = active_sim["telemetry"]
     fv = active_sim.get("flight_validation") or {}
     tl = active_sim.get("scenario_timeline") or {}
+    call_top = active_sim.get("callouts") or {}
+    reg_badge = call_top.get("badge_en" if is_en else "badge_tr") or tel.get("regime", "")
     rag_hits = rag_hits or []
     live_ntrs = live_ntrs or []
     history = history or []
@@ -447,7 +453,7 @@ def synthesize_question_driven_report(
         if is_en:
             text = (
                 "### ALTAR-NASA v5.1 — Interactive Engineering & Scientific Capabilities\n"
-                f"Currently locked onto your live 3D chamber (**{inp['fuel_name_en']}** at `{inp['gravity_g']} G`, `{inp['oxygen_pct']}% O₂`, `{inp['pressure_psia']} psia`, `U = {inp['airflow_cms']} cm/s` → **`{tel['regime']}`**, Risk `{tel['risk_score']}/100`). Instead of static summaries, you can ask me to perform direct calculations and comparisons:\n\n"
+                f"Currently locked onto your live 3D chamber (**{inp['fuel_name_en']}** at `{inp['gravity_g']} G`, `{inp['oxygen_pct']}% O₂`, `{inp['pressure_psia']} psia`, `U = {inp['airflow_cms']} cm/s` → **{reg_badge}**, Risk `{tel['risk_score']}/100`). Instead of static summaries, you can ask me to perform direct calculations and comparisons:\n\n"
                 "| Capability Domain | What I Compute & Synthesize Live | Example Prompt You Can Ask |\n"
                 "| :--- | :--- | :--- |\n"
                 "| **Governing Equation Derivation** | Step-by-step substitution of `d²`-law `K`, Spalding `B_oq`, Sherwood `Sh`, `Ra/Gr/Ri`, Damköhler `Da`, and `MOC` | *\"How is Spalding B_oq and burning rate K calculated for my current droplet?\"* |\n"
@@ -460,7 +466,7 @@ def synthesize_question_driven_report(
         else:
             text = (
                 "### ALTAR-NASA v5.1 — Yapabileceğim Canlı Hesaplama ve Mühendislik Analizleri\n"
-                f"Şu anda aktif 3B yanma odanıza kilitliyim (**{inp['fuel_name_tr']}** • `{inp['gravity_g']} G`, `%{inp['oxygen_pct']} O₂`, `{inp['pressure_psia']} psia`, `U = {inp['airflow_cms']} cm/s` → **`{tel['regime']}`**, Risk `{tel['risk_score']}/100`). Bana doğrudan aşağıdaki hesaplama ve sorguları yaptırabilirsiniz:\n\n"
+                f"Şu anda aktif 3B yanma odanıza kilitliyim (**{inp['fuel_name_tr']}** • `{inp['gravity_g']} G`, `%{inp['oxygen_pct']} O₂`, `{inp['pressure_psia']} psia`, `U = {inp['airflow_cms']} cm/s` → **{reg_badge}**, Risk `{tel['risk_score']}/100`). Bana doğrudan aşağıdaki hesaplama ve sorguları yaptırabilirsiniz:\n\n"
                 "| Analiz Yeteneği | Arka Planda Yürüttüğüm Canlı İşlem | Doğrudan Sorabileceğiniz Örnek Soru |\n"
                 "| :--- | :--- | :--- |\n"
                 "| **Adım Adım Denklem Çözümü** | Aktif kaydırıcı değerlerinizle `d²` yasası (`K`), Spalding `B_oq`, Sherwood `Sh`, `Ra/Gr/Ri`, Damköhler `Da` ve `MOC` hesabı | *\"Spalding B_oq ve yanma sabiti K şu anki değerlerimle nasıl hesaplanıyor?\"* |\n"
@@ -520,14 +526,14 @@ def synthesize_question_driven_report(
             text = (
                 "### ALTAR-NASA v5.1 — Decision Support Kernel Online\n"
                 f"- **Active 3D Chamber Lock:** `{inp['fuel_name_en']}` (`{inp['geometry_3d']}`) | `{inp['gravity_g']} G` | `{inp['oxygen_pct']}% O₂` (`P_O2 = {tel.get('o2_partial_psia', tel.get('po2_psia', 0))} psia`) | `U = {inp['airflow_cms']} cm/s`\n"
-                f"- **Computed State:** Regime **`{tel['regime']}`** | Flame Temp `{tel['flame_temp_k']} K` | Critical `MOC = {tel['moc_pct']}% O₂` | Fire Risk **`{tel['risk_score']}/100`**\n\n"
+                f"- **Computed State:** Regime **{reg_badge}** | Flame Temp `{tel['flame_temp_k']} K` | Critical `MOC = {tel['moc_pct']}% O₂` | Fire Risk **`{tel['risk_score']}/100`**\n\n"
                 "Ask me any specific question—such as deriving a dimensionless number (`B_oq`, `Sh`, `Da`), running a parameter sensitivity sweep (`0G vs 0.16G Moon`, airflow changes), comparing `EVA Suit` vs `Lunar Rover` atmospheres, or inspecting a NASA PSI experiment (`FLEX`, `Saffire`, `SoFIE-MIST`, `DAFT`)."
             )
         else:
             text = (
                 "### ALTAR-NASA v5.1 — Kanıt Sentezi ve Karar Destek Çekirdeği Hazır\n"
                 f"- **Aktif 3B Yanma Odası Kilidi:** `{inp['fuel_name_tr']}` (`{inp['geometry_3d']}`) | `{inp['gravity_g']} G` | `%{inp['oxygen_pct']} O₂` (`P_O2 = {tel.get('o2_partial_psia', tel.get('po2_psia', 0))} psia`) | `U = {inp['airflow_cms']} cm/s`\n"
-                f"- **Anlık Çözücü Durumu:** Rejim **`{tel['regime']}`** | Alev Sıcaklığı `{tel['flame_temp_k']} K` | Kritik `MOC = %{tel['moc_pct']} O₂` | Yangın Riski **`{tel['risk_score']}/100`**\n\n"
+                f"- **Anlık Çözücü Durumu:** Rejim **{reg_badge}** | Alev Sıcaklığı `{tel['flame_temp_k']} K` | Kritik `MOC = %{tel['moc_pct']} O₂` | Yangın Riski **`{tel['risk_score']}/100`**\n\n"
                 "Bana belirli bir fiziksel denklemi (`Spalding B_oq`, `Sherwood Sh`, `Damköhler Da`), parametre değişim senaryosunu (*\"Akış hızını artırırsam ne olur?\"*), `EVA Uzay Giysisi vs. Ay Gezgini` kıyaslamasını veya merak ettiğiniz bir NASA PSI deneyini (`FLEX`, `Saffire`, `SoFIE-MIST`, `DAFT`) doğrudan sorabilirsiniz."
             )
         return (text, [])
@@ -999,7 +1005,7 @@ def synthesize_question_driven_report(
                 "### 1. Uploaded Dataset & Multi-Phase Telemetry Audit\n"
                 f"{media_context}\n\n"
                 "### 2. Synchronized 3D Chamber, Governing Equations & ISS Flight Validation\n"
-                f"- **Active 3D State (`{inp['fuel_name_en']}` • `{inp['geometry_3d']}`):** `{inp['gravity_g']} G`, `{inp['oxygen_pct']}% O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`), `{inp['pressure_psia']} psia`, `{inp['airflow_cms']} cm/s` -> **`{tel['regime']}`** (`T_f = {tel['flame_temp_k']} K`, Spread `{tel['flame_spread_mm_s']} mm/s`, Risk **`{tel['risk_score']}/100`**).\n"
+                f"- **Active 3D State (`{inp['fuel_name_en']}` • `{inp['geometry_3d']}`):** `{inp['gravity_g']} G`, `{inp['oxygen_pct']}% O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`), `{inp['pressure_psia']} psia`, `{inp['airflow_cms']} cm/s` -> **{reg_badge}** (`T_f = {tel['flame_temp_k']} K`, Spread `{tel['flame_spread_mm_s']} mm/s`, Risk **`{tel['risk_score']}/100`**).\n"
                 f"- **Dimensionless Transport & Kinetics:** `K = {tel['burning_rate_k_mm2_s']} mm²/s` | `B_oq = {tel.get('spalding_b_number', 0)}` | `R_f/R_d = {tel.get('standoff_ratio_rf_rd', 0)}` | `Re = {tel.get('reynolds_number', 0)}` | `Sh = {tel['sherwood_number']}` | `Ra = {tel.get('rayleigh_number', 0)}` | `Ri = {tel.get('richardson_number', 0)}` | `Da = {tel.get('damkohler_number', 0)}` | `χ_r = {tel['radiative_loss_fraction'] * 100:.1f}%` | `MOC = {tel['moc_pct']}% O₂`.\n"
                 f"- **ISS Flight Telemetry Fit:** `R² = {fv.get('r_squared', 0.996)}` • `RMSE = {fv.get('rmse', 0.015)}` ({fv.get('campaign', 'NASA GRC PSI')}).\n"
                 f"{pg_note}\n"
@@ -1015,7 +1021,7 @@ def synthesize_question_driven_report(
                 "### 1. Yüklenen Veri Kaynağı ve Çok Fazlı Telemetri Denetimi\n"
                 f"{media_context}\n\n"
                 "### 2. Senkronize 3B Yanma Odası, Boyutsuz Denklemler ve ISS Doğrulaması\n"
-                f"- **Aktif 3B Sahne (`{inp['fuel_name_tr']}` • `{inp['geometry_3d']}`):** `{inp['gravity_g']} G`, `%{inp['oxygen_pct']} O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`), `{inp['pressure_psia']} psia`, `{inp['airflow_cms']} cm/s` -> **`{tel['regime']}`** (`T_f = {tel['flame_temp_k']} K`, Yayılma `{tel['flame_spread_mm_s']} mm/s`, Risk **`{tel['risk_score']}/100`**).\n"
+                f"- **Aktif 3B Sahne (`{inp['fuel_name_tr']}` • `{inp['geometry_3d']}`):** `{inp['gravity_g']} G`, `%{inp['oxygen_pct']} O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`), `{inp['pressure_psia']} psia`, `{inp['airflow_cms']} cm/s` -> **{reg_badge}** (`T_f = {tel['flame_temp_k']} K`, Yayılma `{tel['flame_spread_mm_s']} mm/s`, Risk **`{tel['risk_score']}/100`**).\n"
                 f"- **Boyutsuz Taşınım ve Kinetik:** `K = {tel['burning_rate_k_mm2_s']} mm²/s` | `B_oq = {tel.get('spalding_b_number', 0)}` | `R_f/R_d = {tel.get('standoff_ratio_rf_rd', 0)}` | `Re = {tel.get('reynolds_number', 0)}` | `Sh = {tel['sherwood_number']}` | `Ra = {tel.get('rayleigh_number', 0)}` | `Ri = {tel.get('richardson_number', 0)}` | `Da = {tel.get('damkohler_number', 0)}` | `χ_r = %{tel['radiative_loss_fraction'] * 100:.1f}` | `MOC = %{tel['moc_pct']} O₂`.\n"
                 f"- **ISS Uçuş Telemetrisi Uyumu:** `R² = {fv.get('r_squared', 0.996)}` • `RMSE = {fv.get('rmse', 0.015)}` ({fv.get('campaign', 'NASA GRC PSI')}).\n"
                 f"{pg_note_tr}\n"
@@ -1142,7 +1148,7 @@ def synthesize_question_driven_report(
             f"{fuel_section}"
             f"- **Governing Physical Rule (`{best_dir['id']} • {best_dir['code']}`):** {best_dir['rule_en']}\n"
             f"{rag_snippet}"
-            f"- **Live Chamber Coupling (`{inp['fuel_name_en']}`):** At `{inp['gravity_g']} G`, `{inp['oxygen_pct']}% O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`), and `U = {inp['airflow_cms']} cm/s`, your chamber operates in **`{tel['regime']}`** (`T_f = {tel['flame_temp_k']} K`, `K = {tel['burning_rate_k_mm2_s']} mm²/s`, `Sh = {tel['sherwood_number']}`, `Da = {tel.get('damkohler_number', 0)}`, `MOC = {tel['moc_pct']}% O₂`, Risk **`{tel['risk_score']}/100`**).\n"
+            f"- **Live Chamber Coupling (`{inp['fuel_name_en']}`):** At `{inp['gravity_g']} G`, `{inp['oxygen_pct']}% O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`), and `U = {inp['airflow_cms']} cm/s`, your chamber operates in **{reg_badge}** (`T_f = {tel['flame_temp_k']} K`, `K = {tel['burning_rate_k_mm2_s']} mm²/s`, `Sh = {tel['sherwood_number']}`, `Da = {tel.get('damkohler_number', 0)}`, `MOC = {tel['moc_pct']}% O₂`, Risk **`{tel['risk_score']}/100`**).\n"
             f"- **Matched NASA PSI Records:**\n"
             f"  1. **{best_exp['program']} (`{best_exp['exp_id']}` • [NTRS #{best_exp['ntrs_id']}]({best_exp['ntrs_url']}))** — {best_exp['key_finding_en']}\n"
             f"  2. **{second_exp['program']} (`{second_exp['exp_id']}` • [NTRS #{second_exp['ntrs_id']}]({second_exp['ntrs_url']}))** — {second_exp['key_finding_en']}"
@@ -1153,7 +1159,7 @@ def synthesize_question_driven_report(
             f"{fuel_section}"
             f"- **İlgili Fiziksel Kısıt ve Yasa (`{best_dir['id']} • {best_dir['code']}`):** {best_dir['rule_tr']}\n"
             f"{rag_snippet}"
-            f"- **Aktif 3B Odanızla Sayısal Bağlantı (`{inp['fuel_name_tr']}`):** `{inp['gravity_g']} G`, `%{inp['oxygen_pct']} O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`) ve `U = {inp['airflow_cms']} cm/s` koşullarında **`{tel['regime']}`** rejimi aktiftir (`T_f = {tel['flame_temp_k']} K`, `K = {tel['burning_rate_k_mm2_s']} mm²/s`, `Sh = {tel['sherwood_number']}`, `Da = {tel.get('damkohler_number', 0)}`, `MOC = %{tel['moc_pct']} O₂`, Risk **`{tel['risk_score']}/100`**).\n"
+            f"- **Aktif 3B Odanızla Sayısal Bağlantı (`{inp['fuel_name_tr']}`):** `{inp['gravity_g']} G`, `%{inp['oxygen_pct']} O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`) ve `U = {inp['airflow_cms']} cm/s` koşullarında **{reg_badge}** rejimi aktiftir (`T_f = {tel['flame_temp_k']} K`, `K = {tel['burning_rate_k_mm2_s']} mm²/s`, `Sh = {tel['sherwood_number']}`, `Da = {tel.get('damkohler_number', 0)}`, `MOC = %{tel['moc_pct']} O₂`, Risk **`{tel['risk_score']}/100`**).\n"
             f"- **Doğrudan Eşleşen NASA PSI Bulguları:**\n"
             f"  1. **{best_exp['program']} (`{best_exp['exp_id']}` • [NTRS #{best_exp['ntrs_id']}]({best_exp['ntrs_url']}))** — {best_exp['key_finding_tr']}\n"
             f"  2. **{second_exp['program']} (`{second_exp['exp_id']}` • [NTRS #{second_exp['ntrs_id']}]({second_exp['ntrs_url']}))** — {second_exp['key_finding_tr']}"

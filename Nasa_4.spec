@@ -30,6 +30,8 @@ hidden_imports = [
     "pymupdf",
     "fitz",
     "dotenv",
+    "zipfile",
+    "xml.etree.ElementTree",
     "core",
     "core.security_guard",
     "core.config_manager",

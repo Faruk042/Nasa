@@ -529,6 +529,8 @@ def simulate_combustion_state(params: Dict[str, Any]) -> Dict[str, Any]:
         rad_loss_frac=rad_loss_frac,
         risk_score=risk_score,
         co_ppm=co_ppm,
+        badge_tr=callouts["badge_tr"],
+        badge_en=callouts["badge_en"],
     )
 
     flight_validation = _build_iss_flight_validation(
@@ -552,6 +554,8 @@ def simulate_combustion_state(params: Dict[str, Any]) -> Dict[str, Any]:
         oxygen_pct=oxygen_pct,
         pressure_psia=pressure_psia,
         airflow_cms=airflow_cms,
+        regime_label_tr=callouts["badge_tr"],
+        regime_label_en=callouts["badge_en"],
     )
 
     return {
@@ -823,9 +827,13 @@ def _build_instant_formula_commentary(
     rad_loss_frac: float,
     risk_score: int,
     co_ppm: float,
+    badge_tr: str = "",
+    badge_en: str = "",
 ) -> Dict[str, str]:
     """Parametreler değiştikçe milisaniyeler içinde güncellenen formül tabanlı bilimsel durum özeti."""
     margin = oxygen_pct - moc_current
+    reg_tr = badge_tr or regime
+    reg_en = badge_en or regime
     tr_text = (
         f"**Analitik Taşınım ve Rejim Özeti ({fuel['formula']}):** Kabin kısmi oksijen basıncı "
         f"`P_O2 = {po2_psia:.2f} psia` ve Spalding transfer sayısı `B_oq = {spalding_b:.2f}` olarak hesaplandı. "
@@ -844,12 +852,12 @@ def _build_instant_formula_commentary(
         )
     elif regime in ("QUENCHED_EXTINGUISHED", "BLOWOFF_EXTINGUISHED"):
         tr_text += (
-            f"Oksijen marjı `ΔO₂ = {margin:+.1f}%` (MOC `%{moc_current}`) veya `Da = {damkohler_da:.2f}` sınırı aşıldığı için "
+            f"Rejim **{reg_tr}**: Oksijen marjı `ΔO₂ = {margin:+.1f}%` (MOC `%{moc_current}`) veya `Da = {damkohler_da:.2f}` sınırı aşıldığı için "
             f"ekzotermik reaksiyon sönümlendi (`K = 0 mm²/s`)."
         )
     else:
         tr_text += (
-            f"Mevcut oksijen (`%{oxygen_pct:.1f}`), kritik MOC sınırının (`%{moc_current}`) `{margin:+.1f}%` üzerindedir; "
+            f"Rejim **{reg_tr}**: Mevcut oksijen (`%{oxygen_pct:.1f}`), kritik MOC sınırının (`%{moc_current}`) `{margin:+.1f}%` üzerindedir; "
             f"`K = {k_burn:.3f} mm²/s` hızında aktif yanma sürüyor (**Risk: {risk_score}/100**). "
             f"İlk müdahale: HVAC fanlarını `0 cm/s` düzeyine çekip Halon kullanmadan İnce Su Sisi (SoFIE-MIST PFE) / CO₂ uygulayın."
         )
@@ -863,7 +871,7 @@ def _build_instant_formula_commentary(
             f"*(Partial-G Bounding: Awaiting NASA PSI LUCI/FM2 datasets; bounded between 0G MOC `{moc_0g_bound}%` and 1G MOC `{moc_1g_bound}%`).* "
         )
     en_text += (
-        f"Regime `{regime}` with O₂ margin `{margin:+.1f}%` vs MOC `{moc_current}%` (`K = {k_burn:.3f} mm²/s`, Risk `{risk_score}/100`). "
+        f"Regime **{reg_en}** with O₂ margin `{margin:+.1f}%` vs MOC `{moc_current}%` (`K = {k_burn:.3f} mm²/s`, Risk `{risk_score}/100`). "
         f"Countermeasure: Immediate HVAC shutoff + Fine Water Mist (SoFIE-MIST) / CO₂ (Halon 1301 prohibited)."
     )
     return {"tr": tr_text, "en": en_text}
@@ -1142,6 +1150,8 @@ def compute_cabin_scenario_timeline(
     oxygen_pct: float,
     pressure_psia: float,
     airflow_cms: float,
+    regime_label_tr: str = "",
+    regime_label_en: str = "",
 ) -> Dict[str, Any]:
     """
     Kabin / Ay Üssü / Basınçlı Rover / EVA Uzay Giysisi hacmine göre:
@@ -1276,8 +1286,8 @@ def compute_cabin_scenario_timeline(
             "t_s": 0.0,
             "title_tr": "0.0 s • Tutuşma Başlangıcı",
             "title_en": "0.0 s • Ignition Onset",
-            "detail_tr": f"Rejim: {regime} ({flame_temp_k:.0f} K, U={airflow_cms:.1f} cm/s)",
-            "detail_en": f"Regime: {regime} ({flame_temp_k:.0f} K, U={airflow_cms:.1f} cm/s)",
+            "detail_tr": f"Rejim: {regime_label_tr or regime} ({flame_temp_k:.0f} K, U={airflow_cms:.1f} cm/s)",
+            "detail_en": f"Regime: {regime_label_en or regime} ({flame_temp_k:.0f} K, U={airflow_cms:.1f} cm/s)",
             "state": "warn",
         },
         {

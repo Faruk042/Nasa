@@ -17,7 +17,7 @@
 
 The repository includes two complete runtime modes:
 
-1. **Offline Desktop & Local Python Edition (`main_nasa.py`, `core/`, and `Nasa_4.exe`):** Runs the closed-form analytical transport solver (`d²`, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, `MOC`), 15-experiment NASA PSI ranking engine, live NTRS/OSDR telemetry stream, and RGB/HSV flame image analyzer locally without requiring cloud connectivity.
+1. **Offline Desktop & Local Python Edition (`main_nasa.py`, `core/`, and `Nasa_4.exe`):** Runs the closed-form analytical transport solver (`d²`, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, `MOC`), 15-experiment NASA PSI ranking engine, live `psi.nasa.gov` / `ntrs.nasa.gov` / `osdr.nasa.gov` telemetry stream, native NASA PSI `Experimental Table` (`.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, `.json`) unit normalizer, and RGB/HSV flame image analyzer locally without requiring cloud connectivity.
 2. **Browser-Native Serverless Web Edition (`web_serverless/`):** Runs directly inside any modern browser on GitHub Pages with zero backend servers or installation (`build_serverless_web.py`).
 
 ---
@@ -52,12 +52,12 @@ The interface is organized into **5 clear modules** with instant **TR / EN** bil
 
 ---
 
-### 3. Data & Imagery — Live NASA Stream & File/Flame Analysis
+### 3. Data & Imagery — Live NASA PSI/NTRS Stream & Dataset/Flame Analysis
 
 ![Data & Imagery — Live NASA Stream & Flame Pixel Analysis](docs/screenshots/04_live_nasa_stream_and_rag.png)
 
-- **Live NASA Stream & Archive Search:** Queries official `ntrs.nasa.gov` and `osdr.nasa.gov` REST APIs for microgravity combustion papers and datasets, extracting oxygen, pressure, and airflow parameters to synchronize the 3D chamber.
-- **File & Flame Analysis:** Analyzes uploaded flame photographs (`.png`, `.jpg`) pixel-by-pixel in RGB/HSV space to quantify blue `CH*` chemiluminescence vs. yellow soot incandescence and aspect-ratio (`H/W`) sphericity, and parses `.csv`, `.pdf`, and `.json` files via linear regression to extract the `d²` burning rate constant (`K`).
+- **Live NASA PSI & NTRS Archive Search:** Queries official `psi.nasa.gov`, `ntrs.nasa.gov`, and `osdr.nasa.gov` REST APIs for microgravity combustion papers and datasets, and directly resolves `https://psi.nasa.gov/physci/repo/data/investigations/PSI-XX` URLs by downloading their `Experimental Table` records into the 3D chamber.
+- **NASA PSI Experimental Table & Flame Analysis:** Directly parses raw NASA PSI `Experimental Table` files across `.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, and `.json` formats — automatically converting oxygen mole fractions (`X_O2 -> %O₂`), pressure units (`mmHg`/`torr`, `bar`, `atm`, `kPa -> psia`), temperatures (`°C -> K`), and helium/carbon-dioxide diluents while grouping multi-run matrices into interactive `Phase 1..N` chamber presets. Also analyzes uploaded flame photographs (`.png`, `.jpg`) pixel-by-pixel in RGB/HSV space to quantify blue `CH*` chemiluminescence vs. yellow soot incandescence and aspect-ratio (`H/W`) sphericity.
 
 ---
 
@@ -114,7 +114,7 @@ python main_nasa.py
 python main_nasa.py --self-test
 ```
 
-To test all simulation geometries, governing equations, cool-flame diagnostics, `SoFIE-MIST` suppression, and `SAME/DAFT` aerosol discrimination in a single file upload, attach `sample_data/ALTAR_NASA_Tam_Kapsamli_Deney_Verisi.csv` inside the **Engineering Analysis** or **NASA Archive** module.
+To test all simulation geometries, governing equations, cool-flame diagnostics, `SoFIE-MIST` suppression, and `SAME/DAFT` aerosol discrimination in a single file upload, attach `sample_data/ALTAR_NASA_Tam_Kapsamli_Deney_Verisi.csv` or any official `Experimental Table` (`.csv`, `.xlsx`, `.zip`) downloaded from `psi.nasa.gov` inside the **Engineering Analysis** or **Data & Imagery** module.
 
 ### 3. Build Standalone `.exe` & Serverless Static Web Bundle
 
@@ -130,7 +130,7 @@ python build_serverless_web.py
 
 ## Primary NASA References
 
-1. **NASA Physical Sciences Informatics (PSI) & OSDR:** [https://osdr.nasa.gov/bio/repo/](https://osdr.nasa.gov/bio/repo/)
+1. **NASA Physical Sciences Informatics (PSI) Combustion Repository:** [https://psi.nasa.gov/physci/repo/search?q=combustion](https://psi.nasa.gov/physci/repo/search?q=combustion) & [https://osdr.nasa.gov/bio/repo/](https://osdr.nasa.gov/bio/repo/)
 2. **NASA Technical Reports Server (NTRS):** [https://ntrs.nasa.gov/](https://ntrs.nasa.gov/) (FLEX, BASS-II, Saffire I–VI, SoFIE, SAME/DAFT reports)
 3. **NASA Glenn Research Center — Combustion Science:** *Combustion Integrated Rack (CIR), Microgravity Science Glovebox (MSG), Cool Flames Investigation (CFI) & ACME.*
 4. **NASA-STD-6001B & NASA-STD-3001:** *Flammability, Offgassing, and Compatibility Requirements* & *Spaceflight Human-System Standard (SMAC CO Limits).*
