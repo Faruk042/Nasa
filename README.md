@@ -143,7 +143,6 @@ Nasa/
 │   ├── smart_synthesizer.py     # Çok noktalı parametre taraması ve çift dilli (TR/EN) mühendislik analizi
 │   ├── data_vision_processor.py # RGB/HSV alev fotoğrafı piksel analizi ve CSV/PDF/JSON veri okuyucu
 │   ├── nasa_live_fetcher.py     # Resmi NASA NTRS ve OSDR REST API istemcisi
-│   ├── rag_knowledge.py         # Yerel TF-IDF bilimsel doküman indeksleyici
 │   ├── ai_engine.py             # Analitik çözücü ve isteğe bağlı yerel model yönlendiricisi
 │   ├── directives.py            # CON-01..CON-09 fiziksel doğrulama ve NASA-STD-6001B kuralları
 │   └── security_guard.py        # Yerel ağ ve girdi doğrulama yardımcıları

@@ -37,7 +37,6 @@ hidden_imports = [
     "core.data_vision_processor",
     "core.nasa_datasets",
     "core.nasa_live_fetcher",
-    "core.rag_knowledge",
     "core.ranking_engine",
     "core.smart_synthesizer",
     "core.ai_engine",
