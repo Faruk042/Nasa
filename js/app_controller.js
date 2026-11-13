@@ -366,6 +366,7 @@
         lastStreamStatus: null,
         lastLiveNasaData: null,
         lastProvidersData: null,
+        lastSearchPickerData: null,
     };
 
     function $(id) {
@@ -926,25 +927,219 @@
             chatSt.innerHTML = `<div><strong>${escapeHtml(state.attachedMediaName)}</strong> <button class="btn-secondary" id="btn-clear-chat-media" style="padding:1px 6px; font-size:10.5px; margin-left:5px;">${isEn ? "Clear" : "Temizle"}</button></div>${makePhasePillsHtml("chat")}`;
             const clr = $("btn-clear-chat-media");
             if (clr) {
-                clr.addEventListener("click", () => {
-                    state.attachedImageB64 = null;
-                    state.attachedMediaSummary = "";
-                    state.attachedMediaSummaryTr = "";
-                    state.attachedMediaSummaryEn = "";
-                    state.attachedMediaPhases = [];
-                    state.attachedMediaName = "";
-                    chatSt.textContent = "";
-                    $("inp-chat-image").value = "";
-                    $("copilot-live-context-tag").textContent = tStr("copilot_ctx_tag");
+                    clr.addEventListener("click", () => {
+                        state.attachedImageB64 = null;
+                        state.attachedMediaSummary = "";
+                        state.attachedMediaSummaryTr = "";
+                        state.attachedMediaSummaryEn = "";
+                        state.attachedMediaPhases = [];
+                        state.attachedMediaName = "";
+                        chatSt.textContent = "";
+                        $("inp-chat-image").value = "";
+                        $("copilot-live-context-tag").textContent = tStr("copilot_ctx_tag");
+                    });
+                }
+                chatSt.querySelectorAll(".chat-phase-btn").forEach((btn) => {
+                    btn.addEventListener("click", () => {
+                        const idx = parseInt(btn.getAttribute("data-pidx"), 10);
+                        const found = phases.find((x) => x.index === idx);
+                        if (found) activateUploadedPhase(found, false);
+                    });
                 });
             }
-            chatSt.querySelectorAll(".chat-phase-btn").forEach((btn) => {
-                btn.addEventListener("click", () => {
-                    const idx = parseInt(btn.getAttribute("data-pidx"), 10);
-                    const found = phases.find((x) => x.index === idx);
-                    if (found) activateUploadedPhase(found, false);
+        }
+
+    function renderSearchPickerUI(data) {
+        const previewBox = $("media-analysis-result-box");
+        if (!previewBox || !data || !Array.isArray(data.search_items)) return;
+        const isEn = state.lang === "en";
+        const repo = data.repository || "PSI";
+        const allItems = data.search_items;
+
+        const headerTxt = isEn
+            ? `Search Page Detected (${allItems.length} NASA ${repo} Records) — Select an investigation to load into the 3D Chamber:`
+            : `Arama Sayfası Algılandı (${allItems.length} NASA ${repo} Deneyi) — 3B Odaya aktarmak istediğiniz kaydı seçin:`;
+        const filterPh = isEn
+            ? "Filter by ID, acronym, fuel, or title (e.g., PSI-69, PSI-117, PSI-22, FLEX, Saffire)..."
+            : "Deney kodu, kısaltma veya yakıt ile filtrele (örn: PSI-69, PSI-117, PSI-22, FLEX, Saffire)...";
+
+        previewBox.innerHTML = `
+            <div class="psi-search-picker">
+                <div style="font-size:12.2px; font-weight:700; color:#7dd3fc; margin-bottom:7px;">
+                    ${escapeHtml(headerTxt)}
+                </div>
+                ${allItems.length > 5 ? `<input type="text" class="nasa-input" id="psi-picker-filter-inp" placeholder="${escapeHtml(filterPh)}" style="margin-bottom:8px; padding:6px 10px; font-size:12px;" />` : ""}
+                <div class="psi-picker-list" id="psi-picker-items-list"></div>
+            </div>
+        `;
+
+        const listEl = $("psi-picker-items-list");
+        const renderFiltered = (needle) => {
+            const q = (needle || "").trim().toLowerCase();
+            const filtered = q
+                ? allItems.filter((it) =>
+                      `${it.id || ""} ${it.acronym || ""} ${it.title || ""} ${it.table_file || ""} ${it.abstract || ""}`
+                          .toLowerCase()
+                          .includes(q)
+                  )
+                : allItems;
+
+            listEl.innerHTML = "";
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div style="padding:8px; font-size:12px; color:#94a3b8;">${isEn ? "No matching records." : "Eşleşen deney kaydı bulunamadı."}</div>`;
+                return;
+            }
+            filtered.forEach((it) => {
+                const row = document.createElement("div");
+                row.className = "psi-picker-item";
+                const phBadge =
+                    it.phase_count > 1
+                        ? `<span class="preset-badge" style="margin-left:5px;">${it.phase_count} ${isEn ? "Phases" : "Faz Tablo"}</span>`
+                        : it.table_file
+                        ? `<span class="preset-badge" style="margin-left:5px;">${isEn ? "Exp. Table" : "Deney Tablosu"}</span>`
+                        : "";
+                const cleanT = String(it.title || it.id || "").replace(new RegExp(`^${it.id}\\s*[—\\-]\\s*`, "i"), "");
+                row.innerHTML = `
+                    <div style="min-width:0; flex:1;">
+                        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                            <strong style="color:#38bdf8; font-size:12.2px;">${escapeHtml(it.id || "PSI")}</strong>
+                            ${phBadge}
+                        </div>
+                        <div style="font-size:11.8px; color:#e2e8f0; margin-top:2px; line-height:1.35;">${escapeHtml(cleanT)}</div>
+                    </div>
+                    <button type="button" class="btn-primary psi-pick-load-btn" data-target-url="${escapeHtml(it.url || "")}" style="padding:4px 10px; font-size:11.3px; white-space:nowrap; flex-shrink:0;">
+                        ${isEn ? "Load to 3D" : "3B'ye Aktar"}
+                    </button>
+                `;
+                row.querySelector(".psi-pick-load-btn").addEventListener("click", () => {
+                    if (it.url) {
+                        $("inp-scrape-url").value = it.url;
+                        executeUrlScrape(it.url);
+                    }
                 });
+                listEl.appendChild(row);
             });
+        };
+
+        renderFiltered("");
+        const fInp = $("psi-picker-filter-inp");
+        if (fInp) {
+            fInp.addEventListener("input", () => renderFiltered(fInp.value));
+        }
+    }
+
+    async function executeUrlScrape(rawUrl) {
+        const url = String(rawUrl || "").trim();
+        const isEn = state.lang === "en";
+        const btn = $("btn-scrape-url");
+        const statusLine = $("url-scrape-status-line");
+        const previewBox = $("media-analysis-result-box");
+
+        if (!url) {
+            showToast(isEn ? "Please enter a web link (https://...)." : "Lütfen çözümlenecek web bağlantısını (https://...) girin.");
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = isEn ? "Loading..." : "Çözümleniyor...";
+        }
+        if (statusLine) {
+            statusLine.style.color = "#7dd3fc";
+            statusLine.textContent = isEn
+                ? "Connecting to NASA repository and parsing parameters..."
+                : "NASA veri kaynağına bağlanılıyor ve parametreler çözümleniyor...";
+        }
+
+        try {
+            const res = await apiFetch("/api/scrape-url", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url }),
+            });
+            const data = await res.json();
+
+            if (!data.ok) {
+                state.lastSearchPickerData = null;
+                const errMsg = data.error || (isEn ? "Web link could not be parsed." : "Web bağlantısı çözümlenemedi.");
+                if (statusLine) {
+                    statusLine.style.color = "#fca5a5";
+                    statusLine.textContent = errMsg;
+                }
+                if (previewBox) {
+                    previewBox.innerHTML = `<div class="media-preview-card" style="border-color:rgba(248,113,113,0.45); color:#fecaca; font-size:12.2px;">${escapeHtml(errMsg)}</div>`;
+                }
+                showToast(errMsg);
+                return;
+            }
+
+            if (data.mode === "search_results" && Array.isArray(data.search_items)) {
+                state.lastSearchPickerData = data;
+                renderSearchPickerUI(data);
+                state.lastLiveNasaData = {
+                    ok: true,
+                    source_status: "live_online",
+                    count: data.search_items.length,
+                    items: data.search_items,
+                };
+                renderLiveNasaCards(state.lastLiveNasaData);
+                const msgSearch = isEn
+                    ? `${data.search_items.length} investigations listed — select a record below to load into 3D.`
+                    : `Arama bağlantısındaki ${data.search_items.length} deney listelendi — 3B Odaya aktarmak için aşağıdan bir kayıt seçin.`;
+                if (statusLine) {
+                    statusLine.style.color = "#6ee7b7";
+                    statusLine.textContent = msgSearch;
+                }
+                showToast(msgSearch);
+                return;
+            }
+
+            state.lastSearchPickerData = null;
+            state.attachedImageB64 = null;
+            state.attachedMediaName = data.title || url;
+            state.attachedMediaSummaryTr = data.summary_tr || `**Web (${url}):** ${data.title}\n${data.preview || ""}`;
+            state.attachedMediaSummaryEn = data.summary_en || `**Web (${url}):** ${data.title}\n${data.preview || ""}`;
+            state.attachedMediaSummary = isEn ? state.attachedMediaSummaryEn : state.attachedMediaSummaryTr;
+            state.attachedMediaPhases = data.phases || [];
+
+            const shortTitle =
+                state.attachedMediaName.length > 58
+                    ? `${state.attachedMediaName.slice(0, 58)}...`
+                    : state.attachedMediaName;
+
+            if ($("chk-media-autosync").checked && data.extracted_sim_params) {
+                applyParamsToSliders(data.extracted_sim_params);
+                if (state.chamber3D) state.chamber3D.reigniteDroplet();
+                const srcLbl = isEn ? `Web (${shortTitle.slice(0, 36)})` : `Web (${shortTitle.slice(0, 36)})`;
+                if (data.simulation) {
+                    applySimulationStateEverywhere(data.simulation, srcLbl);
+                } else {
+                    await runSimulationUpdate(srcLbl);
+                }
+                refreshRankingTable();
+            }
+
+            renderUploadedMediaUI();
+            const okMsg = isEn
+                ? `'${shortTitle}' parsed and synced to the 3D Chamber.`
+                : `'${shortTitle}' çözümlendi ve 3B Yanma Odasına aktarıldı.`;
+            if (statusLine) {
+                statusLine.style.color = "#6ee7b7";
+                statusLine.textContent = okMsg;
+            }
+            showToast(okMsg);
+        } catch (err) {
+            const netMsg = err && err.message ? err.message : (isEn ? "Connection error." : "Bağlantı hatası.");
+            if (statusLine) {
+                statusLine.style.color = "#fca5a5";
+                statusLine.textContent = netMsg;
+            }
+            showToast(netMsg);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = tStr("btn_scrape_url");
+            }
         }
     }
 
@@ -975,6 +1170,10 @@
                 return;
             }
 
+            state.lastSearchPickerData = null;
+            if ($("url-scrape-status-line")) {
+                $("url-scrape-status-line").textContent = "";
+            }
             state.attachedMediaSummaryTr = data.summary_tr || "";
             state.attachedMediaSummaryEn = data.summary_en || data.summary_tr || "";
             const pickedSummary = isEn ? state.attachedMediaSummaryEn : state.attachedMediaSummaryTr;
@@ -1004,11 +1203,11 @@
                 : "";
             const phaseNote = state.attachedMediaPhases.length > 1
                 ? (isEn ? `${state.attachedMediaPhases.length} phases` : `${state.attachedMediaPhases.length} faz`)
-                : `${data.chunks || 1} blok`;
+                : (isEn ? "1 record" : "1 kayıt");
             const shortInfo =
                 data.media_type === "image"
-                    ? `${state.attachedMediaName} -> ${detectedReg}`
-                    : `${state.attachedMediaName} (${phaseNote}) -> O₂:%${data.extracted_sim_params.oxygen_pct}, ${data.extracted_sim_params.airflow_cms} cm/s`;
+                    ? `${state.attachedMediaName} — ${detectedReg}`
+                    : `${state.attachedMediaName} (${phaseNote}) — O₂:%${data.extracted_sim_params.oxygen_pct}, ${data.extracted_sim_params.airflow_cms} cm/s`;
 
             if (statusEl) {
                 statusEl.style.color = "#6ee7b7";
@@ -1453,12 +1652,65 @@
             return;
         }
 
+        async function syncArchiveItemTo3D(item) {
+            let simParams = item.extracted_sim_params || null;
+            let phases = Array.isArray(item.phases) ? item.phases : [];
+            let sumTr = item.summary_tr || `**NASA [${item.id}]:** ${item.title}\n${item.abstract}`;
+            let sumEn = item.summary_en || sumTr;
+            let simObj = null;
+
+            if (item.url && /\bPSI-\d+\b/i.test(item.url) && phases.length === 0 && !item.summary_tr) {
+                try {
+                    const sRes = await apiFetch("/api/scrape-url", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ url: item.url }),
+                    });
+                    const sData = await sRes.json();
+                    if (sData && sData.ok && !sData.mode) {
+                        simParams = sData.extracted_sim_params || simParams;
+                        phases = sData.phases || phases;
+                        sumTr = sData.summary_tr || sumTr;
+                        sumEn = sData.summary_en || sumEn;
+                        simObj = sData.simulation || null;
+                    }
+                } catch (_) {}
+            }
+
+            state.lastSearchPickerData = null;
+            state.attachedImageB64 = null;
+            state.attachedMediaName = `${item.id}: ${String(item.title || "").slice(0, 48)}`;
+            state.attachedMediaSummaryTr = sumTr;
+            state.attachedMediaSummaryEn = sumEn;
+            state.attachedMediaSummary = state.lang === "en" ? sumEn : sumTr;
+            state.attachedMediaPhases = phases;
+
+            if (simParams) {
+                applyParamsToSliders(simParams);
+                if (state.chamber3D) state.chamber3D.reigniteDroplet();
+                if (simObj) {
+                    applySimulationStateEverywhere(simObj, `NASA (${item.id})`);
+                } else {
+                    await runSimulationUpdate(`NASA (${item.id})`);
+                }
+                refreshRankingTable();
+            }
+            renderUploadedMediaUI();
+        }
+
         data.items.forEach((item) => {
             const div = document.createElement("div");
             div.className = "live-result-card";
+            const phChip =
+                item.phase_count > 1
+                    ? `<span class="preset-badge" style="margin-left:5px;">${item.phase_count} ${isEn ? "Phases" : "Faz Tablo"}</span>`
+                    : "";
             div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:4px;">
-                    <span class="preset-badge">${escapeHtml(item.id)} • ${escapeHtml(item.source)}</span>
+                <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:4px; align-items:center; flex-wrap:wrap;">
+                    <div>
+                        <span class="preset-badge">${escapeHtml(item.id)} • ${escapeHtml(item.source)}</span>
+                        ${phChip}
+                    </div>
                     <span style="font-size:11.5px; color:#94a3b8;">${escapeHtml(item.date || item.mission || "")}</span>
                 </div>
                 <div style="font-weight:700; font-size:13.5px; color:#ffffff; margin-bottom:5px;">
@@ -1467,13 +1719,24 @@
                 <p style="font-size:12.3px; color:#cbd5e1; margin-bottom:8px;">
                     ${escapeHtml(item.abstract)}
                 </p>
-                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <a class="ext-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${isEn ? "Official Record" : "Resmi Kayıt"}</a>
                     ${item.pdf_url ? `<a class="ext-link" href="${escapeHtml(item.pdf_url)}" target="_blank" rel="noopener">PDF</a>` : ""}
-                    <button class="btn-secondary index-ntrs-btn" style="padding:3px 9px; font-size:11.5px;">${isEn ? "Analyze Record" : "Kaydı Analiz Et"}</button>
+                    <button type="button" class="btn-secondary load-live-3d-btn" style="padding:3px 9px; font-size:11.5px;">${isEn ? "Load in 3D" : "3B'de Yükle"}</button>
+                    <button type="button" class="btn-secondary index-ntrs-btn" style="padding:3px 9px; font-size:11.5px;">${isEn ? "Analyze Record" : "Kaydı Analiz Et"}</button>
                 </div>
             `;
+            div.querySelector(".load-live-3d-btn").addEventListener("click", async () => {
+                await syncArchiveItemTo3D(item);
+                switchTab("tab-lab");
+                showToast(
+                    state.lang === "en"
+                        ? `${item.id} conditions loaded into 3D Chamber.`
+                        : `${item.id} deney koşulları 3B Yanma Odasına aktarıldı.`
+                );
+            });
             div.querySelector(".index-ntrs-btn").addEventListener("click", async () => {
+                await syncArchiveItemTo3D(item);
                 await apiFetch("/api/rag-add-text", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1484,14 +1747,16 @@
                         url: item.url,
                     }),
                 });
-                state.attachedMediaName = `${item.id}`;
-                state.attachedMediaSummary = `**NASA [${item.id}]:** ${item.title}\n${item.abstract}`;
-                showToast(isEn ? `${item.id} added to search records.` : `${item.id} arama kayıtlarına eklendi.`);
+                showToast(
+                    state.lang === "en"
+                        ? `${item.id} synced to 3D Chamber and Engineering Analysis.`
+                        : `${item.id} 3B Yanma Odasına ve Mühendislik Analizine aktarıldı.`
+                );
                 switchTab("tab-copilot");
                 sendChatMessage(
-                    isEn
-                        ? `Analyze NASA report ${item.id} (${item.title}) using microgravity combustion equations and spacecraft fire safety protocols.`
-                        : `${item.id} (${item.title}) raporunun bulgularını fiziksel yanma formülleri ve uzay aracı yangın güvenliği açısından analiz et.`
+                    state.lang === "en"
+                        ? `Analyze NASA record ${item.id} (${item.title}) using microgravity combustion equations and spacecraft fire safety protocols.`
+                        : `${item.id} (${item.title}) kaydının bulgularını fiziksel yanma formülleri ve uzay aracı yangın güvenliği açısından analiz et.`
                 );
             });
             listBox.appendChild(div);
@@ -2336,6 +2601,15 @@
             if (state.lastStreamStatus) updateStreamHeaderAndUI(state.lastStreamStatus);
             if (state.lastLiveNasaData) renderLiveNasaCards(state.lastLiveNasaData);
             if (state.lastProvidersData) updateHeaderEngineBadge(state.lastProvidersData);
+            if (state.lastSearchPickerData) {
+                renderSearchPickerUI(state.lastSearchPickerData);
+            } else if (state.attachedMediaName) {
+                state.attachedMediaSummary =
+                    state.lang === "en"
+                        ? (state.attachedMediaSummaryEn || state.attachedMediaSummaryTr)
+                        : (state.attachedMediaSummaryTr || state.attachedMediaSummaryEn);
+                renderUploadedMediaUI();
+            }
             if (state.tourStepIndex >= 0) renderGuidedTourStep();
             refreshRankingTable();
             showToast(state.lang === "en" ? "Language switched to English" : "Arayüz dili Türkçe olarak güncellendi");
@@ -2430,7 +2704,7 @@
             const v = $("sel-stream-source").value;
             const inp = $("inp-stream-target");
             if (v === "custom_url" && (inp.value === "auto" || !inp.value.startsWith("http"))) {
-                inp.value = "https://ntrs.nasa.gov/api/citations/search?q=Saffire%20fire";
+                inp.value = "https://psi.nasa.gov/physci/repo/data/investigations/PSI-69";
             } else if (v !== "custom_url" && inp.value.startsWith("http")) {
                 inp.value = "auto";
             }
@@ -2452,40 +2726,12 @@
             });
         });
 
-        $("btn-scrape-url").addEventListener("click", async () => {
-            const url = $("inp-scrape-url").value.trim();
-            if (!url) return;
-            showToast(state.lang === "en" ? "Parsing web link..." : "Web bağlantısı çözümleniyor...");
-            try {
-                const res = await apiFetch("/api/scrape-url", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ url }),
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    const isEn = state.lang === "en";
-                    state.attachedImageB64 = null;
-                    state.attachedMediaName = data.title || url;
-                    state.attachedMediaSummaryTr = data.summary_tr || `**Web (${url}):** ${data.title}\n${data.preview || ""}`;
-                    state.attachedMediaSummaryEn = data.summary_en || `**Web (${url}):** ${data.title}\n${data.preview || ""}`;
-                    state.attachedMediaSummary = isEn ? state.attachedMediaSummaryEn : state.attachedMediaSummaryTr;
-                    state.attachedMediaPhases = data.phases || [];
-                    if ($("chk-media-autosync").checked && data.extracted_sim_params) {
-                        applyParamsToSliders(data.extracted_sim_params);
-                        if (state.chamber3D) state.chamber3D.reigniteDroplet();
-                        if (data.simulation) {
-                            applySimulationStateEverywhere(data.simulation, `Web (${(data.title || url).slice(0, 35)})`);
-                        }
-                        refreshRankingTable();
-                    }
-                    renderUploadedMediaUI();
-                    showToast(`'${data.title}' (${data.chunks} chunks) synced.`);
-                } else {
-                    showToast(`${data.error || "Failed"}`);
-                }
-            } catch (err) {
-                showToast(`${err.message}`);
+        $("btn-scrape-url").addEventListener("click", () => {
+            executeUrlScrape($("inp-scrape-url").value);
+        });
+        $("inp-scrape-url").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                executeUrlScrape($("inp-scrape-url").value);
             }
         });
 

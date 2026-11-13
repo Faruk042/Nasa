@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' https://ntrs.nasa.gov https://osdr.nasa.gov https://generativelanguage.googleapis.com https://openrouter.ai; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' https: http://127.0.0.1:11434; object-src 'none'; base-uri 'self'; form-action 'self';" />
     <link rel="icon" href="./nasa_flame.ico" />
     <title>ALTAR-NASA • Flame in Freefall v5.1 | Microgravity Combustion &amp; Fire Safety Suite</title>
-    <link rel="stylesheet" href="./css/mission_control.css?v=5.3" />
+    <link rel="stylesheet" href="./css/mission_control.css?v=5.4" />
 </head>
 <body>
 
@@ -488,10 +488,10 @@
                         Doğrudan resmi psi.nasa.gov, ntrs.nasa.gov ve osdr.nasa.gov servislerinden gerçek zamanlı bilimsel rapor ve deney kayıtlarını sorgulayın.
                     </p>
                     <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-                        <input type="text" class="nasa-input" id="inp-live-nasa-q" value="FLEX microgravity droplet cool flame" style="flex:1; min-width:220px;" />
-                        <select class="nasa-select" id="sel-live-source" style="width:170px;">
-                            <option value="ntrs" data-tr="NASA NTRS Makaleleri" data-en="NASA NTRS Papers">NASA NTRS Makaleleri</option>
+                        <input type="text" class="nasa-input" id="inp-live-nasa-q" value="FLEX microgravity droplet cool flame" style="flex:1; min-width:200px;" />
+                        <select class="nasa-select" id="sel-live-source" style="min-width:210px; width:auto;">
                             <option value="osdr" data-tr="NASA PSI Veri Kayıtları" data-en="NASA PSI Datasets">NASA PSI Veri Kayıtları</option>
+                            <option value="ntrs" data-tr="NASA NTRS Makaleleri" data-en="NASA NTRS Papers">NASA NTRS Makaleleri</option>
                         </select>
                         <button class="btn-primary" id="btn-fetch-nasa-live" data-i18n="btn_fetch_live">Arşivde Ara</button>
                     </div>
@@ -521,11 +521,14 @@
                         <div class="control-label"><span data-i18n="lbl_scrape_url">Web Bağlantısı Çözümle</span></div>
                         <div style="display:flex; gap:8px;">
                             <input type="text" class="nasa-input" id="inp-scrape-url" placeholder="https://psi.nasa.gov/physci/repo/data/investigations/PSI-69" />
-                            <button class="btn-secondary" id="btn-scrape-url" data-i18n="btn_scrape_url">3B'ye Aktar</button>
+                            <button class="btn-secondary" id="btn-scrape-url" style="white-space:nowrap;" data-i18n="btn_scrape_url">3B'ye Aktar</button>
                         </div>
+                        <div id="url-scrape-status-line" style="font-size:11.8px; margin-top:6px; min-height:16px;"></div>
                     </div>
 
-                    <div class="control-group" style="margin-top:14px;">
+                    <div id="media-analysis-result-box" style="margin-top:8px; margin-bottom:12px;"></div>
+
+                    <div class="control-group" style="margin-top:12px;">
                         <div class="control-label"><span data-i18n="lbl_choose_file">Veri Dosyası veya Fotoğraf Seç</span></div>
                         <input type="file" class="nasa-input" id="inp-doc-file" accept="image/*,.csv,.tsv,.xlsx,.zip,.json,.pdf,.txt,.md" />
                         <label style="display:inline-flex; align-items:center; gap:7px; font-size:12px; color:#cbd5e1; margin-top:7px; cursor:pointer;">
@@ -536,8 +539,6 @@
                             Dosyayı Analiz Et
                         </button>
                     </div>
-
-                    <div id="media-analysis-result-box"></div>
 
                     <div class="panel-header" style="margin-top:16px;">
                         <span class="panel-title" data-i18n="rag_test_title">Metin Arama</span>
@@ -857,9 +858,9 @@
 
     <!-- YEREL PAKETLENMİŞ THREE.JS VE UYGULAMA MODÜLLERİ -->
     <script src="./js/vendor/three.min.js"></script>
-    <script src="./js/three_chamber_3d.js?v=5.3"></script>
-    <script src="./js/charts_and_audio.js?v=5.3"></script>
-    <script src="./js/serverless_kernel.js?v=5.3"></script>
-    <script src="./js/app_controller.js?v=5.3"></script>
+    <script src="./js/three_chamber_3d.js?v=5.4"></script>
+    <script src="./js/charts_and_audio.js?v=5.4"></script>
+    <script src="./js/serverless_kernel.js?v=5.4"></script>
+    <script src="./js/app_controller.js?v=5.4"></script>
 </body>
 </html>
