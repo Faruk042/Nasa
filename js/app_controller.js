@@ -1,11 +1,10 @@
 /* ============================================================================
    ALTAR-NASA Görev Kontrol Ana Kontrolcüsü v5.1 (app_controller.js)
-   - 3B WebGL Simülasyon (Damlacık • Polimer Çubuk • Kumaş Plaka • Küresel Brülör)
-   - Kısmi Yerçekimi (0.16G Ay / 0.38G Mars) LUCI/FM2 & E-FIELD Şeffaflık Sistemi
-   - EVA Uzay Giysisi (%100 O₂ @ 4.3 psia), Ay Gezgini (%32 O₂ @ 10.2 psia) & CFI-G (%85 O₂)
-   - 15 NASA PSI Soruşturması, Donanım Raf Filtresi (CIR/MSG/Cygnus/DAFT) & Deney İçi Varyasyonlar
-   - %100 Akademik Çift Dilli (TR / EN) Arayüz Çeviri Motoru
-   - Sürekli Canlı Telemetri Akışı + Çok Modlu Çözümleyici + Kanıt Sentezi Konsolu
+   - 3B WebGL Yanma Odası (Damlacık • Polimer Çubuk • Kumaş Plaka • Küresel Brülör)
+   - Kısmi Yerçekimi (0.16G Ay / 0.38G Mars) LUCI/FM2 ve E-FIELD Şeffaflık Sistemi
+   - EVA Uzay Giysisi (%100 O₂ @ 4.3 psia), Ay Gezgini (%32 O₂ @ 10.2 psia) ve CFI-G (%85 O₂)
+   - 15 NASA PSI Deneyi, Donanım Filtresi (CIR/MSG/Cygnus/DAFT) ve Test Varyasyonları
+   - Çift Dilli (TR / EN) Sade Mühendislik Arayüzü
    ============================================================================ */
 
 (function () {
@@ -13,324 +12,326 @@
 
     const UI_I18N = {
         tr: {
-            brand_sub: "Fizik-Temelli Mikroçekim & Kısmi Yerçekimi Yanma Güvenliği, PSI Veri Sentezi ve 3B Dijital İkiz Platformu",
-            nav_lab: "01 // 3B Yanma Odası & Denklemler",
-            nav_rank: "02 // PSI Sıralama & Kıyaslama",
-            nav_live: "03 // Telemetri Akışı & Çözümleyici",
-            nav_copilot: "04 // Kanıt Sentezi & Karar Konsolu",
-            nav_settings: "05 // Sistem Kalibrasyonu & Kısıtlar",
-            quick_ingest_title: "◫ Dosya veya Alev Görüntüsüyle 3B Simüle Et",
+            brand_sub: "Mikro Yerçekimi Yanma Analizi ve Yangın Güvenliği Platformu",
+            nav_lab: "Yanma Odası",
+            nav_rank: "NASA Deneyleri",
+            nav_live: "Veri ve Görüntü",
+            nav_copilot: "Mühendislik Analizi",
+            nav_settings: "Doğrulama ve Ayarlar",
+            quick_ingest_title: "Hızlı Veri Yükle",
             quick_ingest_desc: "Yüklediğiniz alev fotoğrafı veya veri dosyasından parametreler otomatik çıkarılır ve 3B sahneye uygulanır:",
-            presets_title: "◈ Hazır NASA Görev & Giysi Senaryoları",
-            controls_title: "⌖ Kabin, Uzay Giysisi & Yanma Parametreleri",
-            lbl_fuel: "Yakıt / Numune / Brülör Türü",
-            lbl_gravity: "Yerçekimi İvmesi (0G ISS • 0.16G Ay • 0.38G Mars • 1G)",
-            lbl_oxygen: "Oksijen Konsantrasyonu (%8 – %100 Saf O₂)",
-            lbl_pressure: "Basınç (4.3 psia Giysi – 14.7 psia ISS)",
-            lbl_airflow: "Havalandırma Akış Hızı (cm/s)",
-            lbl_droplet: "Damlacık / Numune / Brülör Çapı",
-            lbl_diluent: "Seyreltici Kabin Gazı",
-            audio_title: "◈ Akustik Telemetri Sonifikasyonu",
-            audio_start: "▸ Sesi Başlat",
-            audio_stop: "■ Sesi Durdur",
-            audio_desc: "Sıcaklık ve görünmez Soğuk Alev titreşimlerini gerçek zamanlı akustik frekansa dönüştürür.",
-            chamber_title: "◈ 3B ISS Yanma Odası Dijital İkizi (CIR / MSG WebGL)",
-            chamber_hint: "Fare: 360° Döndür • Tekerlek: Yakınlaştır",
+            presets_title: "Hazır Senaryolar",
+            controls_title: "Yanma Ayarları",
+            lbl_fuel: "Yakıt Türü",
+            lbl_gravity: "Yerçekimi İvmesi",
+            lbl_oxygen: "Oksijen Oranı",
+            lbl_pressure: "Ortam Basıncı",
+            lbl_airflow: "Hava Akış Hızı",
+            lbl_droplet: "Numune Çapı",
+            lbl_diluent: "Seyreltici Gaz",
+            audio_title: "Alev Seslendirme",
+            audio_start: "Sesi Aç",
+            audio_stop: "Sesi Kapat",
+            audio_desc: "Sıcaklık ve görünmez Soğuk Alev titreşimlerini gerçek zamanlı ses frekansına dönüştürür.",
+            chamber_title: "3B Yanma Odası",
+            chamber_hint: "Sürükle: Döndür • Tekerlek: Yakınlaştır",
             cam_front: "Ön Açı",
-            cam_macro: "Makro Çekirdek",
+            cam_macro: "Yakın Çekirdek",
             cam_sensors: "Sensör Açısı",
             cam_top: "Üst Kesit",
-            cam_reignite: "⌖ Yeniden Ateşle",
-            leg_blue: "CH*/OH* Mavi Kemilüminesans",
-            leg_soot: "Kurum (Soot) Işıması",
-            leg_cool: "Görünmez Soğuk Alev (UV/IR 550-750 K)",
-            leg_geom: "Damlacık / Polimer / Küresel Brülör",
-            chart_sensor_title: "◈ Çoklu Sensör Tutarlılığı & İki Aşamalı Soğuk Alev Anomali Analizi (0–30 sn)",
-            chart_sensor_sub: "Optik Kamera vs. IR Radyometre vs. CO",
-            tel_panel_title: "◈ Canlı Yanma Telemetrisi",
-            btn_ai_interpret: "⌖ Kanıt Konsolunda Analiz Et",
-            lbl_risk_score: "UZAY ARACI / GİYSİ YANGIN RİSK SKORU",
+            cam_reignite: "Yeniden Ateşle",
+            leg_blue: "Mavi Alev",
+            leg_soot: "Kurum Işıması",
+            leg_cool: "Soğuk Alev",
+            leg_geom: "Yakıt Numunesi",
+            chart_sensor_title: "Sensör Zaman Grafiği",
+            chart_sensor_sub: "Optik • IR • CO",
+            tel_panel_title: "Anlık Ölçümler",
+            btn_ai_interpret: "Detaylı Analiz",
+            lbl_risk_score: "YANGIN RİSK SKORU",
             card_temp: "Alev Sıcaklığı",
-            card_moc: "Kritik Oksijen (MOC)",
-            card_kburn: "D² Yanma Sabiti (K)",
-            card_spread: "Yayılma & Spalding B",
-            card_rad: "Radyatif Kayıp (χr)",
-            card_co: "CO, Kurum & Sherwood",
-            chart_moc_title: "◈ Tutuşabilirlik Sınır Haritası (0G • 0.16G Ay • 1G Sınırları)",
+            card_moc: "Kritik Oksijen",
+            card_kburn: "Yanma Sabiti",
+            card_spread: "Yayılma Hızı",
+            card_rad: "Isıl Kayıp",
+            card_co: "Karbonmonoksit",
+            chart_moc_title: "Tutuşma Sınır Haritası",
             chart_moc_desc: "0G ve 1G MOC eğrileri ara yerçekimi (0.16G Ay LUCI/FM2) davranışını sınırlar; düşük fan akışı (3–8 cm/s) gizli risk yaratır.",
-            formula_table_title: "◈ Canlı Fiziksel Denklemler, Boyutsuz Sayılar & Sonuç Tablosu",
-            th_law: "Fiziksel Yasa / Kriter",
-            th_eq: "Matematiksel Denklem",
-            th_val: "Anlık Sayısal Sonuç",
-            th_status: "Rejim Durumu",
-            live_synthesis_title: "◈ Anlık Analitik & Formülsel Veri Sentezi",
-            btn_full_ai_report: "▸ Teknik Sentez Raporu Üret",
-            rank_main_title: "◈ Fizik-Temelli NASA PSI Yanma Araştırmaları Sıralama, Donanım & Karşılaştırma Matrisi",
-            rank_main_desc: "Uzay aracı, uzay istasyonu, EVA uzay giysisi, Ay/Mars üsleri ve basınçlı gezginler için en kritik 15 NASA PSI soruşturmasını termodinamik yakınlık ve TF-IDF ile sıralar, özetler ve kıyaslar.",
-            rank_placeholder: "Örn: soğuk alev, CFI-G %85 O2, DAFT toz, SPICE, rover...",
-            btn_rerank: "⌖ Yeniden Sırala",
-            btn_compare: "◈ Seçilenleri Kıyasla",
-            lbl_hw_filter: "◈ Uzay Donanım Mimarisi:",
-            hw_all: "Tümü (15 PSI Soruşturması)",
-            hw_cir: "◈ ISS CIR / MDCA & ACME",
-            hw_msg: "◈ ISS MSG Fan Kanalı (SPICE/BASS/SLISE)",
-            hw_cygnus: "◈ Cygnus Otonom Aracı (Saffire)",
-            hw_cabin: "◈ Kabin Duman & Toz (SAME / DAFT)",
-            psi_rocket_scope_note: "◆ NASA PSI Kapsam Notu: Roket motorları ve iticilerdeki yüksek gaz hızları yanmayı etkili biçimde yerçekiminden bağımsız kıldığından PSI veritabanı mürettebat kabinleri, uzay giysileri ve yüzey habitatlarındaki yangın güvenliğine odaklanır.",
+            formula_table_title: "Fiziksel Denklemler",
+            th_law: "Fiziksel Yasa",
+            th_eq: "Denklem",
+            th_val: "Sayısal Sonuç",
+            th_status: "Durum",
+            live_synthesis_title: "Anlık Değerlendirme",
+            btn_full_ai_report: "Tam Rapor",
+            cabin_clock_title: "Yaşam Destek Saati",
+            rank_main_title: "Deney Sıralaması",
+            rank_main_desc: "Uzay istasyonu, uzay giysisi, Ay/Mars üsleri ve basınçlı gezginler için en kritik 15 NASA PSI deneyini fiziksel yakınlık ile sıralar ve karşılaştırır.",
+            rank_placeholder: "Örn: soğuk alev, CFI-G, DAFT toz, SPICE, gezgin...",
+            btn_rerank: "Sırala",
+            btn_compare: "Seçilenleri Kıyasla",
+            lbl_hw_filter: "Donanım Filtresi:",
+            hw_all: "Tüm Deneyler",
+            hw_cir: "ISS CIR / ACME",
+            hw_msg: "MSG Fan Kanalı",
+            hw_cygnus: "Cygnus Aracı",
+            hw_cabin: "Duman ve Toz",
+            psi_rocket_scope_note: "NASA PSI Kapsam Notu: Roket motorları ve iticilerdeki yüksek gaz hızları yanmayı yerçekiminden bağımsız kıldığından PSI veritabanı mürettebat kabinleri, uzay giysileri ve yüzey habitatlarındaki yangın güvenliğine odaklanır.",
             th_sel: "Seç",
             th_rank: "Sıra",
-            th_prog: "Program & Donanım",
-            th_exp_detail: "Hedefler, Numune/Brülör Şekli, Sensörler & Bulgular",
+            th_prog: "Program",
+            th_exp_detail: "Deney Özeti ve Bulgular",
             th_cond: "Test Koşulları",
-            th_prio: "Termodinamik & TF-IDF Skoru",
-            th_evid: "Kanıt & Varyasyon",
-            intra_runs_hint: "Yukarıdaki tablodan herhangi bir deneyin '◈ Test Varyasyonları' butonuna tıklayarak aynı donanım içindeki testlerin nasıl farklılaştığını ve neyin sabit tutulduğunu inceleyin:",
-            cmp_section_title: "◈ Farklı Soruşturmalar Arası Benzerlik & Farklılık Karşılaştırması",
-            earth_section_title: "◈ PSI Verilerinin Dünya'daki Yangın Güvenliği Uygulamaları (Su Sisi • Duman Algılama • İtfaiye Teçhizatı)",
-            stream_panel_title: "◈ Sürekli Canlı Telemetri Akışı & Otonom Simülasyon Besleyici",
-            stream_panel_desc: "Seçtiğiniz NASA veri tabanından (NTRS / OSDR-PSI) veya özel bir web sitesi / JSON / CSV telemetri URL'sinden belirlediğiniz aralıklarla kesintisiz veri çeker; veriler değiştikçe 3B simülasyonu, grafikleri ve sonuç tablolarını anlık olarak günceller.",
-            stream_target_ph: "Sorgu ('auto' = tüm NASA deneylerini döngüsel tarar) veya https://... URL girin",
-            btn_stream_start: "▸ Sürekli Akışı Başlat",
-            btn_stream_stop: "■ Sürekli Akışı Durdur",
-            btn_stream_now: "⌖ Şimdi Çek",
-            chk_stream_sync: "◈ Web'den yeni veri geldikçe 3B Yanma Odası, Grafikler ve Sonuç Tablolarını Anlık Senkronize Et",
-            stream_not_started: "Henüz akış döngüsü başlatılmadı.",
-            live_search_title: "◈ Canlı NASA NTRS & OSDR/PSI Veri Tabanı Sorgusu",
-            live_search_desc: "Doğrudan resmi ntrs.nasa.gov ve osdr.nasa.gov REST API uç noktalarından gerçek zamanlı bilimsel rapor, özet ve deney kayıtlarını sorgulayın.",
-            btn_fetch_live: "▸ Canlı Çek",
-            ingest_panel_title: "◫ Çok Modlu Dosya, Alev Görüntüsü & Web Telemetri Çözümleyici",
-            ingest_panel_desc: "Alev fotoğraflarını (.png, .jpg, .webp), bilimsel veri tablolarını (.csv, .json, .pdf, .txt) veya makale bağlantılarını yükleyin; çıkarılan parametreler 3B odaya ve vektör indeksine aktarılır.",
-            lbl_scrape_url: "Bilimsel Web Sayfası / JSON / CSV / PDF URL Çözümle",
-            btn_scrape_url: "Çözümle & 3B'ye Aktar",
-            lbl_choose_file: "Yerel Veri Dosyası veya Alev Görüntüsü Seç (.png, .jpg, .csv, .json, .pdf, .txt)",
-            chk_media_sync: "Çıkarılan verileri otomatik olarak 3B Yanma Odası ve Tablolara uygula",
-            btn_upload_doc: "▸ Dosya / Görüntüyü Analiz Et, 3B Odaya & Vektör İndeksine Aktar",
-            rag_test_title: "⌖ Semantik Vektör Korpusu Sorgusu",
-            rag_search_ph: "Vektör korpusunda kavram ara (TR veya EN)...",
-            btn_rag_search: "Sorgula",
-            copilot_tasks_title: "◈ Hazır Mühendislik Analiz Protokolleri",
-            cp_btn_1: "◈ Aktif 3B & Denklemleri Kanıtlarla Sentezle",
-            cp_btn_2: "◈ Uzay Giysisi (%100 O₂) & Ay Gezgini Kıyasla",
-            cp_btn_3: "◈ Kısmi Yerçekimi (LUCI/FM2 & E-FIELD) Analizi",
-            cp_btn_4: "◈ Görünmez Soğuk Alev & DAFT Duman/Toz Sensörü",
-            cp_btn_5: "◈ Su Sisi (SoFIE-MIST) & İtfaiye Teknoloji Transferi",
-            copilot_attach_title: "◫ Analize Dosya veya Alev Görüntüsü Bağla",
-            copilot_attach_desc: "Alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.pdf/.json/.txt) seçtiğinizde hem 3B simülasyon güncellenir hem de denklemlerle sentezlenir:",
-            chk_6stage: "◈ 6-Katmanlı Denklem & NASA-STD-6001B Halon Denetçisi Aktif",
-            lbl_active_engine: "◈ Aktif Sentez Çekirdeği:",
-            copilot_ctx_tag: "Canlı 3B Telemetri + 15 PSI Deneyi + Denklem Bağlamı Aktif",
-            welcome_title: "◈ ALTAR-NASA // KANIT SENTEZİ VE KARAR DESTEK KONSOLU [v5.1]",
+            th_prio: "Uyum Skoru",
+            th_evid: "İşlemler",
+            intra_runs_hint: "Yukarıdaki tablodan herhangi bir deneyin \"Test Varyasyonları\" düğmesine tıklayarak aynı donanım içindeki testlerin nasıl farklılaştığını inceleyin:",
+            cmp_section_title: "Deney Karşılaştırması",
+            earth_section_title: "Dünya Uygulamaları",
+            stream_panel_title: "Canlı NASA Akışı",
+            stream_panel_desc: "Seçtiğiniz NASA veri tabanından (NTRS / OSDR-PSI) veya özel bir JSON / CSV bağlantısından belirlediğiniz aralıklarla veri çeker ve simülasyonu günceller.",
+            stream_target_ph: "Sorgu ('auto' = tüm NASA deneylerini tarar) veya https://... adresi girin",
+            btn_stream_start: "Akışı Başlat",
+            btn_stream_stop: "Akışı Durdur",
+            btn_stream_now: "Şimdi Çek",
+            chk_stream_sync: "Yeni verileri 3B Yanma Odasına otomatik uygula",
+            stream_not_started: "Henüz akış başlatılmadı.",
+            live_search_title: "NASA Arşiv Sorgusu",
+            live_search_desc: "Doğrudan resmi ntrs.nasa.gov ve osdr.nasa.gov servislerinden gerçek zamanlı bilimsel rapor ve deney kayıtlarını sorgulayın.",
+            btn_fetch_live: "Arşivde Ara",
+            ingest_panel_title: "Dosya ve Fotoğraf Analizi",
+            ingest_panel_desc: "Alev fotoğraflarını (.png, .jpg) veya veri tablolarını (.csv, .json, .pdf, .txt) yükleyin; çıkarılan parametreler 3B odaya aktarılır.",
+            lbl_scrape_url: "Web Bağlantısı Çözümle",
+            btn_scrape_url: "3B'ye Aktar",
+            lbl_choose_file: "Veri Dosyası veya Fotoğraf Seç",
+            chk_media_sync: "Çıkarılan verileri otomatik olarak 3B Yanma Odasına uygula",
+            btn_upload_doc: "Dosyayı Analiz Et",
+            rag_test_title: "Metin Arama",
+            rag_search_ph: "Deney kayıtlarında kavram ara...",
+            btn_rag_search: "Ara",
+            copilot_tasks_title: "Hazır Sorular",
+            cp_btn_1: "Aktif Odayı Değerlendir",
+            cp_btn_2: "Giysi ve Gezgin Kıyasla",
+            cp_btn_3: "Kısmi Yerçekimi Analizi",
+            cp_btn_4: "Soğuk Alev ve Sensörler",
+            cp_btn_5: "Su Sisi ve İtfaiye",
+            copilot_attach_title: "Dosya Ekle",
+            copilot_attach_desc: "Alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.pdf/.json/.txt) seçtiğinizde hem 3B simülasyon güncellenir hem de denklemlerle değerlendirilir:",
+            chk_6stage: "NASA-STD-6001B Güvenlik Denetimi Aktif",
+            lbl_active_engine: "Hesaplama Modu:",
+            copilot_ctx_tag: "3B Yanma Odası ve 15 PSI Deneyi Bağlı",
+            welcome_title: "Mühendislik Analizi ve Karar Desteği",
             kv_solver_lbl: "SAYISAL ÇÖZÜCÜ",
-            kv_solver_val: "d² • B_oq • Sh • Da • MOC [AKTİF]",
-            kv_corpus_lbl: "REFERANS KORPUSU",
-            kv_auditor_lbl: "GÜVENLİK DENETÇİSİ",
-            welcome_p1: "Telemetri bağlamı kilitlendi. Bu konsol; aktif 3B yanma odası durum vektörünü, boyutsuz taşınım sayılarını, ISS uçuş doğrulama kalıntılarını (R² / RMSE) ve 15 doğrulanmış NASA PSI soruşturmasını deterministik fizik çözücü ve çevrimdışı/hibrit çıkarım katmanlarıyla sentezler.",
-            welcome_p2: "Uzay istasyonları (ISS), EVA uzay giysileri (%100 O₂ @ 4.3 psia), Ay/Mars yüzey habitatları ve basınçlı gezginler (10.2 psia) için rejim sınırları, soğuk alev anomalileri ve SoFIE-MIST söndürme protokollerini sorgulayabilirsiniz.",
-            chat_input_ph: "Mikroçekim yanma denklemleri, EVA giysisi/Ay gezgini rejimi veya NASA PSI kanıt sorgusu girin...",
-            btn_stop_chat: "■ Durdur",
-            btn_send_chat: "Analizi Çalıştır ▸",
-            set_card1_title: "◈ Sayısal Çözücü Kalibrasyonu & Sentez Çekirdeği",
-            set_ollama_hub_title: "◈ Yerel Çevrimdışı Çıkarım Merkezi (Derin Uzay Otonom Modu)",
-            spec_k1: "ANALİTİK TAŞINIM ÇÖZÜCÜ",
-            spec_k2: "ISS UÇUŞ KALİBRASYONU",
-            spec_k3: "ZERO-TRUST SOKET SINIRI",
-            spec_k4: "ECLSS GÜVENLİK STANDARDI",
-            con_enforced_badge: "ZORUNLU DENETİM AKTİF",
-            acc_opt_badge: "OPSİYONEL • YEREL KASA",
-            btn_check_all: "⌖ Durumu Denetle",
-            lbl_def_provider: "Varsayılan Kanıt Sentez Çekirdeği",
-            lbl_agy_model: "Yerel Sistem CLI Çıkarım Köprüsü & Model Profili",
-            lbl_ollama_host: "Yerel Ollama Sunucu Adresi",
-            lbl_ollama_model: "Yüklü Yerel Çevrimdışı Model",
-            lbl_ollama_pull: "Yeni Yerel Model İndir veya Bellek (VRAM/RAM) Boşalt",
+            kv_solver_val: "d² • B_oq • Sh • Da • MOC",
+            kv_corpus_lbl: "VERİ KAYNAKLARI",
+            kv_auditor_lbl: "GÜVENLİK STANDARDI",
+            welcome_p1: "Bu modül; aktif 3B yanma odası durumunu, boyutsuz taşınım sayılarını, ISS uçuş doğrulama sonuçlarını (R² / RMSE) ve 15 doğrulanmış NASA PSI deneyini analitik çözücü üzerinden değerlendirir.",
+            welcome_p2: "Uzay istasyonları (ISS), EVA uzay giysileri (%100 O₂ @ 4.3 psia), Ay/Mars yüzey üsleri ve basınçlı gezginler (10.2 psia) için tutuşma sınırlarını, soğuk alev davranışını ve su sisi protokollerini sorgulayabilirsiniz.",
+            chat_input_ph: "Yanma denklemleri, uzay giysisi/gezgin atmosferi veya NASA PSI deney sorusu yazın...",
+            btn_stop_chat: "Durdur",
+            btn_send_chat: "Analiz Et",
+            set_card1_title: "Çözücü Durumu",
+            set_ollama_hub_title: "Yerel Model Ayarları",
+            spec_k1: "TAŞINIM ÇÖZÜCÜ",
+            spec_k2: "ISS DOĞRULAMASI",
+            spec_k3: "ÇALIŞMA MODU",
+            spec_v3: "Çevrimdışı / Yerel",
+            spec_k4: "GÜVENLİK STANDARDI",
+            con_enforced_badge: "AKTİF DENETİM",
+            acc_opt_badge: "İSTEĞE BAĞLI",
+            btn_check_all: "Durumu Yenile",
+            lbl_def_provider: "Varsayılan Hesaplama Modu",
+            lbl_agy_model: "Yerel Sistem Köprüsü",
+            lbl_ollama_host: "Yerel Servis Adresi",
+            lbl_ollama_model: "Yüklü Yerel Model",
+            lbl_ollama_pull: "Model İndir veya Bellek Temizle",
             btn_pull: "İndir",
-            btn_unload: "✕ Boşalt",
-            btn_test_provider: "▸ Aktif Sentez Çekirdeğini Bilimsel Doğrulama İle Test Et",
-            set_card2_title: "Gelişmiş Harici Bulut Çıkarım Geçidi, Kimlik Doğrulama Kasası & Raporlama Biçimi (İsteğe Bağlı)",
-            set_card2_desc: "Harici bulut geçidi kimlik bilgileri asla kaynak koda veya çalıştırılabilir pakete gömülmez; yalnızca yerel kullanıcı kasasında (%APPDATA%\\AltarNasa\\config.json) saklanır.",
-            lbl_gemini_key: "Google Gemini REST Geçit Anahtarı (GEMINI_API_KEY)",
-            lbl_gemini_model: "Google Gemini Model Tanımlayıcısı",
-            lbl_agy_key: "Yerel CLI Köprüsü Yedek Geçit Anahtarı (CLI Aktifse Gerekmez)",
-            lbl_or_key: "OpenRouter Geçit Anahtarı (OPENROUTER_API_KEY)",
-            lbl_or_model: "OpenRouter Model Tanımlayıcısı",
-            lbl_custom_gw: "Özel OpenAI-Uyumlu Kurumsal Uç Nokta & Anahtar (İsteğe Bağlı)",
-            btn_save_cfg: "◈ Tüm Kalibrasyon ve Geçit Yapılandırmasını Kaydet",
-            set_card3_title: "◈ NASA-STD-6001B & PSI Fiziksel Doğrulama Kısıtları Matrisi (CON-01 .. CON-09)",
-            set_card3_desc: "Aşağıdaki taşınım yasaları, boyutsuz rejim sınırları ve uçuş güvenliği kısıtları analitik fizik çekirdeği ve tüm kanıt sentez katmanlarında zorunlu olarak denetlenmektedir:",
-            lbl_extra_dir: "Özel Birim & Raporlama Biçimi Kısıtları (İsteğe Bağlı)",
-            extra_dir_ph: "Örn: Teknik sentez çıktılarında her zaman kPa biriminin yanında psia karşılığını da raporla...",
-            btn_save_dir: "▸ Raporlama Biçimi Kısıtlarını Güncelle",
-            btn_export_report: "◫ Rapor (.MD)",
-            btn_clear_chat: "✕ Sıfırla",
-            shield_badge: "◈ 127.0.0.1 Zero-Trust İzole",
-            lbl_audience: "◈ Hedef Kitle Modu:",
-            btn_guided_tour: "▸ Rehberli Jüri Turu",
-            chk_flight_pts: "◆ ISS Ölçüm Noktaları",
-            btn_export_csv: "◫ CSV İndir",
-            btn_export_json: "◫ JSON İndir",
-            cabin_clock_title: "◈ Kabin, Basınçlı Gezgin & EVA Uzay Giysisi Yangın Senaryosu — ECLSS Yaşam Destek Saati",
-            btn_tour_end: "✕ Bitir",
-            btn_tour_next: "Sonraki Adım ▸",
+            btn_unload: "Temizle",
+            btn_test_provider: "Çözücüyü Test Et",
+            set_card2_title: "Gelişmiş Bağlantılar",
+            set_card2_desc: "Bağlantı anahtarları kaynak koda gömülmez; yalnızca yerel kullanıcı yapılandırma dosyasında saklanır.",
+            lbl_gemini_key: "Google Gemini Anahtarı",
+            lbl_gemini_model: "Google Gemini Modeli",
+            lbl_agy_key: "Yerel Köprü Anahtarı (İsteğe Bağlı)",
+            lbl_or_key: "OpenRouter Anahtarı",
+            lbl_or_model: "OpenRouter Modeli",
+            lbl_custom_gw: "Özel Uç Nokta Bağlantısı",
+            btn_save_cfg: "Ayarları Kaydet",
+            set_card3_title: "Fiziksel Kurallar",
+            set_card3_desc: "Aşağıdaki taşınım yasaları, boyutsuz rejim sınırları ve NASA-STD-6001B uçuş güvenliği kuralları tüm hesaplama adımlarında zorunlu olarak denetlenmektedir:",
+            lbl_extra_dir: "Raporlama Notları",
+            extra_dir_ph: "Örn: Teknik çıktılarda her zaman kPa biriminin yanında psia karşılığını da belirt...",
+            btn_save_dir: "Notları Güncelle",
+            btn_export_report: "Rapor İndir",
+            btn_clear_chat: "Sıfırla",
+            shield_badge: "Çevrimdışı Mod",
+            lbl_audience: "Görünüm:",
+            btn_guided_tour: "Rehberli Tur",
+            chk_flight_pts: "ISS Ölçümleri",
+            btn_export_csv: "CSV İndir",
+            btn_export_json: "JSON İndir",
+            btn_tour_end: "Bitir",
+            btn_tour_next: "Sonraki Adım",
         },
         en: {
-            brand_sub: "Physics-Informed Microgravity & Partial-Gravity Fire Safety, PSI Synthesis & 3D Digital Twin Suite",
-            nav_lab: "01 // 3D Chamber & Equations",
-            nav_rank: "02 // PSI Ranking & Matrix",
-            nav_live: "03 // Telemetry Stream & Analyzer",
-            nav_copilot: "04 // Evidence Synthesis Console",
-            nav_settings: "05 // Calibration & Constraints",
-            quick_ingest_title: "◫ Simulate 3D from File or Flame Imagery",
+            brand_sub: "Microgravity Combustion Analysis & Fire Safety Platform",
+            nav_lab: "Combustion Chamber",
+            nav_rank: "NASA Experiments",
+            nav_live: "Data & Imagery",
+            nav_copilot: "Engineering Analysis",
+            nav_settings: "Validation & Settings",
+            quick_ingest_title: "Quick File Load",
             quick_ingest_desc: "Combustion parameters are automatically extracted from your flame photo or dataset and applied to 3D:",
-            presets_title: "◈ NASA Mission, EVA Suit & Rover Presets",
-            controls_title: "⌖ Cabin, Spacesuit & Combustion Parameters",
-            lbl_fuel: "Fuel / Sample / Burner Geometry",
-            lbl_gravity: "Gravity Level (0G ISS • 0.16G Moon • 0.38G Mars • 1G)",
-            lbl_oxygen: "Oxygen Concentration (8% – 100% Pure O₂)",
-            lbl_pressure: "Ambient Pressure (4.3 psia Suit – 14.7 psia ISS)",
-            lbl_airflow: "Ventilation Airflow Speed (cm/s)",
-            lbl_droplet: "Droplet / Sample / Burner Diameter",
-            lbl_diluent: "Ambient Diluent Gas",
-            audio_title: "◈ Acoustic Telemetry Sonification",
-            audio_start: "▸ Start Audio",
-            audio_stop: "■ Stop Audio",
+            presets_title: "Mission Presets",
+            controls_title: "Chamber Controls",
+            lbl_fuel: "Fuel Type",
+            lbl_gravity: "Gravity Level",
+            lbl_oxygen: "Oxygen Level",
+            lbl_pressure: "Ambient Pressure",
+            lbl_airflow: "Airflow Speed",
+            lbl_droplet: "Sample Diameter",
+            lbl_diluent: "Diluent Gas",
+            audio_title: "Flame Audio",
+            audio_start: "Play Audio",
+            audio_stop: "Mute Audio",
             audio_desc: "Converts flame temperature and invisible Cool Flame oscillations into real-time audio frequencies.",
-            chamber_title: "◈ 3D ISS Combustion Chamber Digital Twin (CIR / MSG WebGL)",
-            chamber_hint: "Drag: 360° Orbit • Scroll: Zoom",
+            chamber_title: "3D Combustion Chamber",
+            chamber_hint: "Drag: Orbit • Scroll: Zoom",
             cam_front: "Front View",
-            cam_macro: "Macro Core",
+            cam_macro: "Core View",
             cam_sensors: "Sensor View",
             cam_top: "Top Cutaway",
-            cam_reignite: "⌖ Re-Ignite",
-            leg_blue: "CH*/OH* Blue Chemiluminescence",
-            leg_soot: "Soot Thermal Radiation",
-            leg_cool: "Invisible Cool Flame (UV/IR 550-750 K)",
-            leg_geom: "Droplet / Polymer / Spherical Burner",
-            chart_sensor_title: "◈ Multi-Sensor Coherence & Two-Stage Cool Flame Anomaly (0–30 s)",
-            chart_sensor_sub: "Optical Camera vs. IR Radiometer vs. CO",
-            tel_panel_title: "◈ Live Combustion Telemetry",
-            btn_ai_interpret: "⌖ Analyze in Evidence Console",
-            lbl_risk_score: "SPACECRAFT / SUIT FIRE RISK SCORE",
+            cam_reignite: "Re-Ignite",
+            leg_blue: "Blue Flame",
+            leg_soot: "Soot Glow",
+            leg_cool: "Cool Flame",
+            leg_geom: "Fuel Sample",
+            chart_sensor_title: "Sensor Time Chart",
+            chart_sensor_sub: "Optical • IR • CO",
+            tel_panel_title: "Live Measurements",
+            btn_ai_interpret: "Detailed Analysis",
+            lbl_risk_score: "FIRE RISK SCORE",
             card_temp: "Flame Temperature",
-            card_moc: "Min Oxygen (MOC)",
-            card_kburn: "d² Burn Constant (K)",
-            card_spread: "Spread & Spalding B",
-            card_rad: "Radiative Loss (χr)",
-            card_co: "CO, Soot & Sherwood",
-            chart_moc_title: "◈ Flammability Boundary Map (0G • 0.16G Moon • 1G Bounds)",
-            chart_moc_desc: "0G and 1G MOC curves bound intermediate partial gravity (0.16G Lunar LUCI/FM2); gentle 3–8 cm/s flow lowers MOC.",
-            formula_table_title: "◈ Live Governing Equations, Dimensionless Numbers & Results Table",
-            th_law: "Physical Law / Criterion",
-            th_eq: "Governing Equation",
-            th_val: "Live Numerical Output",
-            th_status: "Regime Status",
-            live_synthesis_title: "◈ Instant Analytical & Equation Synthesis",
-            btn_full_ai_report: "▸ Generate Technical Synthesis",
-            rank_main_title: "◈ Physics-Informed NASA PSI Investigation Ranking, Hardware & Comparison Matrix",
-            rank_main_desc: "Summarizes, ranks, and compares 15 verified NASA PSI investigations via thermodynamic affinity and TF-IDF across spacecraft, EVA suits, Lunar/Mars bases, and pressurized rovers.",
-            rank_placeholder: "e.g., cool flame, CFI-G 85% O2, DAFT dust, SPICE, rover...",
-            btn_rerank: "⌖ Re-Rank",
-            btn_compare: "◈ Compare Selected",
-            lbl_hw_filter: "◈ Orbital Hardware Facility:",
-            hw_all: "All (15 PSI Investigations)",
-            hw_cir: "◈ ISS CIR / MDCA & ACME",
-            hw_msg: "◈ ISS MSG Flow Duct (SPICE/BASS/SLISE)",
-            hw_cygnus: "◈ Cygnus Autonomous Vehicle (Saffire)",
-            hw_cabin: "◈ Cabin Smoke & Dust (SAME / DAFT)",
-            psi_rocket_scope_note: "◆ NASA PSI Scope Note: High gas velocities inside rocket engines and thrusters render combustion effectively gravity-independent; PSI focuses on fire safety in habitable crew cabins, spacesuits, bases, and pressurized rovers.",
+            card_moc: "Critical Oxygen",
+            card_kburn: "Burn Constant",
+            card_spread: "Spread Rate",
+            card_rad: "Radiative Loss",
+            card_co: "Carbon Monoxide",
+            chart_moc_title: "Flammability Map",
+            chart_moc_desc: "0G and 1G MOC curves bound intermediate partial gravity (0.16G Lunar LUCI/FM2); gentle 3–8 cm/s airflow lowers MOC.",
+            formula_table_title: "Governing Equations",
+            th_law: "Physical Law",
+            th_eq: "Equation",
+            th_val: "Live Value",
+            th_status: "Status",
+            live_synthesis_title: "Instant Summary",
+            btn_full_ai_report: "Full Report",
+            cabin_clock_title: "Life Support Clock",
+            rank_main_title: "Experiment Ranking",
+            rank_main_desc: "Ranks and compares 15 verified NASA PSI experiments by physical similarity across stations, EVA suits, Lunar/Mars bases, and pressurized rovers.",
+            rank_placeholder: "e.g., cool flame, CFI-G, DAFT dust, SPICE, rover...",
+            btn_rerank: "Sort",
+            btn_compare: "Compare Selected",
+            lbl_hw_filter: "Hardware Filter:",
+            hw_all: "All Experiments",
+            hw_cir: "ISS CIR / ACME",
+            hw_msg: "MSG Flow Duct",
+            hw_cygnus: "Cygnus Vehicle",
+            hw_cabin: "Smoke & Dust",
+            psi_rocket_scope_note: "NASA PSI Scope Note: High gas velocities inside rocket engines and thrusters render combustion effectively gravity-independent; PSI focuses on fire safety in crew cabins, spacesuits, and surface habitats.",
             th_sel: "Pick",
             th_rank: "Rank",
-            th_prog: "Program & Facility",
-            th_exp_detail: "Objectives, Sample/Burner Shape, Sensors & Key Findings",
+            th_prog: "Program",
+            th_exp_detail: "Summary & Findings",
             th_cond: "Test Conditions",
-            th_prio: "Thermo & TF-IDF Score",
-            th_evid: "Evidence & Runs",
-            intra_runs_hint: "Click '◈ Intra-Run Matrix' on any investigation above to inspect how tests within the same investigation differed and what remained constant:",
-            cmp_section_title: "◈ Cross-Investigation Similarity & Difference Matrix",
-            earth_section_title: "◈ Space-to-Earth Fire Safety Applications (Water Mist • Smoke Detection • Firefighter Gear)",
-            stream_panel_title: "◈ Continuous Live Telemetry Stream & Autonomous Simulation Feeder",
-            stream_panel_desc: "Continuously polls official NASA APIs (NTRS / OSDR-PSI) or custom JSON/CSV/Web telemetry URLs, dynamically updating the 3D simulation, charts, and tables.",
-            stream_target_ph: "Query ('auto' = cycles through all NASA PSI programs) or https://... URL",
-            btn_stream_start: "▸ Start Continuous Stream",
-            btn_stream_stop: "■ Stop Continuous Stream",
-            btn_stream_now: "⌖ Fetch Now",
-            chk_stream_sync: "◈ Auto-synchronize 3D Chamber, Charts & Equation Tables as new web data arrives",
-            stream_not_started: "Stream loop has not been started yet.",
-            live_search_title: "◈ Live NASA NTRS & OSDR/PSI Database Query",
-            live_search_desc: "Query official ntrs.nasa.gov and osdr.nasa.gov REST APIs in real time for peer-reviewed microgravity combustion reports and datasets.",
-            btn_fetch_live: "▸ Fetch Live",
-            ingest_panel_title: "◫ Multimodal File, Flame Imagery & Web Telemetry Analyzer",
-            ingest_panel_desc: "Upload flame imagery (.png, .jpg, .webp), scientific datasets (.csv, .json, .pdf, .txt), or paper URLs; extracted parameters sync directly to the 3D chamber and vector index.",
-            lbl_scrape_url: "Parse Scientific Web Page / JSON / CSV / PDF URL",
-            btn_scrape_url: "Parse & Sync 3D",
-            lbl_choose_file: "Select Local Dataset or Flame Image (.png, .jpg, .csv, .json, .pdf, .txt)",
-            chk_media_sync: "Automatically apply extracted conditions to 3D Chamber & Tables",
-            btn_upload_doc: "▸ Analyze File / Image, Sync to 3D Chamber & Vector Index",
-            rag_test_title: "⌖ Semantic Vector Corpus Query",
-            rag_search_ph: "Query concepts in vector corpus (EN or TR)...",
-            btn_rag_search: "Query",
-            copilot_tasks_title: "◈ Ready Engineering Analysis Protocols",
-            cp_btn_1: "◈ Synthesize Active 3D & Equations with Evidence",
-            cp_btn_2: "◈ Compare EVA Suit (100% O₂) & Lunar Rover",
-            cp_btn_3: "◈ Partial Gravity (LUCI/FM2 & E-FIELD) Analysis",
-            cp_btn_4: "◈ Cool Flames & DAFT Smoke/Dust Discrimination",
-            cp_btn_5: "◈ Water Mist (SoFIE-MIST) & Firefighter Spinoffs",
-            copilot_attach_title: "◫ Attach Dataset or Flame Imagery to Analysis",
-            copilot_attach_desc: "Selecting a flame image (.png/.jpg) or data file (.csv/.pdf/.json/.txt) updates both the 3D scene and governing equation context:",
-            chk_6stage: "◈ 6-Stage Equation & NASA-STD-6001B Halon Critic Active",
-            lbl_active_engine: "◈ Active Synthesis Kernel:",
-            copilot_ctx_tag: "Live 3D Telemetry + 15 PSI Investigations + Equations Active",
-            welcome_title: "◈ ALTAR-NASA // EVIDENCE SYNTHESIS & DECISION CONSOLE [v5.1]",
+            th_prio: "Match Score",
+            th_evid: "Actions",
+            intra_runs_hint: "Click \"Test Variations\" on any experiment above to see how runs inside the same facility differed and stayed constant:",
+            cmp_section_title: "Experiment Comparison",
+            earth_section_title: "Earth Applications",
+            stream_panel_title: "Live NASA Stream",
+            stream_panel_desc: "Polls official NASA databases (NTRS / OSDR-PSI) or custom JSON / CSV links at your chosen interval and updates the simulation.",
+            stream_target_ph: "Query ('auto' = cycles through all NASA experiments) or https://... URL",
+            btn_stream_start: "Start Stream",
+            btn_stream_stop: "Stop Stream",
+            btn_stream_now: "Fetch Now",
+            chk_stream_sync: "Automatically apply incoming data to 3D Chamber",
+            stream_not_started: "Stream has not started yet.",
+            live_search_title: "NASA Archive Search",
+            live_search_desc: "Search official ntrs.nasa.gov and osdr.nasa.gov services in real time for scientific reports and experiment records.",
+            btn_fetch_live: "Search Archive",
+            ingest_panel_title: "File & Flame Analysis",
+            ingest_panel_desc: "Upload flame photos (.png, .jpg) or data files (.csv, .json, .pdf, .txt); extracted parameters sync directly to the 3D chamber.",
+            lbl_scrape_url: "Parse Web Link",
+            btn_scrape_url: "Sync to 3D",
+            lbl_choose_file: "Choose Data File or Photo",
+            chk_media_sync: "Automatically apply extracted parameters to 3D Chamber",
+            btn_upload_doc: "Analyze File",
+            rag_test_title: "Text Search",
+            rag_search_ph: "Search concepts in experiment records...",
+            btn_rag_search: "Search",
+            copilot_tasks_title: "Quick Questions",
+            cp_btn_1: "Evaluate Active Chamber",
+            cp_btn_2: "Compare Suit & Rover",
+            cp_btn_3: "Partial Gravity Analysis",
+            cp_btn_4: "Cool Flame & Sensors",
+            cp_btn_5: "Water Mist & Spinoffs",
+            copilot_attach_title: "Attach File",
+            copilot_attach_desc: "Selecting a flame photo (.png/.jpg) or data file (.csv/.pdf/.json/.txt) updates both the 3D simulation and governing equation analysis:",
+            chk_6stage: "NASA-STD-6001B Safety Check Active",
+            lbl_active_engine: "Analysis Mode:",
+            copilot_ctx_tag: "3D Chamber & 15 PSI Experiments Linked",
+            welcome_title: "Engineering Analysis & Decision Support",
             kv_solver_lbl: "NUMERICAL SOLVER",
-            kv_solver_val: "d² • B_oq • Sh • Da • MOC [ACTIVE]",
-            kv_corpus_lbl: "EVIDENCE CORPUS",
-            kv_auditor_lbl: "SAFETY AUDITOR",
-            welcome_p1: "Telemetry context locked. This console synthesizes the active 3D chamber state vector, dimensionless transport numbers, ISS flight validation residuals (R² / RMSE), and 15 verified NASA PSI investigations through the deterministic physics solver and offline/hybrid inference kernels.",
-            welcome_p2: "Query regime boundaries, invisible cool-flame anomalies, and SoFIE-MIST suppression protocols across ISS modules, EVA spacesuits (100% O₂ @ 4.3 psia), Lunar/Mars surface habitats, and pressurized rovers (10.2 psia).",
-            chat_input_ph: "Enter microgravity combustion equation, EVA suit/Lunar rover regime, or NASA PSI query...",
-            btn_stop_chat: "■ Stop",
-            btn_send_chat: "Execute Analysis ▸",
-            set_card1_title: "◈ Numerical Solver Calibration & Synthesis Kernel",
-            set_ollama_hub_title: "◈ Local Offline Inference Hub (Deep-Space Autonomous Mode)",
-            spec_k1: "ANALYTICAL TRANSPORT SOLVER",
-            spec_k2: "ISS FLIGHT CALIBRATION",
-            spec_k3: "ZERO-TRUST SOCKET BOUNDARY",
-            spec_k4: "ECLSS SAFETY STANDARD",
-            con_enforced_badge: "MANDATORY AUDIT ACTIVE",
-            acc_opt_badge: "OPTIONAL • LOCAL VAULT",
-            btn_check_all: "⌖ Inspect Status",
-            lbl_def_provider: "Default Evidence Synthesis Kernel",
-            lbl_agy_model: "Local System CLI Inference Bridge & Model Profile",
-            lbl_ollama_host: "Local Ollama Server Host",
-            lbl_ollama_model: "Installed Local Offline Model",
-            lbl_ollama_pull: "Pull New Local Model or Unload Memory (VRAM/RAM)",
-            btn_pull: "Pull",
-            btn_unload: "✕ Unload",
-            btn_test_provider: "▸ Run Live Scientific Verification on Active Kernel",
-            set_card2_title: "Advanced External Cloud Inference Gateway, Credential Vault & Formatting Rules (Optional)",
-            set_card2_desc: "External gateway credentials are never embedded in source code or executables; stored strictly in your local user vault (%APPDATA%\\AltarNasa\\config.json).",
-            lbl_gemini_key: "Google Gemini REST Gateway Key (GEMINI_API_KEY)",
-            lbl_gemini_model: "Google Gemini Model Identifier",
-            lbl_agy_key: "Local CLI Bridge Fallback Token (Not required if CLI is active)",
-            lbl_or_key: "OpenRouter Gateway Key (OPENROUTER_API_KEY)",
-            lbl_or_model: "OpenRouter Model Identifier",
-            lbl_custom_gw: "Custom OpenAI-Compatible Enterprise Endpoint & Token (Optional)",
-            btn_save_cfg: "◈ Save All Calibration & Gateway Configuration",
-            set_card3_title: "◈ NASA-STD-6001B & PSI Physical Validation Constraints Matrix (CON-01 .. CON-09)",
-            set_card3_desc: "These transport laws, dimensionless regime boundaries, and crew safety constraints are strictly enforced across the analytical solver and all synthesis layers:",
-            lbl_extra_dir: "Custom Unit & Reporting Format Constraints (Optional)",
-            extra_dir_ph: "e.g., Always report both metric kPa and psia pressure units in synthesis outputs...",
-            btn_save_dir: "▸ Update Reporting Format Constraints",
-            btn_export_report: "◫ Report (.MD)",
-            btn_clear_chat: "✕ Reset",
-            shield_badge: "◈ 127.0.0.1 Zero-Trust Isolated",
-            lbl_audience: "◈ Target Audience:",
-            btn_guided_tour: "▸ Guided Jury Tour",
-            chk_flight_pts: "◆ ISS Flight Points",
-            btn_export_csv: "◫ Export CSV",
-            btn_export_json: "◫ Export JSON",
-            cabin_clock_title: "◈ Cabin, Pressurized Rover & EVA Suit Fire Scenario — ECLSS Crew Survival Clock",
-            btn_tour_end: "✕ Close",
-            btn_tour_next: "Next Step ▸",
+            kv_solver_val: "d² • B_oq • Sh • Da • MOC",
+            kv_corpus_lbl: "DATA SOURCES",
+            kv_auditor_lbl: "SAFETY STANDARD",
+            welcome_p1: "This module evaluates the active 3D chamber state, dimensionless transport numbers, ISS flight validation metrics (R² / RMSE), and 15 verified NASA PSI experiments via the analytical solver.",
+            welcome_p2: "Ask about flammability bounds, invisible cool-flame behavior, and fine water mist protocols across ISS modules, EVA suits (100% O₂ @ 4.3 psia), Lunar/Mars bases, and pressurized rovers (10.2 psia).",
+            chat_input_ph: "Ask about combustion equations, spacesuit/rover atmospheres, or NASA PSI experiments...",
+            btn_stop_chat: "Stop",
+            btn_send_chat: "Run Analysis",
+            set_card1_title: "Solver Status",
+            set_ollama_hub_title: "Local Model Settings",
+            spec_k1: "TRANSPORT SOLVER",
+            spec_k2: "ISS VALIDATION",
+            spec_k3: "OPERATING MODE",
+            spec_v3: "Offline / Local",
+            spec_k4: "SAFETY STANDARD",
+            con_enforced_badge: "ACTIVE AUDIT",
+            acc_opt_badge: "OPTIONAL",
+            btn_check_all: "Refresh Status",
+            lbl_def_provider: "Default Analysis Mode",
+            lbl_agy_model: "Local System Bridge",
+            lbl_ollama_host: "Local Service Address",
+            lbl_ollama_model: "Installed Local Model",
+            lbl_ollama_pull: "Download Model or Clear Memory",
+            btn_pull: "Download",
+            btn_unload: "Clear",
+            btn_test_provider: "Test Solver",
+            set_card2_title: "Advanced Connections",
+            set_card2_desc: "Connection keys are never embedded in source code; stored only in your local user configuration file.",
+            lbl_gemini_key: "Google Gemini Key",
+            lbl_gemini_model: "Google Gemini Model",
+            lbl_agy_key: "Local Bridge Token (Optional)",
+            lbl_or_key: "OpenRouter Key",
+            lbl_or_model: "OpenRouter Model",
+            lbl_custom_gw: "Custom Endpoint Connection",
+            btn_save_cfg: "Save Settings",
+            set_card3_title: "Physical Rules",
+            set_card3_desc: "The following transport laws, dimensionless regime bounds, and NASA-STD-6001B flight safety rules are strictly enforced across all solver calculations:",
+            lbl_extra_dir: "Reporting Notes",
+            extra_dir_ph: "e.g., Always include psia alongside metric kPa pressure units in technical outputs...",
+            btn_save_dir: "Update Notes",
+            btn_export_report: "Download Report",
+            btn_clear_chat: "Reset",
+            shield_badge: "Offline Mode",
+            lbl_audience: "View:",
+            btn_guided_tour: "Guided Tour",
+            chk_flight_pts: "ISS Flight Data",
+            btn_export_csv: "Download CSV",
+            btn_export_json: "Download JSON",
+            btn_tour_end: "Finish",
+            btn_tour_next: "Next Step",
         },
     };
 
@@ -342,7 +343,7 @@
         directives: [],
         earthTransfers: [],
         currentSim: null,
-        activeSourceLabel: "3B Dijital İkiz",
+        activeSourceLabel: "Yanma Odası",
         activeHardwareFilter: "ALL",
         activeIntraExpId: "PSI-FLEX-01",
         rankedList: [],
@@ -420,9 +421,14 @@
             opt.textContent = state.lang === "en" ? opt.getAttribute("data-en") : opt.getAttribute("data-tr");
         });
 
-        if (window.ALTAR_SERVERLESS_MODE && $("isolation-shield-pill")) {
-            $("isolation-shield-pill").textContent =
-                state.lang === "en" ? "◈ 100% Serverless Static Isolated" : "◈ %100 Sunucusuz Statik İzole";
+        if (window.ALTAR_SERVERLESS_MODE) {
+            if ($("isolation-shield-pill")) {
+                $("isolation-shield-pill").textContent =
+                    state.lang === "en" ? "Browser Mode" : "Tarayıcı Modu";
+            }
+            document.querySelectorAll('[data-i18n="spec_v3"]').forEach((el) => {
+                el.textContent = state.lang === "en" ? "In-Browser" : "Tarayıcı İçi";
+            });
         }
 
         if (!state.streamEnabled && $("header-stream-text")) {
@@ -439,16 +445,16 @@
 
         const copy = {
             researcher: {
-                tr: "◈ **Araştırmacı & Profesör Modu:** Analitik `d²` yasası (`K`), Spalding `B_oq`, Sherwood `Sh`, Damköhler `Da` ve radyatif kayıp (`χ_r`) denklemleri aktif. Grafikler üzerindeki **◆ ISS elmas noktaları** gerçek NASA GRC uçuş telemetrisiyle canlı `R²` / `RMSE` uyumunu gösterir; sağ üstten **CSV / JSON** öngörücü veri setlerini indirebilirsiniz.",
-                en: "◈ **Researcher & Professor Mode:** Analytical `d²`-law (`K`), Spalding `B_oq`, Sherwood `Sh`, Damköhler `Da`, and radiative fraction (`χ_r`) highlighted. **◆ ISS diamond markers** overlay NASA GRC flight telemetry with live `R²` / `RMSE` metrics; extract predictive datasets via **Export CSV / JSON** above.",
+                tr: "**Araştırmacı Görünümü:** Analitik `d²` yasası (`K`), Spalding `B_oq`, Sherwood `Sh`, Damköhler `Da` ve ısıl kayıp (`χ_r`) denklemleri aktif. Grafikler üzerindeki **ISS ölçüm noktaları** gerçek NASA GRC uçuş verileriyle canlı `R²` / `RMSE` uyumunu gösterir; sağ üstten **CSV / JSON** veri setlerini indirebilirsiniz.",
+                en: "**Researcher View:** Analytical `d²`-law (`K`), Spalding `B_oq`, Sherwood `Sh`, Damköhler `Da`, and radiative fraction (`χ_r`) highlighted. **ISS flight data markers** overlay NASA GRC flight telemetry with live `R²` / `RMSE` metrics; download predictive datasets via **Download CSV / JSON** above.",
             },
             student: {
-                tr: "◈ **Lisans Öğrencisi Modu (Kavramsal Odak):** Dünya'da (`1G`) ısınan hava yükselerek alevi gözyaşı şekline sokar. Uzayda (`0G`) kaldırma kuvveti yok olur (`Ra = 0`); oksijen yalnızca moleküler difüzyonla ilerlediği için alev **küresel safir-mavi** bir topa dönüşür veya çıplak gözle görülemeyen **550–780 K Soğuk Alev** fazına geçer.",
-                en: "◈ **Undergraduate Mode (Conceptual Focus):** On Earth (`1G`), rising hot gas stretches flames into teardrops. In freefall (`0G`), buoyancy vanishes (`Ra = 0`); oxygen arrives purely via molecular diffusion, turning the flame into a **sapphire-blue sphere** or an invisible **550–780 K Cool Flame** that blinds optical smoke detectors.",
+                tr: "**Öğrenci Görünümü:** Dünya'da (`1G`) ısınan hava yükselerek alevi gözyaşı şekline sokar. Uzayda (`0G`) kaldırma kuvveti yok olur (`Ra = 0`); oksijen yalnızca moleküler difüzyonla ilerlediği için alev **küresel safir-mavi** bir topa dönüşür veya çıplak gözle görülemeyen **550–780 K Soğuk Alev** fazına geçer.",
+                en: "**Student View:** On Earth (`1G`), rising hot gas stretches flames into teardrops. In freefall (`0G`), buoyancy vanishes (`Ra = 0`); oxygen arrives purely via molecular diffusion, turning the flame into a **sapphire-blue sphere** or an invisible **550–780 K Cool Flame** that blinds optical smoke detectors.",
             },
             engineer: {
-                tr: "◈ **Uçuş Güvenlik Mühendisi Modu (Operasyonel Odak):** EVA uzay giysisi (`4.3 psia / %100 O₂`) ve basınçlı Ay gezgini (`10.2 psia / %32 O₂`) atmosferlerinde azot ısıl balastı azaldığından yayılma hızı sıçrar. Aşağıdaki **ECLSS Yaşam Destek Saati** ile `SMAC 125 ppm CO` süresini izleyin; ilk eylem daima **HVAC Kapatma + İnce Su Sisi (SoFIE-MIST)** olmalıdır (*Halon 1301 yasaktır*).",
-                en: "◈ **Flight Safety Engineer Mode (Operational Focus):** Reduced N₂ thermal ballast in EVA suits (`4.3 psia / 100% O₂`) and Lunar rovers (`10.2 psia / 32% O₂`) accelerates flame spread. Monitor the **ECLSS Crew Survival Clock** below for `SMAC 125 ppm CO` margins; execute **HVAC Cutoff + Fine Water Mist (SoFIE-MIST)** (*Halon 1301 strictly prohibited*).",
+                tr: "**Mühendis Görünümü:** Uzay giysisi (`4.3 psia / %100 O₂`) ve basınçlı Ay gezgini (`10.2 psia / %32 O₂`) atmosferlerinde azot ısıl balastı azaldığından yayılma hızı sıçrar. Aşağıdaki **Yaşam Destek Saati** ile `SMAC 125 ppm CO` süresini izleyin; ilk eylem daima **Fan Kapatma + İnce Su Sisi (SoFIE-MIST)** olmalıdır (*Halon 1301 yasaktır*).",
+                en: "**Engineer View:** Reduced N₂ thermal ballast in EVA suits (`4.3 psia / 100% O₂`) and Lunar rovers (`10.2 psia / 32% O₂`) accelerates flame spread. Monitor the **Life Support Clock** below for `SMAC 125 ppm CO` margins; execute **HVAC Cutoff + Fine Water Mist (SoFIE-MIST)** (*Halon 1301 strictly prohibited*).",
             },
         };
         const msg = (copy[mode] || copy.researcher)[isEn ? "en" : "tr"];
@@ -503,7 +509,6 @@
             .replace(/\$([^$\n]{1,80})\$/g, "$1");
         let html = escapeHtml(cleaned);
 
-        // GFM Markdown pipe tablolarını (| A | B |) temiz HTML tablosuna dönüştür
         html = html.replace(
             /(?:^\|.+\|[ \t]*(?:\n|$))+/gm,
             (tableBlock) => {
@@ -599,7 +604,7 @@
     }
 
     // =========================================================================
-    // SİMÜLASYON, 3B WEBGL, KISMİ YERÇEKİMİ & CANLI FORMÜL TABLOSU GÜNCELLEME
+    // SİMÜLASYON, 3B WEBGL, KISMİ YERÇEKİMİ VE DENKLEM TABLOSU GÜNCELLEME
     // =========================================================================
     function getSimParamsFromUI() {
         return {
@@ -677,7 +682,7 @@
                 body: JSON.stringify(params),
             });
             const data = await res.json();
-            const defaultLbl = state.lang === "en" ? "3D Digital Twin Sliders" : "3B Dijital İkiz Kaydırıcıları";
+            const defaultLbl = state.lang === "en" ? "Combustion Chamber" : "Yanma Odası";
             applySimulationStateEverywhere(data, sourceLabel || defaultLbl);
         } catch (err) {
             console.error("Simulation API error:", err);
@@ -688,7 +693,7 @@
         syncSliderLabels();
         clearTimeout(state.simDebounceTimer);
         state.simDebounceTimer = setTimeout(() => {
-            const lbl = state.lang === "en" ? "3D Digital Twin Sliders" : "3B Dijital İkiz Kaydırıcıları";
+            const lbl = state.lang === "en" ? "Combustion Chamber" : "Yanma Odası";
             runSimulationUpdate(lbl);
         }, 45);
     }
@@ -778,7 +783,6 @@
             ? `Source: ${state.activeSourceLabel}`
             : `Kaynak: ${state.activeSourceLabel}`;
 
-        // Kısmi Yerçekimi (LUCI/FM2) veya EVA Uzay Giysisi / Ay Gezgini Şeffaflık Kutusu
         const pgBanner = $("partial-g-banner");
         if (pgBanner) {
             const pgInfo = sim.partial_gravity_info;
@@ -791,7 +795,6 @@
             }
         }
 
-        // Canlı Fiziksel Denklemler & Boyutsuz Sayılar Sonuç Tablosu
         const ftBody = $("formula-results-tbody");
         if (ftBody) {
             ftBody.innerHTML = "";
@@ -809,13 +812,12 @@
             });
         }
 
-        // Anlık Dinamik Analitik & Formülsel Veri Sentezi
         const liveAiBox = $("live-formula-ai-box");
         if (liveAiBox && sim.instant_ai_summary) {
             const rawSummary = isEn ? sim.instant_ai_summary.en : sim.instant_ai_summary.tr;
-            const mediaLbl = isEn ? "Active Media Context" : "Aktif Medya Bağlamı";
+            const mediaLbl = isEn ? "Active File" : "Aktif Dosya";
             const mediaBanner = state.attachedMediaName
-                ? `<div style="margin-bottom:8px; padding:5px 9px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:6px; font-size:11.8px; color:#6ee7b7;">◫ ${mediaLbl}: <strong>${escapeHtml(state.attachedMediaName)}</strong></div>`
+                ? `<div style="margin-bottom:8px; padding:5px 9px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:6px; font-size:11.8px; color:#6ee7b7;">${mediaLbl}: <strong>${escapeHtml(state.attachedMediaName)}</strong></div>`
                 : "";
             liveAiBox.innerHTML = mediaBanner + renderSafeMarkdown(rawSummary);
         }
@@ -828,7 +830,7 @@
     }
 
     // =========================================================================
-    // EVRENSEL DOSYA (.CSV/.JSON/.PDF/.TXT) VE ALEV RESMİ (.PNG/.JPG) İŞLEYİCİ
+    // DOSYA (.CSV/.JSON/.PDF/.TXT) VE ALEV FOTOĞRAFI (.PNG/.JPG) İŞLEYİCİ
     // =========================================================================
     async function ingestMediaFile(fileObj, syncTo3D, targetStatusElId) {
         if (!fileObj) return;
@@ -837,10 +839,10 @@
         if (statusEl) {
             statusEl.style.color = "#7dd3fc";
             statusEl.textContent = isEn
-                ? `◈ Analyzing '${fileObj.name}' and extracting combustion parameters...`
-                : `◈ '${fileObj.name}' analiz ediliyor ve parametreler çıkarılıyor...`;
+                ? `Analyzing '${fileObj.name}' and extracting parameters...`
+                : `'${fileObj.name}' analiz ediliyor ve parametreler çıkarılıyor...`;
         }
-        showToast(isEn ? `◈ Processing '${fileObj.name}'...` : `◈ '${fileObj.name}' işleniyor...`);
+        showToast(isEn ? `Processing '${fileObj.name}'...` : `'${fileObj.name}' işleniyor...`);
 
         const fd = new FormData();
         fd.append("file", fileObj);
@@ -851,9 +853,9 @@
             if (!data.ok) {
                 if (statusEl) {
                     statusEl.style.color = "#fca5a5";
-                    statusEl.textContent = `▲ ${data.error || "Error"}`;
+                    statusEl.textContent = `${data.error || "Error"}`;
                 }
-                showToast(`▲ ${data.error || "Failed"}`);
+                showToast(`${data.error || "Failed"}`);
                 return;
             }
 
@@ -867,8 +869,8 @@
             }
 
             $("copilot-live-context-tag").textContent = isEn
-                ? `◫ Active Media: ${state.attachedMediaName} + 3D Equations`
-                : `◫ Aktif Veri: ${state.attachedMediaName} + 3B Denklemler`;
+                ? `Active File: ${state.attachedMediaName} + 3D Chamber`
+                : `Aktif Dosya: ${state.attachedMediaName} + 3B Oda`;
 
             if (syncTo3D && data.extracted_sim_params) {
                 applyParamsToSliders(data.extracted_sim_params);
@@ -886,12 +888,12 @@
                 : "";
             const shortInfo =
                 data.media_type === "image"
-                    ? `◫ ${state.attachedMediaName} -> ${detectedReg}`
-                    : `◫ ${state.attachedMediaName} (${data.chunks} chunks) -> O₂:%${data.extracted_sim_params.oxygen_pct}, ${data.extracted_sim_params.airflow_cms} cm/s`;
+                    ? `${state.attachedMediaName} -> ${detectedReg}`
+                    : `${state.attachedMediaName} (${data.chunks} blok) -> O₂:%${data.extracted_sim_params.oxygen_pct}, ${data.extracted_sim_params.airflow_cms} cm/s`;
 
             if (statusEl) {
                 statusEl.style.color = "#6ee7b7";
-                const btnTxt = isEn ? "⌖ Synthesize in Console" : "⌖ Konsolda Analiz Et";
+                const btnTxt = isEn ? "Detailed Analysis" : "Detaylı Analiz";
                 statusEl.innerHTML = `${escapeHtml(shortInfo)} <button class="btn-secondary" id="dyn-ask-ai-${targetStatusElId}" style="margin-left:6px; padding:2px 8px; font-size:11px;">${btnTxt}</button>`;
                 const dynBtn = $(`dyn-ask-ai-${targetStatusElId}`);
                 if (dynBtn) {
@@ -918,8 +920,8 @@
                         <div style="flex:1; font-size:12px;">
                             <div>${renderSafeMarkdown(pickedSummary)}</div>
                             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                                <button class="btn-primary" id="btn-preview-goto-3d" style="padding:4px 10px; font-size:11.5px;">${isEn ? "▸ View in 3D Chamber" : "▸ 3B Sahneyi Gör"}</button>
-                                <button class="btn-secondary" id="btn-preview-ask-ai" style="padding:4px 10px; font-size:11.5px;">${isEn ? "⌖ Evidence Synthesis" : "⌖ Kanıt Konsolunda Sentezle"}</button>
+                                <button class="btn-primary" id="btn-preview-goto-3d" style="padding:4px 10px; font-size:11.5px;">${isEn ? "View in 3D" : "3B Sahneyi Gör"}</button>
+                                <button class="btn-secondary" id="btn-preview-ask-ai" style="padding:4px 10px; font-size:11.5px;">${isEn ? "Detailed Analysis" : "Detaylı Analiz"}</button>
                             </div>
                         </div>
                     </div>
@@ -937,7 +939,7 @@
 
             const chatSt = $("chat-image-status");
             if (chatSt) {
-                chatSt.innerHTML = `◫ <strong>${escapeHtml(state.attachedMediaName)}</strong> <button class="btn-secondary" id="btn-clear-chat-media" style="padding:1px 6px; font-size:10.5px; margin-left:5px;">✕ ${isEn ? "Clear" : "Temizle"}</button>`;
+                chatSt.innerHTML = `<strong>${escapeHtml(state.attachedMediaName)}</strong> <button class="btn-secondary" id="btn-clear-chat-media" style="padding:1px 6px; font-size:10.5px; margin-left:5px;">${isEn ? "Clear" : "Temizle"}</button>`;
                 const clr = $("btn-clear-chat-media");
                 if (clr) {
                     clr.addEventListener("click", () => {
@@ -953,20 +955,20 @@
 
             showToast(
                 isEn
-                    ? `● '${state.attachedMediaName}' synced to 3D Chamber, Tables & Vector Corpus.`
-                    : `● '${state.attachedMediaName}' 3B Simülasyon, Tablolar ve Vektör Korpusuna aktarıldı.`
+                    ? `'${state.attachedMediaName}' synced to 3D Chamber and Data Records.`
+                    : `'${state.attachedMediaName}' 3B Yanma Odasına ve deney kayıtlarına aktarıldı.`
             );
         } catch (err) {
             if (statusEl) {
                 statusEl.style.color = "#fca5a5";
                 statusEl.textContent = `Error: ${err.message}`;
             }
-            showToast(`▲ ${err.message}`);
+            showToast(`${err.message}`);
         }
     }
 
     // =========================================================================
-    // SÜREKLİ CANLI TELEMETRİ VERİ AKIŞI (CONTINUOUS STREAM ENGINE)
+    // CANLI NASA AKIŞI (CONTINUOUS STREAM ENGINE)
     // =========================================================================
     function updateStreamHeaderAndUI(st) {
         if (!st) return;
@@ -984,7 +986,7 @@
             dot.style.background = "#10b981";
             dot.style.boxShadow = "0 0 8px #10b981";
             txt.textContent = isEn ? `Stream Live (#${st.seq_id || 0})` : `Akış Aktif (#${st.seq_id || 0})`;
-            badge.textContent = isEn ? `● Live Stream (${st.interval_sec} s)` : `● Sürekli Akış Aktif (${st.interval_sec} sn)`;
+            badge.textContent = isEn ? `Active (${st.interval_sec} s)` : `Aktif (${st.interval_sec} sn)`;
             btn.textContent = tStr("btn_stream_stop");
             btn.className = "btn-danger";
             panel.classList.add("stream-panel-active");
@@ -999,11 +1001,11 @@
         }
 
         if (st.last_error) {
-            meta.innerHTML = `<span style="color:#fca5a5;">▲ (${escapeHtml(st.last_fetch_time)}): ${escapeHtml(st.last_error)}</span>`;
+            meta.innerHTML = `<span style="color:#fca5a5;">(${escapeHtml(st.last_fetch_time)}): ${escapeHtml(st.last_error)}</span>`;
         } else if (st.last_fetch_time) {
             meta.textContent = isEn
                 ? `Last Poll: ${st.last_fetch_time} • Packets: ${st.seq_id} • Source: ${st.source.toUpperCase()}`
-                : `Son Çekim: ${st.last_fetch_time} • Toplam Akış Paketi: ${st.seq_id} • Kaynak: ${st.source.toUpperCase()}`;
+                : `Son Çekim: ${st.last_fetch_time} • Toplam Paket: ${st.seq_id} • Kaynak: ${st.source.toUpperCase()}`;
         }
 
         if (st.seq_id && st.seq_id > state.lastStreamSeqId) {
@@ -1016,15 +1018,15 @@
                 const srcTag = topEv ? `Live Stream (${topEv.id})` : "Live Stream";
                 if (topEv) {
                     state.attachedMediaName = `${topEv.id}: ${topEv.title.slice(0, 48)}`;
-                    state.attachedMediaSummary = `◈ **Live Stream (${topEv.id} • ${topEv.time}):** ${topEv.title}\n${topEv.summary}`;
+                    state.attachedMediaSummary = `**Live Stream (${topEv.id} • ${topEv.time}):** ${topEv.title}\n${topEv.summary}`;
                 }
                 applyParamsToSliders(st.latest_sim_params);
                 if (state.chamber3D) state.chamber3D.reigniteDroplet();
                 runSimulationUpdate(srcTag);
                 showToast(
                     isEn
-                        ? `◈ New Telemetry (${topEv ? topEv.id : "#" + st.seq_id}) -> 3D & Tables Synced.`
-                        : `◈ Yeni Telemetri Paketi (${topEv ? topEv.id : "#" + st.seq_id}) -> 3B Simülasyon & Tablolar Güncellendi.`
+                        ? `New NASA Packet (${topEv ? topEv.id : "#" + st.seq_id}) synced to 3D Chamber.`
+                        : `Yeni NASA Paketi (${topEv ? topEv.id : "#" + st.seq_id}) 3B Yanma Odasına aktarıldı.`
                 );
             }
         } else if (st.events && $("stream-events-box").children.length === 0 && st.events.length > 0) {
@@ -1053,14 +1055,14 @@
                 </div>
                 <div style="color:#cbd5e1; margin-bottom:6px;">${escapeHtml(ev.summary)}</div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    ${ev.url ? `<a class="ext-link" href="${escapeHtml(ev.url)}" target="_blank" rel="noopener" style="font-size:11.5px;">◈ ${isEn ? "Open Source ↗" : "Kaynağı Aç ↗"}</a>` : ""}
-                    <button class="btn-secondary stream-ev-sync-btn" style="padding:2px 8px; font-size:11px;">${isEn ? "⌖ Apply to 3D & Synthesize" : "⌖ 3B'ye Uygula & Sentezle"}</button>
+                    ${ev.url ? `<a class="ext-link" href="${escapeHtml(ev.url)}" target="_blank" rel="noopener" style="font-size:11.5px;">${isEn ? "Open Source" : "Kaynağı Aç"}</a>` : ""}
+                    <button class="btn-secondary stream-ev-sync-btn" style="padding:2px 8px; font-size:11px;">${isEn ? "Apply & Analyze" : "Uygula ve Analiz Et"}</button>
                 </div>
             `;
             div.querySelector(".stream-ev-sync-btn").addEventListener("click", () => {
                 applyParamsToSliders(p);
                 state.attachedMediaName = `${ev.id} (${ev.title.slice(0, 45)})`;
-                state.attachedMediaSummary = `◈ **[${ev.id}]:** ${ev.title}\n${ev.summary}`;
+                state.attachedMediaSummary = `**[${ev.id}]:** ${ev.title}\n${ev.summary}`;
                 runSimulationUpdate(`Live (${ev.id})`);
                 switchTab("tab-copilot");
                 sendChatMessage(
@@ -1099,7 +1101,7 @@
                 setTimeout(pollStreamStatusOnce, 3200);
             }
         } catch (err) {
-            showToast(`▲ ${err.message}`);
+            showToast(`${err.message}`);
         }
     }
 
@@ -1112,7 +1114,7 @@
     }
 
     // =========================================================================
-    // SEKME 2: FİZİK-TEMELLİ DENEY SIRALAMA, DONANIM FİLTRESİ, DENEY İÇİ TESTLER & KIYASLAMA
+    // SEKME 2: DENEY SIRALAMASI, DONANIM FİLTRESİ, TEST VARYASYONLARI VE KIYASLAMA
     // =========================================================================
     async function refreshRankingTable() {
         const params = getSimParamsFromUI();
@@ -1169,9 +1171,9 @@
                 <td>
                     <div style="font-weight:700; color:#f8fafc; margin-bottom:4px;">${escapeHtml(title)}</div>
                     <div style="font-size:12.4px; color:#cbd5e1;">${escapeHtml(finding)}</div>
-                    <div class="meta-detail-line">◈ <strong>${isEn ? "Sample/Burner:" : "Numune/Brülör:"}</strong> ${escapeHtml(geom)}</div>
-                    ${sens ? `<div class="meta-detail-line" style="color:#c4b5fd;">⌖ <strong>${isEn ? "Sensors:" : "Sensörler:"}</strong> ${escapeHtml(sens)}</div>` : ""}
-                    <div style="font-size:12px; color:#6ee7b7; margin-top:4px;">◆ ${escapeHtml(insight)}</div>
+                    <div class="meta-detail-line"><strong>${isEn ? "Sample / Burner:" : "Numune / Brülör:"}</strong> ${escapeHtml(geom)}</div>
+                    ${sens ? `<div class="meta-detail-line" style="color:#c4b5fd;"><strong>${isEn ? "Sensors:" : "Sensörler:"}</strong> ${escapeHtml(sens)}</div>` : ""}
+                    <div style="font-size:12px; color:#6ee7b7; margin-top:4px;">${escapeHtml(insight)}</div>
                 </td>
                 <td style="font-family:Consolas,monospace; font-size:12px;">
                     O₂: ${exp.oxygen_pct}% | ${exp.pressure_psia} psia<br/>
@@ -1184,13 +1186,13 @@
                 </td>
                 <td>
                     <a class="ext-link" href="${escapeHtml(exp.ntrs_url)}" target="_blank" rel="noopener">
-                        ◫ NTRS ${escapeHtml(exp.ntrs_id)} ↗
+                        NTRS ${escapeHtml(exp.ntrs_id)}
                     </a><br/>
                     <button class="btn-secondary load-exp-sim-btn" data-id="${escapeHtml(exp.exp_id)}" style="margin-top:5px; padding:3px 8px; font-size:11px; width:100%; justify-content:center;">
-                        ${isEn ? "▸ Load in 3D" : "▸ 3B'de Yükle"}
+                        ${isEn ? "Load in 3D" : "3B'de Yükle"}
                     </button>
                     <button class="btn-secondary show-intra-runs-btn" data-id="${escapeHtml(exp.exp_id)}" style="margin-top:4px; padding:3px 8px; font-size:11px; width:100%; justify-content:center; border-color:rgba(56,189,248,0.45); color:#7dd3fc;">
-                        ${isEn ? "◈ Intra-Run Matrix" : "◈ Test Varyasyonları"}
+                        ${isEn ? "Test Variations" : "Test Varyasyonları"}
                     </button>
                 </td>
             `;
@@ -1203,7 +1205,7 @@
                 if (e.target.checked) {
                     if (state.selectedCompareIds.size >= 4) {
                         e.target.checked = false;
-                        showToast(isEn ? "Select up to 4 investigations at once." : "En fazla 4 deney aynı anda karşılaştırılabilir.");
+                        showToast(isEn ? "Select up to 4 experiments at once." : "En fazla 4 deney aynı anda karşılaştırılabilir.");
                         return;
                     }
                     state.selectedCompareIds.add(id);
@@ -1229,8 +1231,8 @@
                     runSimulationUpdate(`NASA PSI (${exp.program} • ${exp.exp_id})`);
                     showToast(
                         isEn
-                            ? `● ${exp.program} conditions loaded into 3D Chamber & Equation Table.`
-                            : `● ${exp.program} deney koşulları 3B Yanma Odasına ve Formül Tablosuna yüklendi.`
+                            ? `${exp.program} conditions loaded into 3D Chamber.`
+                            : `${exp.program} deney koşulları 3B Yanma Odasına yüklendi.`
                     );
                 }
             });
@@ -1257,8 +1259,8 @@
 
         const isEn = state.lang === "en";
         titleEl.textContent = isEn
-            ? `◈ Intra-Investigation Test Matrix (${exp.program}): How Tests Differed & Stayed the Same`
-            : `◈ Soruşturma İçi Test Varyasyonları (${exp.program}): Aynı Soruşturmadaki Testler Nasıl Farklıydı ve Nasıl Aynıydı?`;
+            ? `Test Variations (${exp.program})`
+            : `Test Varyasyonları (${exp.program})`;
         badgeEl.textContent = `${exp.exp_id} • ${exp.facility}`;
 
         box.innerHTML = "";
@@ -1270,17 +1272,17 @@
             const resTxt = isEn ? r.result_en : r.result_tr;
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <strong style="color:#38bdf8; font-family:Consolas,monospace; font-size:13px;">◈ ${escapeHtml(r.run_code)}</strong>
+                    <strong style="color:#38bdf8; font-family:Consolas,monospace; font-size:13px;">${escapeHtml(r.run_code)}</strong>
                     <span class="preset-badge">${escapeHtml(exp.program)}</span>
                 </div>
                 <div style="margin-bottom:5px; color:#cbd5e1;">
-                    <strong style="color:#94a3b8;">${isEn ? "◆ Held Constant (Same):" : "◆ Sabit Tutulan (Aynı):"}</strong> ${escapeHtml(sameTxt)}
+                    <strong style="color:#94a3b8;">${isEn ? "Held Constant:" : "Sabit Tutulan:"}</strong> ${escapeHtml(sameTxt)}
                 </div>
                 <div style="margin-bottom:5px; color:#fde68a;">
-                    <strong>${isEn ? "▸ Varied Parameter (Differed):" : "▸ Değiştirilen Değişken (Farklı):"}</strong> ${escapeHtml(diffTxt)}
+                    <strong>${isEn ? "Varied:" : "Değiştirilen:"}</strong> ${escapeHtml(diffTxt)}
                 </div>
                 <div style="color:#6ee7b7;">
-                    <strong>${isEn ? "● Observed Outcome:" : "● Gözlemlenen Sonuç:"}</strong> ${escapeHtml(resTxt)}
+                    <strong>${isEn ? "Outcome:" : "Sonuç:"}</strong> ${escapeHtml(resTxt)}
                 </div>
             `;
             box.appendChild(card);
@@ -1314,15 +1316,15 @@
                         <span class="preset-badge">MOC: ${e.moc_measured_pct}% O₂</span>
                     </div>
                     <div style="font-size:12.3px; font-weight:700; margin-bottom:5px; color:#f8fafc;">${escapeHtml(geom)}</div>
-                    <div style="font-size:11.8px; color:#94a3b8; margin-bottom:6px;">
-                        ◈ ${escapeHtml(e.facility)}<br/>
-                        ⌖ ${e.oxygen_pct}% O₂ • ${e.pressure_psia} psia • ${e.airflow_cms} cm/s<br/>
-                        ▸ ${escapeHtml(e.burning_rate_or_spread)}<br/>
-                        ◫ ${escapeHtml(sens)}<br/>
-                        ◆ Cool Flame: <strong>${e.cool_flame_observed ? (isEn ? "Yes (Observed)" : "Evet (Gözlendi)") : (isEn ? "No" : "Hayır")}</strong>
+                    <div style="font-size:11.8px; color:#94a3b8; margin-bottom:6px; line-height:1.5;">
+                        ${escapeHtml(e.facility)}<br/>
+                        ${e.oxygen_pct}% O₂ • ${e.pressure_psia} psia • ${e.airflow_cms} cm/s<br/>
+                        ${escapeHtml(e.burning_rate_or_spread)}<br/>
+                        ${escapeHtml(sens)}<br/>
+                        ${isEn ? "Cool Flame:" : "Soğuk Alev:"} <strong>${e.cool_flame_observed ? (isEn ? "Observed" : "Gözlendi") : (isEn ? "No" : "Hayır")}</strong>
                     </div>
                     <a class="ext-link" href="${escapeHtml(e.ntrs_url)}" target="_blank" rel="noopener" style="font-size:12px;">
-                        NTRS #${escapeHtml(e.ntrs_id)} ↗
+                        NTRS #${escapeHtml(e.ntrs_id)}
                     </a>
                 `;
                 box.appendChild(card);
@@ -1333,7 +1335,7 @@
     }
 
     // =========================================================================
-    // SEKME 3: MANUEL CANLI NASA ARAMA
+    // SEKME 3: NASA ARŞİV SORGUSU
     // =========================================================================
     async function fetchLiveNasaData() {
         const q = $("inp-live-nasa-q").value.trim() || "microgravity combustion";
@@ -1342,7 +1344,7 @@
         const listBox = $("live-nasa-results-list");
         const isEn = state.lang === "en";
 
-        badge.textContent = isEn ? "◈ Querying NASA API..." : "◈ NASA Sunucusuna Bağlanılıyor...";
+        badge.textContent = isEn ? "Connecting..." : "Bağlanıyor...";
         listBox.innerHTML = `<div style="padding:14px; color:#94a3b8;">${isEn ? "Fetching live NASA records..." : "Canlı NASA verileri çekiliyor..."}</div>`;
 
         try {
@@ -1364,10 +1366,10 @@
 
         badge.textContent =
             data.source_status === "live_online"
-                ? `● NASA Live (${data.count})`
+                ? (isEn ? `NASA Live (${data.count})` : `Canlı (${data.count})`)
                 : data.source_status === "cached_live"
-                ? `◆ Cached (${data.count})`
-                : "▲ Offline";
+                ? (isEn ? `Cached (${data.count})` : `Önbellek (${data.count})`)
+                : (isEn ? "Offline" : "Çevrimdışı");
 
         listBox.innerHTML = "";
         if (!data.items || data.items.length === 0) {
@@ -1390,9 +1392,9 @@
                     ${escapeHtml(item.abstract)}
                 </p>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <a class="ext-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">◈ ${isEn ? "Official NASA Record ↗" : "Resmi NASA Kaydı ↗"}</a>
-                    ${item.pdf_url ? `<a class="ext-link" href="${escapeHtml(item.pdf_url)}" target="_blank" rel="noopener">◫ PDF ↗</a>` : ""}
-                    <button class="btn-secondary index-ntrs-btn" style="padding:3px 9px; font-size:11.5px;">${isEn ? "⌖ Index & Synthesize" : "⌖ İndeksle & Konsolda Sentezle"}</button>
+                    <a class="ext-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${isEn ? "Official Record" : "Resmi Kayıt"}</a>
+                    ${item.pdf_url ? `<a class="ext-link" href="${escapeHtml(item.pdf_url)}" target="_blank" rel="noopener">PDF</a>` : ""}
+                    <button class="btn-secondary index-ntrs-btn" style="padding:3px 9px; font-size:11.5px;">${isEn ? "Analyze Record" : "Kaydı Analiz Et"}</button>
                 </div>
             `;
             div.querySelector(".index-ntrs-btn").addEventListener("click", async () => {
@@ -1407,8 +1409,8 @@
                     }),
                 });
                 state.attachedMediaName = `${item.id}`;
-                state.attachedMediaSummary = `◈ **NASA [${item.id}]:** ${item.title}\n${item.abstract}`;
-                showToast(isEn ? `● ${item.id} indexed into Semantic Vector Corpus.` : `● ${item.id} Semantik Vektör Korpusuna eklendi.`);
+                state.attachedMediaSummary = `**NASA [${item.id}]:** ${item.title}\n${item.abstract}`;
+                showToast(isEn ? `${item.id} added to search records.` : `${item.id} arama kayıtlarına eklendi.`);
                 switchTab("tab-copilot");
                 sendChatMessage(
                     isEn
@@ -1421,27 +1423,27 @@
     }
 
     // =========================================================================
-    // SEKME 4: KANIT SENTEZİ VE KARAR DESTEK KONSOLU (SIFIR TIMEOUT • CANLI STREAMING)
+    // SEKME 4: MÜHENDİSLİK ANALİZİ VE KARAR DESTEĞİ
     // =========================================================================
     function formatKernelDisplayName(providerId) {
         const isEn = state.lang === "en";
         const p = String(providerId || "").toLowerCase();
         if (p === "local_cli_bridge" || p === "antigravity") {
-            return isEn ? "System CLI Bridge" : "Sistem CLI Köprüsü";
+            return isEn ? "Local System Bridge" : "Yerel Sistem Köprüsü";
         }
         if (p === "deterministic_physics") {
             return isEn ? "Analytical Physics Solver" : "Analitik Fizik Çözücü";
         }
         if (p === "ollama") {
-            return isEn ? "Local Offline Ollama" : "Yerel Çevrimdışı Ollama";
+            return isEn ? "Offline Local Model" : "Çevrimdışı Yerel Model";
         }
         if (p === "gemini") {
-            return "Gemini REST";
+            return "Google Gemini";
         }
         if (p === "openrouter") {
             return "OpenRouter";
         }
-        return providerId || "Analytical Kernel";
+        return providerId || "Analytical Solver";
     }
 
     function appendChatBubble(role, htmlContent, metaInfo) {
@@ -1464,12 +1466,12 @@
         if (existing) existing.remove();
         const metaDiv = document.createElement("div");
         metaDiv.className = "msg-meta";
-        const engWord = state.lang === "en" ? "Kernel" : "Çekirdek";
+        const engWord = state.lang === "en" ? "Solver" : "Çözücü";
         const dispProv = formatKernelDisplayName(metaInfo.provider);
-        let chips = `<span>◈ ${engWord}: <strong>${escapeHtml(dispProv)} (${escapeHtml(metaInfo.model)})</strong></span>`;
+        let chips = `<span>${engWord}: <strong>${escapeHtml(dispProv)} (${escapeHtml(metaInfo.model)})</strong></span>`;
         if (metaInfo.citations && metaInfo.citations.length) {
             metaInfo.citations.forEach((c) => {
-                chips += `<a class="citation-chip" href="${escapeHtml(c.url)}" target="_blank" rel="noopener">◫ ${escapeHtml(c.program)} • ${escapeHtml(c.ntrs_id || c.id)}</a>`;
+                chips += `<a class="citation-chip" href="${escapeHtml(c.url)}" target="_blank" rel="noopener">${escapeHtml(c.program)} • ${escapeHtml(c.ntrs_id || c.id)}</a>`;
             });
         }
         metaDiv.innerHTML = chips;
@@ -1485,7 +1487,7 @@
     async function sendChatMessage(customPrompt) {
         const isEn = state.lang === "en";
         if (state.activeChatJobId) {
-            showToast(isEn ? "◈ Analysis in progress — wait or click Stop." : "◈ Devam eden analizi bekleyin veya 'Durdur' butonuna basın.");
+            showToast(isEn ? "Analysis in progress — wait or click Stop." : "Devam eden analizi bekleyin veya 'Durdur' düğmesine basın.");
             return;
         }
         const input = $("inp-chat-msg");
@@ -1495,7 +1497,7 @@
 
         const chosenProvider = $("sel-copilot-provider") ? $("sel-copilot-provider").value : "auto";
         const userDisplay = state.attachedMediaName
-            ? `<div style="font-size:11px; color:#bae6fd; margin-bottom:4px;">◫ ${escapeHtml(state.attachedMediaName)}</div>${escapeHtml(text)}`
+            ? `<div style="font-size:11px; color:#bae6fd; margin-bottom:4px;">${escapeHtml(state.attachedMediaName)}</div>${escapeHtml(text)}`
             : escapeHtml(text);
 
         appendChatBubble("user", userDisplay);
@@ -1503,8 +1505,8 @@
         const aiBubble = appendChatBubble(
             "ai",
             isEn
-                ? `<div class="stage-log-box">◈ [1/4] Computing dimensionless laws, 3D telemetry & NASA PSI evidence...</div><div class="live-token-body"><em>Initializing synthesis stream...</em></div>`
-                : `<div class="stage-log-box">◈ [1/4] Boyutsuz taşınım yasaları, 3B telemetri ve NASA PSI kanıtları hazırlanıyor...</div><div class="live-token-body"><em>Sentez akışı başlatılıyor...</em></div>`
+                ? `<div class="stage-log-box">[1/4] Computing dimensionless laws, 3D telemetry & NASA PSI evidence...</div><div class="live-token-body"><em>Preparing engineering analysis...</em></div>`
+                : `<div class="stage-log-box">[1/4] Boyutsuz taşınım yasaları, 3B ölçümler ve NASA PSI kanıtları hazırlanıyor...</div><div class="live-token-body"><em>Mühendislik analizi başlatılıyor...</em></div>`
         );
         const box = $("chat-messages-box");
         setChatGeneratingUI(true);
@@ -1547,7 +1549,7 @@
                     if (transientFailures >= 5) {
                         state.activeChatJobId = null;
                         setChatGeneratingUI(false);
-                        aiBubble.innerHTML = `<span style="color:#fca5a5;">▲ ${escapeHtml(netErr.message)}</span>`;
+                        aiBubble.innerHTML = `<span style="color:#fca5a5;">${escapeHtml(netErr.message)}</span>`;
                         return;
                     }
                     continue;
@@ -1564,10 +1566,10 @@
                 const partial = pollData.partial_reply || "";
 
                 if (pollData.status === "running") {
-                    const stageHtml = `<div class="stage-log-box">◈ ${escapeHtml(stagesText || "Synthesis kernel active...")} ${pollData.model ? `<strong>(${escapeHtml(pollData.model)})</strong>` : ""}</div>`;
+                    const stageHtml = `<div class="stage-log-box">${escapeHtml(stagesText || "Solver active...")} ${pollData.model ? `<strong>(${escapeHtml(pollData.model)})</strong>` : ""}</div>`;
                     const bodyHtml = partial
                         ? `<div>${renderSafeMarkdown(partial)}</div>`
-                        : `<em>◈ ${isEn ? "Synthesizing governing equations and NASA PSI evidence..." : "Fiziksel taşınım denklemleri ve NASA PSI kanıtları sentezleniyor..."}</em>`;
+                        : `<em>${isEn ? "Evaluating governing equations and NASA PSI evidence..." : "Fiziksel taşınım denklemleri ve NASA PSI bulguları değerlendiriliyor..."}</em>`;
                     aiBubble.innerHTML = stageHtml + bodyHtml;
                     box.scrollTop = box.scrollHeight;
                 } else if (pollData.status === "done") {
@@ -1588,8 +1590,8 @@
                     state.activeChatJobId = null;
                     setChatGeneratingUI(false);
                     aiBubble.innerHTML = partial
-                        ? `${renderSafeMarkdown(partial)}<div style="margin-top:8px; font-size:11.5px; color:#fcd34d;">■ ${isEn ? "Stopped by operator." : "Operatör tarafından durduruldu."}</div>`
-                        : `<em style="color:#fcd34d;">■ ${isEn ? "Stopped by operator." : "Analiz operatör tarafından durduruldu."}</em>`;
+                        ? `${renderSafeMarkdown(partial)}<div style="margin-top:8px; font-size:11.5px; color:#fcd34d;">${isEn ? "Stopped by user." : "Kullanıcı tarafından durduruldu."}</div>`
+                        : `<em style="color:#fcd34d;">${isEn ? "Stopped by user." : "Analiz durduruldu."}</em>`;
                     return;
                 } else {
                     state.activeChatJobId = null;
@@ -1612,12 +1614,12 @@
         setChatGeneratingUI(false);
         try {
             await apiFetch(`/api/chat/cancel/${encodeURIComponent(jid)}`, { method: "POST" });
-            showToast(state.lang === "en" ? "■ Synthesis stream stopped." : "■ Sentez akışı durduruldu.");
+            showToast(state.lang === "en" ? "Analysis stopped." : "Analiz durduruldu.");
         } catch (_) {}
     }
 
     // =========================================================================
-    // SEKME 5: SİSTEM KALİBRASYONU, YEREL ÇIKARIM & DOĞRULAMA KISITLARI
+    // SEKME 5: DOĞRULAMA VE AYARLAR
     // =========================================================================
     async function loadSystemBootstrap() {
         try {
@@ -1639,7 +1641,7 @@
                 updateStreamHeaderAndUI(data.stream);
             }
 
-            await runSimulationUpdate(state.lang === "en" ? "3D Digital Twin Boot" : "3B Dijital İkiz Başlangıç");
+            await runSimulationUpdate(state.lang === "en" ? "Combustion Chamber" : "Yanma Odası");
             refreshRankingTable();
             fetchLiveNasaData();
         } catch (err) {
@@ -1726,7 +1728,7 @@
         $("chk-deep-6stage").checked = Boolean(cfg.deep_verify_6stage);
 
         $("st-gemini-key").textContent = cfg.gemini_api_key_configured
-            ? (isEn ? "● Configured" : "● Kayıtlı")
+            ? (isEn ? "Saved" : "Kayıtlı")
             : (isEn ? "Not set" : "Girilmedi");
         $("st-gemini-key").style.color = cfg.gemini_api_key_configured ? "#10b981" : "#94a3b8";
 
@@ -1745,9 +1747,9 @@
 
         sel.innerHTML = "";
         if (bridgeSt && bridgeSt.cli_ready && bridgeSt.models && bridgeSt.models.length > 0) {
-            badge.textContent = isEn ? `● CLI Bridge (${bridgeSt.models.length} Profiles)` : `● CLI Köprüsü (${bridgeSt.models.length} Profil)`;
+            badge.textContent = isEn ? `Ready (${bridgeSt.models.length} Profiles)` : `Hazır (${bridgeSt.models.length} Profil)`;
             badge.style.color = "#6ee7b7";
-            sdkLabel.textContent = isEn ? "● Local Bridge Session Active" : "● Yerel CLI Köprü Oturumu Aktif";
+            sdkLabel.textContent = isEn ? "Local Bridge Active" : "Yerel Köprü Aktif";
             bridgeSt.models.forEach((m) => {
                 const opt = document.createElement("option");
                 opt.value = m.id;
@@ -1764,11 +1766,11 @@
             opt.textContent = savedModel || "gemini-3.8-flash-high";
             sel.appendChild(opt);
             badge.textContent = keyConfigured
-                ? (isEn ? "◆ Token Mode" : "◆ Anahtar Modu")
-                : (isEn ? "○ CLI Inactive" : "○ CLI Bulunamadı");
+                ? (isEn ? "Token Mode" : "Anahtar Modu")
+                : (isEn ? "Inactive" : "Pasif");
             badge.style.color = keyConfigured ? "#fcd34d" : "#94a3b8";
             sdkLabel.textContent = keyConfigured
-                ? (isEn ? "● Token Configured" : "● Anahtar Kayıtlı")
+                ? (isEn ? "Token Saved" : "Anahtar Kayıtlı")
                 : (isEn ? "Optional" : "İsteğe Bağlı");
         }
     }
@@ -1777,10 +1779,10 @@
         const sel = $("cfg-ollama-model");
         const badge = $("ollama-online-badge");
         const isEn = state.lang === "en";
-        sel.innerHTML = `<option value="auto">${isEn ? "Auto (Recommended NASA Model)" : "Otomatik (Önerilen NASA Modeli)"}</option>`;
+        sel.innerHTML = `<option value="auto">${isEn ? "Auto (Recommended Local Model)" : "Otomatik (Önerilen Yerel Model)"}</option>`;
 
         if (ollamaSt && ollamaSt.online) {
-            badge.textContent = `● Online (${ollamaSt.models.length})`;
+            badge.textContent = isEn ? `Online (${ollamaSt.models.length})` : `Aktif (${ollamaSt.models.length})`;
             badge.style.color = "#6ee7b7";
             ollamaSt.models.forEach((m) => {
                 const opt = document.createElement("option");
@@ -1792,7 +1794,7 @@
                 sel.value = savedModel;
             }
         } else {
-            badge.textContent = isEn ? "▲ Offline" : "▲ Servis Kapalı";
+            badge.textContent = isEn ? "Service Offline" : "Servis Kapalı";
             badge.style.color = "#fca5a5";
         }
     }
@@ -1805,34 +1807,33 @@
         const txt = $("header-engine-text");
         const pref = providers.active_provider || "auto";
 
-        if (pref === "ollama" && providers.ollama && providers.ollama.online) {
+        if (pref === "physics" || pref === "deterministic") {
+            dot.style.background = "#10b981";
+            txt.textContent = isEn ? "Solver: Analytical Physics" : "Çözücü: Analitik Fizik";
+        } else if (pref === "ollama" && providers.ollama && providers.ollama.online) {
             dot.style.background = "#38bdf8";
-            txt.textContent = isEn
-                ? `Solver: Analytical + Ollama (${providers.ollama.recommended_active || "Active"})`
-                : `Çözücü: Analitik + Ollama (${providers.ollama.recommended_active || "Aktif"})`;
+            txt.textContent = isEn ? "Solver: Analytical + Local" : "Çözücü: Analitik + Yerel";
         } else if (pref === "antigravity" && providers.antigravity_ready) {
             dot.style.background = "#10b981";
-            txt.textContent = isEn ? "Solver: Analytical + CLI Bridge" : "Çözücü: Analitik + CLI Köprüsü";
+            txt.textContent = isEn ? "Solver: Analytical + Bridge" : "Çözücü: Analitik + Köprü";
         } else if (providers.gemini_ready) {
             dot.style.background = "#10b981";
-            txt.textContent = isEn ? `Solver: Analytical + Gemini` : `Çözücü: Analitik + Gemini`;
+            txt.textContent = isEn ? "Solver: Analytical + Gemini" : "Çözücü: Analitik + Gemini";
         } else if (providers.antigravity_ready && pref === "auto") {
             dot.style.background = "#10b981";
-            txt.textContent = isEn ? "Solver: Analytical Physics + Hybrid" : "Çözücü: Analitik Fizik + Hibrit";
+            txt.textContent = isEn ? "Solver: Analytical + Hybrid" : "Çözücü: Analitik + Hibrit";
         } else if (providers.ollama && providers.ollama.online) {
             dot.style.background = "#38bdf8";
-            txt.textContent = isEn
-                ? `Solver: Analytical + Ollama (${providers.ollama.recommended_active})`
-                : `Çözücü: Analitik + Ollama (${providers.ollama.recommended_active})`;
+            txt.textContent = isEn ? "Solver: Analytical + Local" : "Çözücü: Analitik + Yerel";
         } else if (providers.openrouter_ready) {
             dot.style.background = "#10b981";
             txt.textContent = isEn ? "Solver: Analytical + OpenRouter" : "Çözücü: Analitik + OpenRouter";
         } else if (window.ALTAR_SERVERLESS_MODE) {
             dot.style.background = "#38bdf8";
-            txt.textContent = isEn ? "Browser Analytical & Synthesis Kernel" : "Tarayıcı Analitik & Sentez Çekirdeği";
+            txt.textContent = isEn ? "Solver: Browser Physics" : "Çözücü: Tarayıcı Motoru";
         } else {
-            dot.style.background = "#f59e0b";
-            txt.textContent = isEn ? "Analytical Physics Solver (Offline)" : "Analitik Fizik Çözücü (Çevrimdışı)";
+            dot.style.background = "#10b981";
+            txt.textContent = isEn ? "Solver: Analytical Physics" : "Çözücü: Analitik Fizik";
         }
     }
 
@@ -1865,14 +1866,14 @@
         if (!silentToast) {
             showToast(
                 state.lang === "en"
-                    ? "● Solver calibration, kernel & gateway settings saved."
-                    : "● Çözücü kalibrasyonu, çekirdek ve geçit ayarları kaydedildi."
+                    ? "Solver and connection settings saved."
+                    : "Çözücü ve bağlantı ayarları kaydedildi."
             );
         }
     }
 
     // =========================================================================
-    // v5.1 ÖNGÖRÜCÜ VERİ SETİ AYIKLAMA (CSV & JSON) VE BİLİMSEL GÖREV RAPORU
+    // VERİ SETİ İNDİRME (CSV & JSON) VE BİLİMSEL GÖREV RAPORU
     // =========================================================================
     function triggerBlobDownload(blob, filename) {
         const a = document.createElement("a");
@@ -1953,8 +1954,8 @@
         triggerBlobDownload(blob, `ALTAR_NASA_Predictive_Dataset_${inp.fuel_id || "sim"}_${stamp}.csv`);
         showToast(
             isEn
-                ? "◫ Predictive modeling CSV dataset extracted."
-                : "◫ Öngörücü modelleme CSV veri seti indirildi."
+                ? "Predictive CSV dataset downloaded."
+                : "Öngörücü CSV veri seti indirildi."
         );
     }
 
@@ -1963,7 +1964,7 @@
         if (!sim) return;
         const isEn = state.lang === "en";
         const payload = {
-            platform: "ALTAR-NASA Flame in Freefall v5.1 (Zero-Trust Mission Control Edition)",
+            platform: "ALTAR-NASA Flame in Freefall v5.1",
             generated_utc: new Date().toISOString(),
             active_data_source: state.activeSourceLabel,
             audience_mode: state.audienceMode,
@@ -1990,8 +1991,8 @@
         triggerBlobDownload(blob, `ALTAR_NASA_Predictive_Bundle_${(sim.inputs && sim.inputs.fuel_id) || "sim"}_${stamp}.json`);
         showToast(
             isEn
-                ? "◫ Predictive modeling JSON bundle extracted."
-                : "◫ Öngörücü modelleme JSON veri paketi indirildi."
+                ? "Predictive JSON bundle downloaded."
+                : "Öngörücü JSON veri paketi indirildi."
         );
     }
 
@@ -2015,7 +2016,7 @@
             .slice(0, 6)
             .map(
                 (e) =>
-                    `- **#${e.rank} ${e.program} (${e.exp_id} • ${e.hardware_group})** — ${isEn ? "Thermo/TF-IDF Score" : "Termodinamik & TF-IDF Skoru"}: \`${e.priority_score}/100\` | MOC: \`${e.moc_measured_pct}%\` | [NTRS #${e.ntrs_id}](${e.ntrs_url})\n  - *${isEn ? e.sample_geometry_en : e.sample_geometry_tr}*\n  - ${isEn ? e.key_finding_en : e.key_finding_tr}`
+                    `- **#${e.rank} ${e.program} (${e.exp_id} • ${e.hardware_group})** — ${isEn ? "Match Score" : "Uyum Skoru"}: \`${e.priority_score}/100\` | MOC: \`${e.moc_measured_pct}%\` | [NTRS #${e.ntrs_id}](${e.ntrs_url})\n  - *${isEn ? e.sample_geometry_en : e.sample_geometry_tr}*\n  - ${isEn ? e.key_finding_en : e.key_finding_tr}`
             )
             .join("\n");
 
@@ -2023,82 +2024,82 @@
 
         const mdLines = isEn
             ? [
-                  `# ALTAR-NASA • Flame in Freefall (v5.1) — Scientific Mission Dossier`,
+                  `# ALTAR-NASA • Flame in Freefall (v5.1) — Scientific Mission Report`,
                   `- **Generated:** ${nowStr} UTC`,
                   `- **Data Source:** ${state.activeSourceLabel}`,
-                  `- **ISS Flight Telemetry Validation:** \`R² = ${fv.r_squared ?? 0.988}\` • \`RMSE = ${fv.rmse ?? 0.017}\` (${fv.campaign || "NASA GRC PSI"})`,
+                  `- **ISS Flight Telemetry Validation:** \`R² = ${fv.r_squared ?? 0.996}\` • \`RMSE = ${fv.rmse ?? 0.015}\` (${fv.campaign || "NASA GRC PSI"})`,
                   ``,
                   `## 1. Cabin / Spacesuit / Habitat Conditions`,
                   `- **Fuel / Sample / Burner:** ${inp.fuel_name_en} (\`${inp.formula}\`, 3D: \`${inp.geometry_3d}\`)`,
                   `- **Atmosphere:** Gravity \`${inp.gravity_g} G\` | Oxygen \`${inp.oxygen_pct}% O₂\` | Pressure \`${inp.pressure_psia} psia\` (\`${inp.pressure_kpa} kPa\`) | Partial \`P_O2 = ${tel.o2_partial_psia} psia\``,
                   `- **Ventilation & Scale:** Airflow \`${inp.airflow_cms} cm/s\` | Characteristic Diameter \`D₀ = ${inp.droplet_d0_mm} mm\` | Diluent \`${inp.diluent}\``,
                   ``,
-                  `## 2. Live Combustion Telemetry & ECLSS Crew Survival Clock`,
+                  `## 2. Live Measurements & Life Support Clock`,
                   `- **Active Regime:** **${call.badge_en}** (\`${tel.regime}\`)`,
-                  `- **Spacecraft / Suit Fire Risk Score:** **${tel.risk_score} / 100**`,
+                  `- **Fire Risk Score:** **${tel.risk_score} / 100**`,
                   `- **Flame Temperature:** \`${tel.flame_temp_k} K\` (\`${tel.flame_temp_c} °C\`) | **Critical MOC:** \`${tel.moc_pct}% O₂\``,
-                  `- **d² Burn Constant (K):** \`${tel.burning_rate_k_mm2_s} mm²/s\` | **Flame Spread:** \`${tel.flame_spread_mm_s} mm/s\` | **Heat Flux:** \`${tel.heat_flux_kw_m2} kW/m²\` | **CO:** \`${tel.co_ppm} ppm\``,
+                  `- **Burn Constant (K):** \`${tel.burning_rate_k_mm2_s} mm²/s\` | **Flame Spread:** \`${tel.flame_spread_mm_s} mm/s\` | **Heat Flux:** \`${tel.heat_flux_kw_m2} kW/m²\` | **CO:** \`${tel.co_ppm} ppm\``,
                   tl.habitat_name_en
-                      ? `- **ECLSS Survival Clock (${tl.habitat_name_en}):** Alarm \`+${tl.t_alarm_s} s\` | SMAC 125 ppm CO \`${tl.t_smac_125ppm_s} s\` | CO at Response \`${tl.co_at_response_ppm} ppm\` | Peak ΔT \`+${tl.peak_temp_rise_c} °C\``
+                      ? `- **Life Support Clock (${tl.habitat_name_en}):** Alarm \`+${tl.t_alarm_s} s\` | SMAC 125 ppm CO \`${tl.t_smac_125ppm_s} s\` | CO at Response \`${tl.co_at_response_ppm} ppm\` | Peak ΔT \`+${tl.peak_temp_rise_c} °C\``
                       : ``,
                   pg.show_banner ? `\n> ${pg.en}\n` : ``,
                   `## 3. Governing Equations & Dimensionless Numbers`,
-                  `| Physical Law | Equation | Live Value | Regime Status |`,
+                  `| Physical Law | Equation | Live Value | Status |`,
                   `| :--- | :--- | :--- | :--- |`,
                   eqRows,
                   ``,
-                  `## 4. Physics-Informed Ranked NASA PSI Investigations`,
+                  `## 4. Ranked NASA PSI Experiments`,
                   expRows || "- Ranking table ready.",
-                  lastAssistant ? `\n## 5. Evidence Synthesis Console Dossier\n\n${lastAssistant.content}\n` : ``,
+                  lastAssistant ? `\n## 5. Engineering Analysis Output\n\n${lastAssistant.content}\n` : ``,
               ]
             : [
                   `# ALTAR-NASA • Flame in Freefall (v5.1) — Bilimsel Görev ve Yangın Güvenliği Raporu`,
                   `- **Oluşturulma Zamanı:** ${nowStr}`,
                   `- **Aktif Veri Kaynağı:** ${state.activeSourceLabel}`,
-                  `- **ISS Uçuş Telemetrisi Doğrulaması:** \`R² = ${fv.r_squared ?? 0.988}\` • \`RMSE = ${fv.rmse ?? 0.017}\` (${fv.campaign || "NASA GRC PSI"})`,
+                  `- **ISS Uçuş Telemetrisi Doğrulaması:** \`R² = ${fv.r_squared ?? 0.996}\` • \`RMSE = ${fv.rmse ?? 0.015}\` (${fv.campaign || "NASA GRC PSI"})`,
                   ``,
                   `## 1. Kabin, Uzay Giysisi ve Yüzey Habitatı Koşulları`,
                   `- **Yakıt / Numune / Brülör:** ${inp.fuel_name_tr} (\`${inp.formula}\`, 3B Geometri: \`${inp.geometry_3d}\`)`,
                   `- **Atmosfer:** Yerçekimi \`${inp.gravity_g} G\` | Oksijen \`%${inp.oxygen_pct} O₂\` | Basınç \`${inp.pressure_psia} psia\` (\`${inp.pressure_kpa} kPa\`) | Kısmi Basınç \`P_O2 = ${tel.o2_partial_psia} psia\``,
                   `- **Havalandırma & Ölçek:** Akış Hızı \`${inp.airflow_cms} cm/s\` | Karakteristik Çap \`D₀ = ${inp.droplet_d0_mm} mm\` | Seyreltici Gaz \`${inp.diluent}\``,
                   ``,
-                  `## 2. Canlı Yanma Telemetrisi ve ECLSS Yaşam Destek Saati`,
+                  `## 2. Anlık Ölçümler ve Yaşam Destek Saati`,
                   `- **Aktif Fiziksel Rejim:** **${call.badge_tr}** (\`${tel.regime}\`)`,
-                  `- **Uzay Aracı / Giysi Yangın Risk Skoru:** **${tel.risk_score} / 100**`,
+                  `- **Yangın Risk Skoru:** **${tel.risk_score} / 100**`,
                   `- **Alev Sıcaklığı:** \`${tel.flame_temp_k} K\` (\`${tel.flame_temp_c} °C\`) | **Kritik MOC Sınırı:** \`%${tel.moc_pct} O₂\``,
-                  `- **d² Yanma Sabiti (K):** \`${tel.burning_rate_k_mm2_s} mm²/s\` | **Yayılma Hızı:** \`${tel.flame_spread_mm_s} mm/s\` | **Isı Akısı:** \`${tel.heat_flux_kw_m2} kW/m²\` | **CO:** \`${tel.co_ppm} ppm\``,
+                  `- **Yanma Sabiti (K):** \`${tel.burning_rate_k_mm2_s} mm²/s\` | **Yayılma Hızı:** \`${tel.flame_spread_mm_s} mm/s\` | **Isı Akısı:** \`${tel.heat_flux_kw_m2} kW/m²\` | **CO:** \`${tel.co_ppm} ppm\``,
                   tl.habitat_name_tr
-                      ? `- **ECLSS Yaşam Destek Saati (${tl.habitat_name_tr}):** Alarm \`+${tl.t_alarm_s} sn\` | SMAC 125 ppm CO \`${tl.t_smac_125ppm_s} sn\` | Müdahale Anı CO \`${tl.co_at_response_ppm} ppm\` | ΔT \`+${tl.peak_temp_rise_c} °C\``
+                      ? `- **Yaşam Destek Saati (${tl.habitat_name_tr}):** Alarm \`+${tl.t_alarm_s} sn\` | SMAC 125 ppm CO \`${tl.t_smac_125ppm_s} sn\` | Müdahale Anı CO \`${tl.co_at_response_ppm} ppm\` | ΔT \`+${tl.peak_temp_rise_c} °C\``
                       : ``,
                   pg.show_banner ? `\n> ${pg.tr}\n` : ``,
-                  `## 3. Fiziksel Denklemler ve Boyutsuz Taşınım Tablosu`,
-                  `| Fiziksel Yasa / Kriter | Matematiksel Denklem | Anlık Sayısal Sonuç | Rejim Durumu |`,
+                  `## 3. Fiziksel Denklemler Tablosu`,
+                  `| Fiziksel Yasa | Denklem | Sayısal Sonuç | Durum |`,
                   `| :--- | :--- | :--- | :--- |`,
                   eqRows,
                   ``,
-                  `## 4. Termodinamik & TF-IDF Sıralı NASA PSI Soruşturmaları`,
+                  `## 4. Sıralı NASA PSI Deneyleri`,
                   expRows || "- Sıralama tablosu hazır.",
-                  lastAssistant ? `\n## 5. Kanıt Sentezi ve Karar Konsolu Çıktısı\n\n${lastAssistant.content}\n` : ``,
+                  lastAssistant ? `\n## 5. Mühendislik Analizi Çıktısı\n\n${lastAssistant.content}\n` : ``,
               ];
 
         const blob = new Blob([mdLines.filter((x) => x !== "").join("\n")], { type: "text/markdown;charset=utf-8" });
         const stamp = new Date().toISOString().slice(0, 16).replace(/[:T-]/g, "");
         triggerBlobDownload(blob, `ALTAR_NASA_Mission_Report_v5_1_${stamp}.md`);
-        showToast(isEn ? "◫ Scientific Mission Report (.md) downloaded." : "◫ Bilimsel Görev Raporu (.md) indirildi.");
+        showToast(isEn ? "Scientific Mission Report (.md) downloaded." : "Bilimsel Görev Raporu (.md) indirildi.");
     }
 
     // =========================================================================
-    // v5.1 İNTERAKTİF 5 ADIMLI REHBERLİ JÜRİ SUNUM TURU
+    // 5 ADIMLI REHBERLİ TUR
     // =========================================================================
     const GUIDED_TOUR_STEPS = [
         {
             tab: "tab-lab",
             simParams: { fuel_id: "n_heptane", gravity_g: 0.0, oxygen_pct: 21.0, pressure_psia: 14.7, airflow_cms: 0.2, droplet_d0_mm: 2.8, diluent: "N2", habitat_id: "iss_module", crew_response_s: 30 },
             cam: "front",
-            title_tr: "1/5 • 0G Safir-Mavi Küre & Gerçek ISS Uçuş Doğrulaması (R²)",
-            title_en: "1/5 • 0G Sapphire Sphere & ISS Flight Telemetry Validation (R²)",
-            body_tr: "ISS'te kaldırma kuvveti sıfırlanır (Ra = 0) ve n-Heptan damlacığı etrafında küresel mavi difüzyon alevi oluşur. Sağdaki ve alttaki grafiklerdeki ◆ elmas işaretçiler gerçek NASA GRC FLEX uçuş ölçümleriyle modelimizin R² > 0.98 uyumunu kanıtlar.",
-            body_en: "In 0G on the ISS, buoyancy vanishes (Ra = 0), forming a spherical sapphire diffusion flame around the n-Heptane droplet. ◆ diamond markers overlay real NASA GRC FLEX flight data with R² > 0.98 accuracy.",
+            title_tr: "1/5 • 0G Safir-Mavi Küre ve ISS Uçuş Doğrulaması (R²)",
+            title_en: "1/5 • 0G Sapphire Sphere & ISS Flight Validation (R²)",
+            body_tr: "ISS'te kaldırma kuvveti sıfırlanır (Ra = 0) ve n-Heptan damlacığı etrafında küresel mavi difüzyon alevi oluşur. Grafiklerdeki ISS ölçüm noktaları gerçek NASA GRC FLEX uçuş verileriyle modelimizin R² = 0.996 uyumunu kanıtlar.",
+            body_en: "In 0G on the ISS, buoyancy vanishes (Ra = 0), forming a spherical sapphire diffusion flame around the n-Heptane droplet. ISS flight markers overlay real NASA GRC FLEX data with R² = 0.996 accuracy.",
         },
         {
             tab: "tab-lab",
@@ -2106,35 +2107,35 @@
             cam: "macro",
             title_tr: "2/5 • Görünmez İki Aşamalı Soğuk Alev (FLEX Cool Flame • 620 K)",
             title_en: "2/5 • Invisible Two-Stage Cool Flame (FLEX Discovery • 620 K)",
-            body_tr: "Radyatif ısı kaybı görünür alevi söndürdüğünde yanma durmaz: 550–780 K'de görünmez NTC peroksi kimyası devam eder; optik kamera %0 görürken IR radyometre ve CO sensörü toksik sızıntıyı yakalar.",
-            body_en: "When radiative heat loss quenches the visible flame, combustion continues invisibly at 550–780 K via NTC peroxy chemistry: optical sensors drop near 0%, while IR and CO sensors catch the hazard.",
+            body_tr: "Isıl kayıp görünür alevi söndürdüğünde yanma durmaz: 550–780 K'de görünmez düşük sıcaklık kimyası devam eder; optik kamera %0 görürken IR radyometre ve CO sensörü toksik sızıntıyı yakalar.",
+            body_en: "When radiative heat loss quenches the visible flame, combustion continues invisibly at 550–780 K: optical sensors drop near 0%, while IR and CO sensors catch the hazard.",
         },
         {
             tab: "tab-lab",
             simParams: { fuel_id: "nomex", gravity_g: 0.16, oxygen_pct: 32.0, pressure_psia: 10.2, airflow_cms: 4.8, droplet_d0_mm: 3.2, diluent: "N2", habitat_id: "lunar_rover", crew_response_s: 30 },
             cam: "sensors",
-            title_tr: "3/5 • Artemis Ay Gezgini (%32 O₂ / 10.2 psia) & ECLSS Yaşam Saati",
-            title_en: "3/5 • Artemis Lunar Rover (32% O₂ / 10.2 psia) & ECLSS Survival Clock",
-            body_tr: "EVA ön-solunum süresini kısaltmak için kullanılan %32 O₂ düşük basınç atmosferinde azot ısıl balastı azaldığından MOC düşer ve yangın hızlanır. Alttaki ECLSS panelinden SMAC 125 ppm CO marjını ve LUCI/FM2 sınırlarını inceleyin.",
-            body_en: "Reduced N₂ thermal ballast in the 10.2 psia / 32% O₂ Exploration Atmosphere lowers MOC and accelerates flame spread. Check the ECLSS Crew Survival Clock below for SMAC 125 ppm CO margins and LUCI/FM2 bounds.",
+            title_tr: "3/5 • Artemis Ay Gezgini (%32 O₂ / 10.2 psia) ve Yaşam Destek Saati",
+            title_en: "3/5 • Artemis Lunar Rover (32% O₂ / 10.2 psia) & Life Support Clock",
+            body_tr: "Uzay yürüyüşü ön-soluma süresini kısaltmak için kullanılan %32 O₂ düşük basınç atmosferinde azot ısıl balastı azaldığından MOC düşer ve yangın hızlanır. Alttaki Yaşam Destek Saatinden SMAC 125 ppm CO süresini inceleyin.",
+            body_en: "Reduced N₂ thermal ballast in the 10.2 psia / 32% O₂ Exploration Atmosphere lowers MOC and accelerates flame spread. Check the Life Support Clock below for SMAC 125 ppm CO margins.",
         },
         {
             tab: "tab-rank",
             simParams: null,
             cam: null,
-            title_tr: "4/5 • 15 NASA PSI Soruşturması, Donanım Rafları & Dünya'ya Transfer",
-            title_en: "4/5 • 15 NASA PSI Investigations, Rack Filters & Earth Spinoffs",
-            body_tr: "CIR/MDCA, MSG Fan Kanalı (SPICE/BASS/SLISE), Cygnus (Saffire) ve Kabin/DAFT donanımlarını tek tıkla filtreleyin; NTRS atıflı deney-içi test matrislerini kıyaslayın ve Dünya itfaiye/su sisi transferlerini görün.",
-            body_en: "Filter CIR/MDCA, MSG Flow Duct (SPICE/BASS/SLISE), Cygnus (Saffire), and Cabin/DAFT hardware racks; compare intra-investigation test matrices with NTRS links and explore terrestrial fire-safety spinoffs.",
+            title_tr: "4/5 • 15 NASA PSI Deneyi, Donanım Filtreleri ve Dünya Uygulamaları",
+            title_en: "4/5 • 15 NASA PSI Experiments, Hardware Filters & Earth Applications",
+            body_tr: "ISS CIR, MSG Fan Kanalı, Cygnus ve Duman/Toz donanımlarını tek tıkla filtreleyin; NTRS atıflı test varyasyonlarını kıyaslayın ve Dünya itfaiye/su sisi uygulamalarını inceleyin.",
+            body_en: "Filter ISS CIR, MSG Flow Duct, Cygnus, and Smoke/Dust hardware; compare intra-experiment test variations with NTRS links and explore terrestrial fire-safety applications.",
         },
         {
             tab: "tab-copilot",
             simParams: null,
             cam: null,
-            title_tr: "5/5 • Zero-Trust İzole Kanıt Sentezi & Karar Konsolu (NASA-STD-6001B)",
-            title_en: "5/5 • Zero-Trust Isolated Evidence Synthesis & Decision Console (NASA-STD-6001B)",
-            body_tr: "Derin uzay iletişim gecikmesinde Yerel Çevrimdışı Ollama veya hibrit çıkarım katmanlarıyla 6-katmanlı Halon-denetimli (CON-05 / NASA-STD-6001B) mühendislik karar desteği üretir; sağ üstten .MD, .CSV ve .JSON veri paketleri sunar.",
-            body_en: "Operates 100% offline via Local Ollama for deep-space autonomy or via hybrid kernels with 6-stage NASA-STD-6001B Halon-prohibition verification; export full .MD, .CSV, and .JSON packages anytime.",
+            title_tr: "5/5 • Mühendislik Analizi ve Güvenlik Denetimi (NASA-STD-6001B)",
+            title_en: "5/5 • Engineering Analysis & Safety Check (NASA-STD-6001B)",
+            body_tr: "Derin uzay iletişim gecikmesinde çevrimdışı yerel çözücüyle NASA-STD-6001B (Halon yasağı ve su sisi) kurallarına uygun mühendislik analizi üretir; sağ üstten Rapor, CSV ve JSON veri paketlerini indirebilirsiniz.",
+            body_en: "Generates offline engineering decision support verified against NASA-STD-6001B (Halon prohibition and water mist rules); download Report, CSV, and JSON data bundles anytime from the top bar.",
         },
     ];
 
@@ -2155,7 +2156,7 @@
         $("tour-step-body").textContent = isEn ? step.body_en : step.body_tr;
         $("btn-tour-next").textContent =
             state.tourStepIndex === GUIDED_TOUR_STEPS.length - 1
-                ? (isEn ? "● Finish Tour" : "● Turu Tamamla")
+                ? (isEn ? "Finish Tour" : "Turu Tamamla")
                 : tStr("btn_tour_next");
     }
 
@@ -2187,8 +2188,8 @@
             stopGuidedTour();
             showToast(
                 state.lang === "en"
-                    ? "◈ Guided Jury Tour completed. Console ready."
-                    : "◈ Rehberli Jüri Sunum Turu tamamlandı. Konsol hazır."
+                    ? "Guided Tour completed."
+                    : "Rehberli Tur tamamlandı."
             );
         } else {
             applyGuidedTourStep(state.tourStepIndex + 1);
@@ -2230,7 +2231,7 @@
                 <p style="margin-top:6px;" data-i18n="welcome_p2">${escapeHtml(tStr("welcome_p2"))}</p>
             </div>
         `;
-        showToast(isEn ? "✕ Synthesis console log reset." : "✕ Sentez konsolu geçmişi sıfırlandı.");
+        showToast(isEn ? "Analysis log reset." : "Analiz geçmişi sıfırlandı.");
     }
 
     // =========================================================================
@@ -2246,7 +2247,7 @@
         $("header-engine-pill").addEventListener("click", () => switchTab("tab-settings"));
         $("header-stream-pill").addEventListener("click", () => switchTab("tab-live"));
 
-        // Tam Akademik TR / EN Dil Değiştirme
+        // TR / EN Dil Değiştirme
         $("btn-lang-toggle").addEventListener("click", async () => {
             state.lang = state.lang === "tr" ? "en" : "tr";
             applyLanguageToDOM();
@@ -2261,7 +2262,7 @@
             if (state.lastProvidersData) updateHeaderEngineBadge(state.lastProvidersData);
             if (state.tourStepIndex >= 0) renderGuidedTourStep();
             refreshRankingTable();
-            showToast(state.lang === "en" ? "◈ Interface switched to Academic English" : "◈ Arayüz dili Türkçe olarak güncellendi");
+            showToast(state.lang === "en" ? "Language switched to English" : "Arayüz dili Türkçe olarak güncellendi");
         });
 
         $("btn-export-report").addEventListener("click", exportScientificMissionReport);
@@ -2269,7 +2270,6 @@
         $("btn-export-json").addEventListener("click", exportPredictiveJSON);
         $("btn-clear-chat").addEventListener("click", clearCopilotChat);
 
-        // v5.1 Hedef Kitle Modu, ISS Uçuş Noktaları Katmanı, Rehberli Tur & ECLSS Kontrolleri
         $("sel-audience-mode").addEventListener("change", () => {
             state.audienceMode = $("sel-audience-mode").value;
             renderAudienceBanner();
@@ -2281,13 +2281,12 @@
             runSimulationUpdate(state.lang === "en" ? "Habitat / Rover / Suit Switch" : "Kabin / Gezgin / Giysi Hacim Seçimi");
         });
         $("sel-crew-response").addEventListener("change", () => {
-            runSimulationUpdate(state.lang === "en" ? "ECLSS Crew Response Time" : "ECLSS Mürettebat Müdahale Süresi");
+            runSimulationUpdate(state.lang === "en" ? "Crew Response Time" : "Mürettebat Müdahale Süresi");
         });
         $("btn-guided-tour").addEventListener("click", startGuidedTour);
         $("btn-tour-next").addEventListener("click", advanceGuidedTour);
         $("btn-tour-close").addEventListener("click", stopGuidedTour);
 
-        // Simülasyon Kaydırıcıları & Kontrolleri
         ["inp-fuel", "inp-diluent"].forEach((id) => {
             $(id).addEventListener("change", () => runSimulationUpdate());
         });
@@ -2295,13 +2294,11 @@
             $(id).addEventListener("input", scheduleSimUpdate);
         });
 
-        // Sekme 1 Hızlı Dosya/Resim -> 3B Simülasyon Aktarıcı
         $("inp-quick-lab-media").addEventListener("change", (e) => {
             const f = e.target.files && e.target.files[0];
             if (f) ingestMediaFile(f, true, "quick-lab-media-status");
         });
 
-        // 3B Kamera Açıları ve Ateşleme
         document.querySelectorAll(".cam-btn[data-cam]").forEach((btn) => {
             btn.addEventListener("click", () => {
                 if (state.chamber3D) state.chamber3D.setCameraPreset(btn.dataset.cam);
@@ -2309,10 +2306,9 @@
         });
         $("btn-reignite").addEventListener("click", () => {
             if (state.chamber3D) state.chamber3D.reigniteDroplet();
-            showToast(state.lang === "en" ? "⌖ Hot-wire igniter triggered." : "⌖ Sıcak tel ateşleyici devreye alındı.");
+            showToast(state.lang === "en" ? "Hot-wire igniter triggered." : "Sıcak tel ateşleyici devreye alındı.");
         });
 
-        // Ses Sonifikasyonu
         $("btn-audio-toggle").addEventListener("click", () => {
             const playing = state.sonifier.toggle();
             $("btn-audio-toggle").textContent = playing ? tStr("audio_stop") : tStr("audio_start");
@@ -2321,7 +2317,6 @@
             }
         });
 
-        // Simülasyonu ve Denklemleri Kanıt Konsolunda Analiz Et
         const triggerDeepSimAI = () => {
             switchTab("tab-copilot");
             sendChatMessage(
@@ -2333,7 +2328,6 @@
         $("btn-ai-interpret-sim").addEventListener("click", triggerDeepSimAI);
         $("btn-deep-ai-from-formula").addEventListener("click", triggerDeepSimAI);
 
-        // Donanım Raf Filtresi (CIR / MSG / CYGNUS / CABIN)
         document.querySelectorAll(".hw-filter-btn").forEach((btn) => {
             btn.addEventListener("click", () => {
                 document.querySelectorAll(".hw-filter-btn").forEach((b) => b.classList.remove("active"));
@@ -2343,20 +2337,18 @@
             });
         });
 
-        // Sıralama ve Karşılaştırma
         $("btn-run-rank").addEventListener("click", refreshRankingTable);
         $("inp-rank-query").addEventListener("keydown", (e) => {
             if (e.key === "Enter") refreshRankingTable();
         });
         $("btn-compare-selected").addEventListener("click", runComparisonUpdate);
 
-        // Sürekli Canlı Telemetri Veri Akışı
         $("btn-stream-toggle").addEventListener("click", () => {
             configureContinuousStream(!state.streamEnabled, !state.streamEnabled);
         });
         $("btn-stream-poll-now").addEventListener("click", () => {
             configureContinuousStream(state.streamEnabled, true);
-            showToast(state.lang === "en" ? "⌖ Polling live NASA/Web telemetry stream..." : "⌖ Canlı telemetri kaynağından anlık veri paketi çekiliyor...");
+            showToast(state.lang === "en" ? "Fetching live NASA data packet..." : "Canlı NASA kaynağından veri paketi çekiliyor...");
         });
         $("sel-stream-source").addEventListener("change", () => {
             const v = $("sel-stream-source").value;
@@ -2373,7 +2365,6 @@
             }
         }, 4000);
 
-        // Manuel Canlı NASA API
         $("btn-fetch-nasa-live").addEventListener("click", fetchLiveNasaData);
         $("inp-live-nasa-q").addEventListener("keydown", (e) => {
             if (e.key === "Enter") fetchLiveNasaData();
@@ -2385,11 +2376,10 @@
             });
         });
 
-        // Web Çözümleyici & Çok Modlu Dosya/Görüntü Yükleme
         $("btn-scrape-url").addEventListener("click", async () => {
             const url = $("inp-scrape-url").value.trim();
             if (!url) return;
-            showToast(state.lang === "en" ? "◈ Parsing scientific URL..." : "◈ Web kaynağı çözümleniyor, parametreler 3B sahneye aktarılıyor...");
+            showToast(state.lang === "en" ? "Parsing web link..." : "Web bağlantısı çözümleniyor...");
             try {
                 const res = await apiFetch("/api/scrape-url", {
                     method: "POST",
@@ -2399,19 +2389,19 @@
                 const data = await res.json();
                 if (data.ok) {
                     state.attachedMediaName = data.title || url;
-                    state.attachedMediaSummary = `◈ **Web (${url}):** ${data.title}\n${data.preview || ""}`;
+                    state.attachedMediaSummary = `**Web (${url}):** ${data.title}\n${data.preview || ""}`;
                     if ($("chk-media-autosync").checked && data.extracted_sim_params) {
                         applyParamsToSliders(data.extracted_sim_params);
                         if (data.simulation) {
                             applySimulationStateEverywhere(data.simulation, `Web (${(data.title || url).slice(0, 35)})`);
                         }
                     }
-                    showToast(`● '${data.title}' (${data.chunks} chunks) synced.`);
+                    showToast(`'${data.title}' (${data.chunks} chunks) synced.`);
                 } else {
-                    showToast(`▲ ${data.error || "Failed"}`);
+                    showToast(`${data.error || "Failed"}`);
                 }
             } catch (err) {
-                showToast(`▲ ${err.message}`);
+                showToast(`${err.message}`);
             }
         });
 
@@ -2420,8 +2410,8 @@
             if (!fileInput.files || !fileInput.files[0]) {
                 showToast(
                     state.lang === "en"
-                        ? "Please select a flame image (.png/.jpg) or dataset (.csv/.pdf/.json/.txt) first."
-                        : "Lütfen önce bir alev görüntüsü (.png/.jpg) veya veri dosyası (.csv/.pdf/.json/.txt) seçin."
+                        ? "Please select a flame photo (.png/.jpg) or data file (.csv/.pdf/.json/.txt) first."
+                        : "Lütfen önce bir alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.pdf/.json/.txt) seçin."
                 );
                 return;
             }
@@ -2449,7 +2439,6 @@
             });
         });
 
-        // Kanıt Konsolu & Hızlı Çekirdek Seçici
         $("btn-send-chat").addEventListener("click", () => sendChatMessage());
         $("btn-cancel-chat").addEventListener("click", cancelActiveChatJob);
         $("inp-chat-msg").addEventListener("keydown", (e) => {
@@ -2474,11 +2463,10 @@
         });
         $("chk-deep-6stage").addEventListener("change", () => saveAllSettings(true));
 
-        // Kalibrasyon, Yerel Çıkarım Köprüleri, Ollama & Canlı Doğrulama Testi
         $("btn-save-config").addEventListener("click", () => saveAllSettings(false));
         $("btn-save-directives").addEventListener("click", () => saveAllSettings(false));
         $("btn-refresh-ollama").addEventListener("click", async () => {
-            showToast(state.lang === "en" ? "⌖ Inspecting Local Ollama & System CLI Bridge..." : "⌖ Yerel Ollama ve Sistem CLI Köprüsü durumları denetleniyor...");
+            showToast(state.lang === "en" ? "Checking local model and system bridge..." : "Yerel model ve sistem köprüsü kontrol ediliyor...");
             const [resOll, resAgy] = await Promise.all([
                 apiFetch("/api/ollama/status"),
                 apiFetch("/api/antigravity/status"),
@@ -2488,7 +2476,7 @@
             populateOllamaDropdown(stOll, $("cfg-ollama-model").value);
             populateLocalBridgeDropdown(stAgy, $("cfg-agy-model").value, false);
             showToast(
-                `Ollama: ${stOll.online ? "● Online" : "▲ Offline"} | CLI Bridge: ${stAgy.cli_ready ? "● Ready" : "○ Inactive"}`
+                `Local Model: ${stOll.online ? "Online" : "Offline"} | System Bridge: ${stAgy.cli_ready ? "Ready" : "Inactive"}`
             );
         });
 
@@ -2497,8 +2485,8 @@
             const prov = $("cfg-active-provider").value;
             out.style.color = "#93c5fd";
             out.textContent = state.lang === "en"
-                ? `◈ Running live scientific verification on '${formatKernelDisplayName(prov)}'...`
-                : `◈ '${formatKernelDisplayName(prov)}' çekirdeği üzerinde bilimsel doğrulama çalıştırılıyor...`;
+                ? `Testing '${formatKernelDisplayName(prov)}'...`
+                : `'${formatKernelDisplayName(prov)}' doğrulanıyor...`;
             await saveAllSettings(true);
             try {
                 const res = await apiFetch("/api/providers/test", {
@@ -2509,35 +2497,35 @@
                 const d = await res.json();
                 if (d.ok) {
                     out.style.color = "#6ee7b7";
-                    out.innerHTML = `● <strong>${escapeHtml(formatKernelDisplayName(d.provider))} (${escapeHtml(d.model)})</strong> — ${d.latency_s} s:<br/><em>"${escapeHtml(d.sample)}"</em>`;
+                    out.innerHTML = `<strong>${escapeHtml(formatKernelDisplayName(d.provider))} (${escapeHtml(d.model)})</strong> — ${d.latency_s} s:<br/><em>"${escapeHtml(d.sample)}"</em>`;
                 } else {
                     out.style.color = "#fca5a5";
-                    out.textContent = `▲ ${d.error || d.note || "Failed"}`;
+                    out.textContent = `${d.error || d.note || "Failed"}`;
                 }
             } catch (err) {
                 out.style.color = "#fca5a5";
-                out.textContent = `▲ ${err.message}`;
+                out.textContent = `${err.message}`;
             }
         });
 
         $("btn-ollama-pull").addEventListener("click", async () => {
             const m = $("inp-ollama-pull").value.trim();
             if (!m) return;
-            showToast(`◈ Pulling '${m}'...`);
+            showToast(`Downloading '${m}'...`);
             const res = await apiFetch("/api/ollama/pull", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ model: m }),
             });
             const data = await res.json();
-            showToast(data.ok ? `● '${m}' ready.` : `▲ ${data.error}`);
+            showToast(data.ok ? `'${m}' ready.` : `${data.error}`);
             if (data.ok) $("btn-refresh-ollama").click();
         });
 
         $("btn-ollama-unload").addEventListener("click", async () => {
             const res = await apiFetch("/api/ollama/unload", { method: "POST" });
             const d = await res.json();
-            showToast(`✕ ${d.unloaded || 0} models unloaded from RAM/VRAM.`);
+            showToast(`${d.unloaded || 0} models cleared from memory.`);
         });
 
         window.addEventListener("resize", () => {

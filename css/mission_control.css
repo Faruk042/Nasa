@@ -105,7 +105,7 @@ html, body {
 .nav-tabs {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: wrap;
 }
 
@@ -113,15 +113,16 @@ html, body {
     background: transparent;
     color: var(--text-muted);
     border: 1px solid transparent;
-    padding: 8px 14px;
+    padding: 7px 11px;
     border-radius: var(--radius-md);
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
 }
 
 .nav-tab:hover {
@@ -146,13 +147,14 @@ html, body {
 .status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 6px 12px;
+    gap: 6px;
+    padding: 6px 11px;
     border-radius: 999px;
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
-    font-size: 12px;
+    font-size: 11.8px;
     font-weight: 600;
+    white-space: nowrap;
     color: var(--text-main);
     cursor: pointer;
 }
@@ -1285,9 +1287,13 @@ details.nasa-accordion > summary::-webkit-details-marker {
 
 details.nasa-accordion > summary .acc-chevron {
     display: inline-block;
-    font-family: Consolas, monospace;
-    color: var(--accent-cyan);
-    margin-right: 6px;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--accent-cyan);
+    border-bottom: 2px solid var(--accent-cyan);
+    transform: rotate(-45deg);
+    margin-right: 8px;
+    vertical-align: middle;
     transition: transform 0.18s ease;
 }
 
@@ -1297,7 +1303,7 @@ details.nasa-accordion[open] > summary {
 }
 
 details.nasa-accordion[open] > summary .acc-chevron {
-    transform: rotate(90deg);
+    transform: rotate(45deg);
 }
 
 .nasa-accordion-body {
