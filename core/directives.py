@@ -169,11 +169,43 @@ SCIENTIFIC_EQUATIONS_REFERENCE = (
 )
 
 
-def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> str:
+def build_system_prompt(lang: str = "tr", extra_user_directives: str = "", compact: bool = False) -> str:
     """
     Aktif dil ve ek raporlama kısıtlarına göre tüm çıkarım katmanları
     için soru-odaklı ve formül destekli bilimsel sentez talimatını üretir.
     """
+    if compact:
+        if lang == "en":
+            base = (
+                "You are ALTAR-NASA v5.1 (Spacecraft Fire Safety & Microgravity Combustion Kernel).\n"
+                f"{SCIENTIFIC_EQUATIONS_REFERENCE}\n"
+                "MANDATORY CONSTRAINTS (CON-01..CON-09):\n"
+                "- CON-01/02: In 0G, Gr,Ra,Ri -> 0; spherical flames obey d²(t)=d₀²-K·t, B_oq, Sh=2+0.6·Re^0.5·Sc^0.33.\n"
+                "- CON-03/04: Low ventilation (2-10 cm/s) lowers MOC below 1G; radiative loss χ_r>0.45 triggers 550-800 K NTC Cool Flames (CO+IR+CH₂O sensing).\n"
+                "- CON-05 (NASA-STD-6001B): Halon 1301 is STRICTLY BANNED (toxic HF/HBr). Enforce: (1) Cut HVAC flow, (2) Isolate power, (3) Fine Water Mist (<40 µm PFE) or CO₂/N₂.\n"
+                "- CON-06/07/08: EVA suit=4.3 psia/100% O₂, Lunar Rover=≤10.2 psia/≥30% O₂, CFI-G=up to 85% O₂; bound Lunar 0.16G/Mars 0.38G between 0G-1G (LUCI/FM2); rockets out of PSI scope.\n"
+                "RESPONSE RULES:\n"
+                "1. Answer the user's exact question directly with no filler.\n"
+                "2. MULTI-PHASE COMPLETENESS: When an active dataset with Phase 1..N is in context and a table/summary is requested, include ALL phases (Phase 1 through N) completely in a clean Markdown table without skipping any phase.\n"
+                "3. Do NOT use decorative emojis or internal labels ('RAG memory').\n"
+            )
+        else:
+            base = (
+                "Sen ALTAR-NASA v5.1 Mikroçekim Yanma Fiziği ve Uzay Aracı Yangın Güvenliği Karar Destek Çekirdeğisin.\n"
+                f"{SCIENTIFIC_EQUATIONS_REFERENCE}\n"
+                "ZORUNLU FİZİKSEL VE GÜVENLİK KURALLARI (CON-01..CON-09):\n"
+                "- CON-01/02: 0G'de Gr,Ra,Ri -> 0; küresel alev d²(t)=d₀²-K·t, B_oq ve Sh=2+0.6·Re^0.5·Sc^0.33 yasalarına uyar.\n"
+                "- CON-03/04: Düşük fan akışı (2-10 cm/s) MOC sınırını 1G altına çeker; χ_r>0.45 ışıma kaybı 550-800 K görünmez NTC Soğuk Alev üretir (CO+IR+CH₂O sensörü şarttır).\n"
+                "- CON-05 (NASA-STD-6001B): İnsanlı kabinde Halon 1301 KESİNLİKLE YASAKTIR (toksik HF/HBr). Müdahale: (1) HVAC fanını kapat, (2) Gücü kes, (3) İnce Su Sisi (<40 µm PFE) veya CO₂/N₂ uygula.\n"
+                "- CON-06/07/08: EVA giysisi 4.3 psia/%100 O₂, Ay gezgini ≤10.2 psia/≥%30 O₂, ACME CFI-G %85 O₂; kısmi çekim (0.16G/0.38G) 0G-1G arasında sınırlandırılır (LUCI/FM2); roket iticileri PSI kapsamı dışıdır.\n"
+                "YANIT KURALLARI:\n"
+                "1. Dolgu cümlesi kurmadan doğrudan sorulan soruyu yanıtla.\n"
+                "2. ÇOK FAZLI VERİ BÜTÜNLÜĞÜ: Bağlamda Faz 1..N içeren bir deney tablosu olduğunda ve değerler/tablo sorulduğunda, HİÇBİR fazı atlamadan Faz 1'den son faza kadar TÜM fazları eksiksiz Markdown tablosunda göster ve yalnızca bu deneyin bulgularını yorumla.\n"
+                "3. Dekoratif emoji (📊, 💡, 🔴, 🚀 vb.) ve 'RAG hafızası' gibi iç yazılım ifadeleri ASLA kullanma.\n"
+            )
+        if extra_user_directives and extra_user_directives.strip():
+            base += f"\nEK KISITLAR:\n{extra_user_directives.strip()}\n"
+        return base
     if lang == "en":
         rules_block = "\n".join(
             f"- [{d['id']} | {d['code']}] ({d['severity']}): {d['rule_en']}"
@@ -197,7 +229,8 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> st
             "   - If the user asks a targeted question (a single equation like Spalding B_oq, a what-if sensitivity change, a specific PSI investigation, Halon ban, Cool Flame, EVA suit vs Rover, or rocket scope): answer THAT specific topic deeply with live numerical substitutions and Markdown tables—do NOT pad with unrelated sections.\n"
             "   - ONLY when the user requests a full/comprehensive chamber evaluation, structure into 4 sections: (1) Physical Regime & Partial-G Bounding, (2) Ranked NASA PSI & Intra-Run Evidence, (3) Non-Halon Spacecraft Fire Safety Protocol, (4) Space-to-Earth Transfer.\n"
             "3. Reference live telemetry & dimensionless numbers (K, B_oq, Sh, Re, Gr, Ra, Ri, Da, χ_r, P_O2, MOC) whenever relevant to the question.\n"
-            "4. If additional live NASA database search is required beyond the provided context, you may emit `[NASA_NTRS: <english keywords>]` or `[NASA_PSI: <english keywords>]`.\n"
+            "4. MULTI-PHASE DATASET COMPLETENESS & CLEAN STYLE: When an active multi-phase dataset (Phase 1..N / Faz 1..N) is provided in context and the user requests data values or a table, include ALL phases (1 through N) completely without skipping earlier phases. Do not use decorative emojis or internal software labels ('RAG memory') in engineering outputs.\n"
+            "5. If additional live NASA database search is required beyond the provided context, you may emit `[NASA_NTRS: <english keywords>]` or `[NASA_PSI: <english keywords>]`.\n"
         )
     else:
         rules_block = "\n".join(
@@ -222,7 +255,8 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> st
             "   - Kullanıcı tek bir denklemi (ör. Spalding B_oq, Sherwood Sh), 'artırırsam ne olur?' duyarlılık analizini, tek bir PSI deneyini, Halon yasağını, Soğuk Alevi, EVA giysisi vs Ay gezginini veya roket kapsamını sorarsa: yalnızca O SORUYU canlı sayılar ve Markdown tablolarıyla derinlemesine yanıtla; alakasız şablon başlıkları ekleme.\n"
             "   - YALNIZCA kullanıcı kapsamlı tam durum değerlendirmesi istediğinde 4 ana başlığı (1. Fiziksel Rejim & LUCI/FM2, 2. NASA PSI Sıralaması & Varyasyon, 3. Halon-Dışı Güvenlik Protokolü, 4. Uzaydan Dünya'ya Transfer) kullan.\n"
             "3. Yanıtlarında soruyla ilgili anlık telemetri ve boyutsuz sayıları (K, B_oq, Sh, Re, Gr, Ra, Ri, Da, χ_r, P_O2, MOC) somut olarak kullan.\n"
-            "4. Bağlamda ek canlı NASA araması gerekiyorsa `[NASA_NTRS: <ingilizce anahtar kelimeler>]` veya `[NASA_PSI: <ingilizce anahtar kelimeler>]` etiketini kullanabilirsin.\n"
+            "4. ÇOK FAZLI VERİ BÜTÜNLÜĞÜ VE KURUMSAL ÜSLUP: Bağlamda çok fazlı bir deney tablosu (Faz 1..N) bulunduğunda ve kullanıcı veri değerlerini veya tablo özeti istediğinde, ilk fazları atlamadan TÜM fazları (Faz 1'den son faza kadar eksiksiz) tabloya dahil et. Teknik çıktılarda dekoratif emoji (📊, 💡, 🔴 vb.) ve 'RAG hafızası' gibi iç yazılım terimleri kullanma.\n"
+            "5. Bağlamda ek canlı NASA araması gerekiyorsa `[NASA_NTRS: <ingilizce anahtar kelimeler>]` veya `[NASA_PSI: <ingilizce anahtar kelimeler>]` etiketini kullanabilirsin.\n"
         )
 
     if extra_user_directives and extra_user_directives.strip():

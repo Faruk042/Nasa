@@ -42,6 +42,14 @@ def _has_any(norm_q: str, terms: Tuple[str, ...]) -> bool:
     return False
 
 
+def _truncate_clean_title(raw_text: str, max_chars: int = 96) -> str:
+    clean = " ".join((raw_text or "").strip().split())
+    if len(clean) <= max_chars:
+        return clean
+    cut = clean[:max_chars].rsplit(" ", 1)[0].strip()
+    return f"{cut or clean[:max_chars]}..."
+
+
 def classify_user_intent(user_message: str, media_context: str = "") -> str:
     """Kullanıcı mesajını en spesifik bilimsel veya etkileşimli niyete yönlendirir."""
     raw = (user_message or "").strip()
@@ -56,22 +64,37 @@ def classify_user_intent(user_message: str, media_context: str = "") -> str:
     if is_full_eval:
         return "full_synthesis"
 
-    # 2) Yüklenen dosya / görsel odaklı soru
+    # 2) Yüklenen dosya / görsel / çok fazlı PSI tablosu odaklı soru
     if media_context and (
         _has_any(
             nq,
             (
                 "yukledigim",
+                "yuklenen",
                 "ekli",
+                "eklenen",
                 "dosya",
                 "gorsel",
+                "goruntu",
                 "resim",
                 "fotograf",
                 "csv",
                 "pdf",
                 "json",
+                "veri",
                 "veriyi",
+                "tablo",
+                "tabloda",
+                "tablosu",
+                "tablosunda",
                 "tabloyu",
+                "grafik",
+                "degerleri",
+                "degerlerini",
+                "mevcut analiz",
+                "analiz deger",
+                "faz",
+                "fazlar",
                 "veri seti",
                 "xlsx",
                 "excel",
@@ -82,11 +105,15 @@ def classify_user_intent(user_message: str, media_context: str = "") -> str:
                 "uploaded",
                 "attached",
                 "image",
+                "photo",
+                "table",
+                "phases",
+                "values",
                 "dataset",
                 "file",
             ),
         )
-        or nq in ("analiz et", "bu veriyi analiz et", "incele", "degerlendir", "analyze", "analyze this", "evaluate")
+        or nq in ("analiz et", "bu veriyi analiz et", "incele", "degerlendir", "ozetle", "analyze", "analyze this", "evaluate", "summarize")
     ):
         return "uploaded_media"
 
@@ -925,12 +952,11 @@ def synthesize_question_driven_report(
     # -------------------------------------------------------------------------
     if intent == "what_if_sensitivity":
         if _has_any(nq, ("seyreltici", "diluent", "helyum", "helium", "argon", "co2", "azot")):
-            sweep_title = "Diluent Gas (`N₂` vs `CO₂` vs `He` vs `Ar`)" if is_en else "Seyreltici Kabin Gazı (`N₂` vs `CO₂` vs `He` vs `Ar`)"
+            sweep_title = "Diluent Gas (`N₂` vs `CO₂` vs `He`)" if is_en else "Seyreltici Kabin Gazı (`N₂` vs `CO₂` vs `He`)"
             variants = [
-                (f"N₂ (Azot • ISS)", {**inp, "diluent": "N2"}),
-                (f"CO₂ (Yüksek c_p Söndürücü)", {**inp, "diluent": "CO2"}),
-                (f"He (Yüksek Isıl İletkenlik λ)", {**inp, "diluent": "He"}),
-                (f"Ar (Düşük c_p Soygaz)", {**inp, "diluent": "Ar"}),
+                ("N₂ (Azot • ISS)", {**inp, "diluent": "N2"}),
+                ("CO₂ (Yüksek c_p Söndürücü)", {**inp, "diluent": "CO2"}),
+                ("He (Yüksek Isıl İletkenlik λ)", {**inp, "diluent": "He"}),
             ]
         elif _has_any(nq, ("oksijen", "oxygen", "o2")):
             sweep_title = "Oxygen Concentration Sweep (`14%` → `34% O₂`)" if is_en else "Oksijen Konsantrasyonu Taraması (`%14` → `%34 O₂`)"
@@ -1110,41 +1136,90 @@ def synthesize_question_driven_report(
     best_exp = top_exps[0] if top_exps else NASA_EXPERIMENTS_CATALOG[0]
     second_exp = top_exps[1] if len(top_exps) > 1 else NASA_EXPERIMENTS_CATALOG[1]
 
-    # İlgili direktifi bul
-    best_dir = CORE_DIRECTIVES_LIST[0]
-    best_dir_score = -1
-    q_tokens = [w for w in re.split(r"[^a-z0-9]+", nq) if len(w) >= 3]
+    # İlgili direktifi tam kelime eşleşmesiyle bul (genel arayüz kelimelerini ele; eşleşme yoksa aktif 3B oda rejimine bağla)
+    dir_stop = {
+        "veri", "verisi", "verileri", "veritabaninda", "goruntu", "gorsel", "tablo", "tabloda", "tablosu", "tablosunda",
+        "grafik", "deger", "degerleri", "degerlerini", "mevcut", "analiz", "sade", "anlasilir", "bana", "gore",
+        "icin", "olan", "nedir", "nasil", "hangi", "soylermisin", "goster", "acikla", "data", "table", "chart",
+        "values", "current", "analysis", "what", "how", "show", "explain", "simple", "clear",
+    }
+    q_tokens = [w for w in re.split(r"[^a-z0-9]+", nq) if len(w) >= 4 and w not in dir_stop]
+    best_dir = None
+    best_dir_score = 0
     for d in CORE_DIRECTIVES_LIST:
-        d_blob = _norm(f"{d['title_tr']} {d['rule_tr']} {d['title_en']} {d['rule_en']}")
-        sc = sum(1 for tok in q_tokens if tok in d_blob)
+        d_words = set(re.findall(r"[a-z0-9]+", _norm(f"{d['title_tr']} {d['rule_tr']} {d['title_en']} {d['rule_en']}")))
+        sc = sum(1 for tok in q_tokens if tok in d_words)
         if sc > best_dir_score:
             best_dir_score = sc
             best_dir = d
+
+    if best_dir is None:
+        dir_by_id = {d["id"]: d for d in CORE_DIRECTIVES_LIST}
+        if tel.get("cool_flame_active") or tel.get("regime") == "COOL_FLAME_NTC":
+            best_dir = dir_by_id.get("CON-04", CORE_DIRECTIVES_LIST[0])
+        elif 0.03 <= float(inp.get("gravity_g", 0.0)) <= 0.88:
+            best_dir = dir_by_id.get("CON-07", CORE_DIRECTIVES_LIST[0])
+        elif float(inp.get("oxygen_pct", 21.0)) >= 30.0 or float(inp.get("pressure_psia", 14.7)) <= 10.6:
+            best_dir = dir_by_id.get("CON-06", CORE_DIRECTIVES_LIST[0])
+        elif float(inp.get("airflow_cms", 0.0)) >= 1.5:
+            best_dir = dir_by_id.get("CON-03", CORE_DIRECTIVES_LIST[0])
+        else:
+            best_dir = dir_by_id.get("CON-01", CORE_DIRECTIVES_LIST[0])
 
     fuel_section = ""
     if mentioned_fuel:
         mf_id, mf = mentioned_fuel
         sim_mf = simulate_combustion_state({**inp, "fuel_id": mf_id})
         mft = sim_mf["telemetry"]
+        moc0_b = mf.get("moc_0g_base", mf.get("moc_0g_pct", 13.8))
+        moc1_b = mf.get("moc_1g_base", mf.get("moc_1g_pct", 15.2))
         fuel_section = (
-            f"- **Queried Fuel / Material (`{mf['name_en']}`, `{mf['formula']}`):** 3D Geometry `{mf['geometry_3d']}`, 0G Baseline `MOC = {mf['moc_0g_pct']}% O₂` vs 1G `MOC = {mf['moc_1g_pct']}% O₂`. Under your current atmosphere (`{inp['oxygen_pct']}% O₂`, `{inp['gravity_g']} G`), it yields `T_f = {mft['flame_temp_k']} K`, regime **`{mft['regime']}`**, Risk **`{mft['risk_score']}/100`**.\n"
+            f"- **Queried Fuel / Material (`{mf['name_en']}`, `{mf['formula']}`):** 3D Geometry `{mf['geometry_3d']}`, 0G Baseline `MOC = {moc0_b}% O₂` vs 1G `MOC = {moc1_b}% O₂`. Under your current atmosphere (`{inp['oxygen_pct']}% O₂`, `{inp['gravity_g']} G`), it yields `T_f = {mft['flame_temp_k']} K`, regime **`{mft['regime']}`**, Risk **`{mft['risk_score']}/100`**.\n"
             if is_en
-            else f"- **Sorgulanan Yakıt / Numune (`{mf['name_tr']}`, `{mf['formula']}`):** 3B Geometri `{mf['geometry_3d']}`, `0G` baz `MOC = %{mf['moc_0g_pct']} O₂` vs `1G` `MOC = %{mf['moc_1g_pct']} O₂`. Mevcut atmosferinizde (`%{inp['oxygen_pct']} O₂`, `{inp['gravity_g']} G`) `T_f = {mft['flame_temp_k']} K`, **`{mft['regime']}`** rejimi ve **`{mft['risk_score']}/100`** risk skoru üretir.\n"
+            else f"- **Sorgulanan Yakıt / Numune (`{mf['name_tr']}`, `{mf['formula']}`):** 3B Geometri `{mf['geometry_3d']}`, `0G` baz `MOC = %{moc0_b} O₂` vs `1G` `MOC = %{moc1_b} O₂`. Mevcut atmosferinizde (`%{inp['oxygen_pct']} O₂`, `{inp['gravity_g']} G`) `T_f = {mft['flame_temp_k']} K`, **`{mft['regime']}`** rejimi ve **`{mft['risk_score']}/100`** risk skoru üretir.\n"
         )
 
     rag_snippet = ""
     if rag_hits:
-        top_r = rag_hits[0]
-        rag_snippet = (
-            f"- **Corpus Evidence Match (`{top_r['title']}`):** {top_r['text'][:320]}\n"
-            if is_en
-            else f"- **Bilgi Tabanı Kanıt Eşleşmesi (`{top_r['title']}`):** {top_r['text'][:320]}\n"
-        )
+        ingested_only = [h for h in rag_hits if h.get("doc_type") == "ingested_doc" and float(h.get("similarity", 0.0)) >= 0.08]
+        if ingested_only:
+            top_r = ingested_only[0]
+            clean_snip = _truncate_clean_title(str((top_r.get("metadata") or {}).get("snippet") or top_r.get("text") or ""), 280)
+            rag_snippet = (
+                f"- **Uploaded Document Match (`{top_r['title']}`):** {clean_snip}\n"
+                if is_en
+                else f"- **Yüklenen Belge Kanıtı (`{top_r['title']}`):** {clean_snip}\n"
+            )
 
-    clean_q_disp = user_message.strip()[:110]
+    wants_table = _has_any(nq, ("tablo", "tabloda", "tablosu", "tablosunda", "grafik", "degerleri", "degerlerini", "table", "chart", "values"))
+    live_table_block = ""
+    if wants_table:
+        if is_en:
+            live_table_block = (
+                "\n| Parameter / Dimensionless Metric | Active 3D Chamber Value | Safety & Regime Interpretation |\n"
+                "| :--- | :--- | :--- |\n"
+                f"| **Fuel & Geometry** | `{inp['fuel_name_en']}` (`{inp['geometry_3d']}`) | Gravity `{inp['gravity_g']} G`, Diluent `{inp['diluent']}` |\n"
+                f"| **Atmosphere (`O₂` & Pressure)** | `{inp['oxygen_pct']}% O₂` • `{inp['pressure_psia']} psia` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`) | Critical `MOC = {tel['moc_pct']}% O₂` |\n"
+                f"| **Flame Temp & Burn Rate** | `T_f = {tel['flame_temp_k']} K` • `K = {tel['burning_rate_k_mm2_s']} mm²/s` | Spread `{tel['flame_spread_mm_s']} mm/s` • `B_oq = {tel.get('spalding_b_number', 0)}` |\n"
+                f"| **Transport & Residence (`Sh`, `Da`)** | `Sh = {tel['sherwood_number']}` • `Da = {tel.get('damkohler_number', 0)}` • `Ra = {tel.get('rayleigh_number', 0)}` | Airflow `U = {inp['airflow_cms']} cm/s` (`χ_r = {tel['radiative_loss_fraction'] * 100:.1f}%`) |\n"
+                f"| **Fire Risk & ECLSS SMAC** | **Risk `{tel['risk_score']}/100`** • `{tel['co_ppm']} ppm CO` | **{reg_badge}** (`125 ppm SMAC`: `{tl.get('t_smac_125ppm_s', 180)} s`) |\n\n"
+            )
+        else:
+            live_table_block = (
+                "\n| Parametre / Boyutsuz Büyüklük | Aktif 3B Oda Değeri | Fiziksel ve Güvenlik Yorumu |\n"
+                "| :--- | :--- | :--- |\n"
+                f"| **Yakıt ve Numune Geometrisi** | `{inp['fuel_name_tr']}` (`{inp['geometry_3d']}`) | Yerçekimi `{inp['gravity_g']} G`, Seyreltici `{inp['diluent']}` |\n"
+                f"| **Atmosfer (`O₂` ve Basınç)** | `%{inp['oxygen_pct']} O₂` • `{inp['pressure_psia']} psia` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`) | Kritik Tutuşma Sınırı `MOC = %{tel['moc_pct']} O₂` |\n"
+                f"| **Alev Sıcaklığı ve Yanma Hızı** | `T_f = {tel['flame_temp_k']} K` • `K = {tel['burning_rate_k_mm2_s']} mm²/s` | Yayılma `{tel['flame_spread_mm_s']} mm/s` • `B_oq = {tel.get('spalding_b_number', 0)}` |\n"
+                f"| **Taşınım ve Kalış (`Sh`, `Da`, `Ra`)** | `Sh = {tel['sherwood_number']}` • `Da = {tel.get('damkohler_number', 0)}` • `Ra = {tel.get('rayleigh_number', 0)}` | Akış Hızı `U = {inp['airflow_cms']} cm/s` (`χ_r = %{tel['radiative_loss_fraction'] * 100:.1f}`) |\n"
+                f"| **Yangın Riski ve ECLSS SMAC** | **Risk `{tel['risk_score']}/100`** • `{tel['co_ppm']} ppm CO` | **{reg_badge}** (`125 ppm SMAC`: `{tl.get('t_smac_125ppm_s', 180)} sn`) |\n\n"
+            )
+
+    clean_q_disp = _truncate_clean_title(user_message, 96)
     if is_en:
         text = (
             f"### Targeted Scientific Analysis — *\"{clean_q_disp}\"*\n"
+            f"{live_table_block}"
             f"{fuel_section}"
             f"- **Governing Physical Rule (`{best_dir['id']} • {best_dir['code']}`):** {best_dir['rule_en']}\n"
             f"{rag_snippet}"
@@ -1156,6 +1231,7 @@ def synthesize_question_driven_report(
     else:
         text = (
             f"### Soru-Odaklı Bilimsel Analiz — *\"{clean_q_disp}\"*\n"
+            f"{live_table_block}"
             f"{fuel_section}"
             f"- **İlgili Fiziksel Kısıt ve Yasa (`{best_dir['id']} • {best_dir['code']}`):** {best_dir['rule_tr']}\n"
             f"{rag_snippet}"

@@ -974,9 +974,9 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
         grav_mean = round(sum(grav_vals) / len(grav_vals), 2) if grav_vals else 0.0
 
         if d0_vals:
-            d0_init = round(max(0.8, min(6.0, d0_vals[0])), 2)
+            d0_init = round(max(0.8, min(6.5, d0_vals[0])), 2)
         elif d2_vals:
-            d0_init = round(max(0.8, min(6.0, math.sqrt(max(0.64, d2_vals[0])))), 2)
+            d0_init = round(max(0.8, min(6.5, math.sqrt(max(0.64, d2_vals[0])))), 2)
         elif fc_vals:
             fc_mean = sum(fc_vals) / len(fc_vals)
             d0_init = round(max(1.4, min(5.4, 1.5 + 2.5 * (fc_mean / 100.0))), 2)
@@ -1384,6 +1384,6 @@ def _map_dict_row_to_params(row: Dict[str, Any], out: Dict[str, Any], notes: Lis
         elif role == "gravity_g" and 0.0 <= num <= 2.0:
             out["gravity_g"] = round(num, 2)
         elif role == "d0_mm" and 0.5 <= num <= 25.0:
-            out["droplet_d0_mm"] = round(max(0.8, min(6.0, num)), 2)
+            out["droplet_d0_mm"] = round(max(0.8, min(6.5, num)), 2)
         elif role == "d2_mm2" and 0.6 <= num <= 80.0 and "droplet_d0_mm" not in out:
-            out["droplet_d0_mm"] = round(max(0.8, min(6.0, math.sqrt(num))), 2)
+            out["droplet_d0_mm"] = round(max(0.8, min(6.5, math.sqrt(num))), 2)

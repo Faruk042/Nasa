@@ -255,11 +255,11 @@ def simulate_combustion_state(params: Dict[str, Any]) -> Dict[str, Any]:
     fuel = FUEL_PROPERTIES[fuel_id]
 
     gravity_g = max(0.0, min(2.0, float(params.get("gravity_g", 0.0))))
-    # EVA Uzay Giysisi (%100 O2 / 4.3 psia) ve ACME CFI-G (%85 O2) için genişletilmiş fiziksel aralık:
+    # EVA Uzay Giysisi (%100 O2 / 4.3 psia), ACME CFI-G (%85 O2) ve yüksek basınçlı PSI fazları (26.45 psia) için genişletilmiş fiziksel aralık:
     oxygen_pct = max(5.0, min(100.0, float(params.get("oxygen_pct", 21.0))))
-    pressure_psia = max(3.5, min(20.0, float(params.get("pressure_psia", 14.7))))
+    pressure_psia = max(3.0, min(35.0, float(params.get("pressure_psia", 14.7))))
     airflow_cms = max(0.0, min(50.0, float(params.get("airflow_cms", 3.5))))
-    droplet_d0_mm = max(0.8, min(8.0, float(params.get("droplet_d0_mm", 3.2))))
+    droplet_d0_mm = max(0.6, min(8.0, float(params.get("droplet_d0_mm", 3.2))))
     diluent = str(params.get("diluent", "N2"))
     if diluent not in DILUENT_FACTORS:
         diluent = "N2"
@@ -326,7 +326,8 @@ def simulate_combustion_state(params: Dict[str, Any]) -> Dict[str, Any]:
     tau_chem_ms = 1.85 / (max(0.04, x_o2 ** 1.45) * (max(0.22, p_atm) ** 0.75))
     damkohler_da = round(min(99.9, tau_flow_ms / max(0.05, tau_chem_ms)), 2)
 
-    is_blowoff = airflow_cms > (fuel["blowoff_cms"] * (oxygen_pct / 21.0) ** 0.65) or damkohler_da < 0.95
+    blowoff_vel_limit = fuel["blowoff_cms"] * ((oxygen_pct / 21.0) ** 0.65)
+    is_blowoff = airflow_cms > blowoff_vel_limit or (damkohler_da < 0.95 and airflow_cms >= 10.0)
     radiative_quench_trigger = (
         gravity_g < 0.08
         and airflow_cms < 1.8

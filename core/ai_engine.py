@@ -270,14 +270,14 @@ class HybridNasaAIEngine:
         if target == "auto":
             if cfg.get("gemini_api_key"):
                 target = "gemini"
-            elif self.get_antigravity_status().get("cli_ready") or cfg.get("antigravity_api_key"):
-                target = "antigravity"
-            elif self.get_ollama_status().get("online"):
-                target = "ollama"
             elif cfg.get("openrouter_api_key"):
                 target = "openrouter"
             elif cfg.get("custom_base_url") and cfg.get("custom_api_key"):
                 target = "custom"
+            elif self.get_ollama_status().get("online"):
+                target = "ollama"
+            elif self.get_antigravity_status().get("cli_ready") or cfg.get("antigravity_api_key"):
+                target = "antigravity"
 
         if target == "ollama":
             ok, m_name, txt, note = self._call_ollama_local(cfg, test_sys, test_prompt, [], max_predict=120)
@@ -502,7 +502,15 @@ class HybridNasaAIEngine:
                     if lang == "en"
                     else "[2/4] Canlı NASA NTRS & PSI veri tabanları taranıyor..."
                 )
-            ntrs_res = self.fetcher.search_ntrs_live(user_message, limit=3)
+            ntrs_query_seed = user_message
+            if combined_media_ctx:
+                ctx_head = combined_media_ctx[:400]
+                ctx_prog = re.findall(r"\b(?:ACME\s*CFI-G|CFI-G|FLEX-2|FLEX|CFI|Saffire|BASS-II|BASS|SoFIE|SPICE|SLISE|DAFT|SAME|BRE|E-FIELD)\b", ctx_head, flags=re.IGNORECASE)
+                if ctx_prog:
+                    ntrs_query_seed = f"{' '.join(dict.fromkeys(ctx_prog))} {active_sim['inputs'].get('fuel_id', '')} {user_message}"
+                else:
+                    ntrs_query_seed = f"{active_sim['inputs'].get('fuel_id', '')} {user_message}"
+            ntrs_res = self.fetcher.search_ntrs_live(ntrs_query_seed, limit=3)
             if ntrs_res.get("ok"):
                 live_ntrs_snippets = ntrs_res.get("items", [])[:3]
 
@@ -671,23 +679,29 @@ class HybridNasaAIEngine:
         if pg_info.get("show_banner") and pg_info.get("tr"):
             lines.append(f"- NASA Özel Atmosfer & Kısmi Yerçekimi Notu: {pg_info['tr']}")
         if media_context:
-            lines.append("\n=== YÜKLENEN DOSYA / ALEV GÖRSELİ / CANLI WEB AKIŞI ÖZEL VERİSİ ===")
-            lines.append(media_context[:4500])
+            lines.append("\n=== AKTİF DENEY VERİ TABLOSU VE TELEMETRİ ÖZETİ (TÜM FAZLAR) ===")
+            lines.append(media_context[:5500])
 
-        lines.append("\n=== GÖREVLE EŞLEŞEN EN KRİTİK NASA PSI DENEYLERİ (TERMODİNAMİK & TF-IDF SIRALI) ===")
-        for e in top_exps:
-            lines.append(
-                f"- #{e['rank']} [{e['exp_id']} | {e['program']} | Donanım:{e.get('hardware_group', 'CIR')} | NTRS:{e['ntrs_id']}] (Öncelik:{e['priority_score']}/100, MOC:%{e['moc_measured_pct']}): "
-                f"Numune/Brülör: {e.get('sample_geometry_tr', e['material'])} | Sensörler: {e.get('sensors_tr', '')} | Bulgu: {e['key_finding_tr']} | Önlem: {e['safety_insight_tr']}"
-            )
+        lines.append("\n=== GÖREVLE EŞLEŞEN EN KRİTİK NASA PSI DENEYLERİ ===")
+        exp_slice = top_exps[:2] if media_context else top_exps
+        for e in exp_slice:
+            if media_context:
+                lines.append(
+                    f"- #{e['rank']} [{e['exp_id']} | {e['program']} | NTRS:{e['ntrs_id']}] (MOC:%{e['moc_measured_pct']}): {e['key_finding_tr']}"
+                )
+            else:
+                lines.append(
+                    f"- #{e['rank']} [{e['exp_id']} | {e['program']} | Donanım:{e.get('hardware_group', 'CIR')} | NTRS:{e['ntrs_id']}] (Öncelik:{e['priority_score']}/100, MOC:%{e['moc_measured_pct']}): "
+                    f"Numune/Brülör: {e.get('sample_geometry_tr', e['material'])} | Sensörler: {e.get('sensors_tr', '')} | Bulgu: {e['key_finding_tr']} | Önlem: {e['safety_insight_tr']}"
+                )
         if live_ntrs:
-            lines.append("\n=== CANLI NASA NTRS API SONUÇLARI ===")
+            lines.append("\n=== CANLI NASA NTRS YAYIN ÖZETLERİ ===")
             for n in live_ntrs:
                 lines.append(f"- [{n['id']}] {n['title']} ({n['date']}): {n['abstract'][:260]}")
         extra_docs = [h for h in rag_hits if h["doc_type"] == "ingested_doc"]
-        if extra_docs:
-            lines.append("\n=== YÜKLENEN BELGE & CANLI AKIŞ HAFIZASI (RAG) ===")
-            for d in extra_docs:
+        if extra_docs and not media_context:
+            lines.append("\n=== EK BİLİMSEL REFERANS KAYITLARI ===")
+            for d in extra_docs[:3]:
                 lines.append(f"- [{d['title']}]: {d['text'][:360]}")
         return "\n".join(lines)
 
@@ -734,7 +748,7 @@ class HybridNasaAIEngine:
 
         order: List[str] = []
         if pref == "auto":
-            # Görsel yüklendiyse önce doğrudan görsel işleyen çok modlu geçitlere, ardından yerel CV destekli köprüye öncelik tanı
+            # Görsel yüklendiyse önce doğrudan görsel işleyen çok modlu geçitlere, ardından yerel modele öncelik tanı
             if image_base64:
                 if cfg.get("gemini_api_key"):
                     order.append("gemini")
@@ -744,16 +758,16 @@ class HybridNasaAIEngine:
             else:
                 if cfg.get("gemini_api_key"):
                     order.append("gemini")
-                if agy_available:
-                    order.append("antigravity")
                 if cfg.get("openrouter_api_key"):
                     order.append("openrouter")
                 if cfg.get("custom_base_url") and cfg.get("custom_api_key"):
                     order.append("custom")
                 order.append("ollama")
+                if agy_available:
+                    order.append("antigravity")
         else:
             order.append(pref)
-            for backup in ("antigravity", "ollama", "gemini", "openrouter", "custom"):
+            for backup in ("ollama", "antigravity", "gemini", "openrouter", "custom"):
                 if backup not in order:
                     order.append(backup)
 
@@ -1064,7 +1078,7 @@ class HybridNasaAIEngine:
         image_base64: Optional[str] = None,
         on_chunk: Optional[Callable[[str, str, str], None]] = None,
         cancel_check: Optional[Callable[[], bool]] = None,
-        max_predict: int = 1350,
+        max_predict: int = 1500,
     ) -> Tuple[bool, str, str, str]:
         st = self.get_ollama_status()
         if not st["online"] or not st["models"]:
@@ -1079,12 +1093,17 @@ class HybridNasaAIEngine:
         if not chosen or chosen == "auto" or chosen not in available_names:
             chosen = st["recommended_active"] or available_names[0]
 
-        messages: List[Dict[str, Any]] = [{"role": "system", "content": sys_prompt}]
+        local_sys = build_system_prompt(
+            lang=str(cfg.get("language", "tr")),
+            extra_user_directives=str(cfg.get("custom_extra_directives", "")),
+            compact=True,
+        )
+        messages: List[Dict[str, Any]] = [{"role": "system", "content": local_sys}]
         for h in history[-4:]:
             r = "assistant" if h.get("role") == "assistant" else "user"
             c = str(h.get("content", "")).strip()
             if c:
-                messages.append({"role": r, "content": c})
+                messages.append({"role": r, "content": c[:700]})
 
         user_msg_obj: Dict[str, Any] = {"role": "user", "content": user_prompt}
         if image_base64 and any(v in chosen.lower() for v in ("llava", "vision", "vl")):
@@ -1098,7 +1117,7 @@ class HybridNasaAIEngine:
             "messages": messages,
             "stream": True,
             "think": False,
-            "options": {"temperature": 0.18, "num_ctx": 4096, "num_predict": max_predict},
+            "options": {"temperature": 0.18, "num_predict": max_predict},
         }
 
         with self._ollama_lock:

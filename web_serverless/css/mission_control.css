@@ -775,6 +775,9 @@ table.nasa-table tr:hover td {
 
 .msg-bubble {
     max-width: 88%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
     padding: 13px 16px;
     border-radius: 12px;
     font-size: 13.5px;
@@ -790,10 +793,25 @@ table.nasa-table tr:hover td {
 
 .msg-ai {
     align-self: flex-start;
+    max-width: 96%;
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     color: var(--text-main);
     border-bottom-left-radius: 3px;
+}
+
+.chat-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    margin: 8px 0;
+    border-radius: 6px;
+}
+
+.chat-table-wrap .nasa-table th,
+.chat-table-wrap .nasa-table td {
+    overflow-wrap: break-word;
+    word-break: normal;
 }
 
 .msg-ai h3, .msg-ai h4 {
