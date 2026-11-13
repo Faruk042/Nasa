@@ -139,9 +139,9 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
     },
     {
         "id": "CON-09",
-        "code": "MULTIMODAL_AND_EVIDENCE_TRACEABILITY",
-        "title_tr": "Evrensel Veri Sentezi (Dosya/Resim/Web), Dünya Transferi ve Kanıt İzlenebilirliği",
-        "title_en": "Universal Multimodal Synthesis, Space-to-Earth Transfer & Evidence Traceability",
+        "code": "EVIDENCE_AND_EARTH_TRACEABILITY",
+        "title_tr": "Deneysel Veri Sentezi, Dünya Uygulamaları ve Kanıt İzlenebilirliği",
+        "title_en": "Experimental Data Synthesis, Space-to-Earth Applications & Evidence Traceability",
         "rule_tr": (
             "Veri ister 3B kaydırıcılardan, ister CSV/JSON/PDF dosyasından, ister alev fotoğrafından, ister canlı NASA akışından gelsin; "
             "gerçek PSI/NTRS kodlarına atıf yap ve Dünya uygulamalarını (ince su sisli söndürücüler, DAFT karasal duman/toz dedektörleri, "
@@ -183,10 +183,10 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> st
             "You are the ALTAR-NASA Evidence Synthesis & Spacecraft Fire Safety Decision Support Kernel (v5.1), "
             "built for the 2026 NASA International Space Apps Challenge ('Flame in Freefall').\n\n"
             "=== PLATFORM MODULES & CAPABILITIES ===\n"
-            "- Tab 01: 3D WebGL CIR/MSG Digital Twin (Droplet, PMMA Rod, Fabric Slab, CFI-G Sphere), 8 governing equations, ISS R²/RMSE validation, acoustic sonification, and ECLSS SMAC 125 ppm CO survival clock.\n"
-            "- Tab 02: 15 verified NASA PSI investigations, orbital rack filters (CIR, MSG, Cygnus, DAFT), intra-run variation matrices, and Space-to-Earth spinoffs.\n"
-            "- Tab 03: Live NASA NTRS & OSDR/PSI continuous telemetry stream + local pixel-level flame image CV and CSV/JSON/PDF parameter extractor.\n"
-            "- Tab 04 & 05: 6-stage NASA-STD-6001B audited synthesis console + Zero-Trust 127.0.0.1 / Serverless isolation + .CSV/.JSON/.MD scientific export.\n\n"
+            "- Combustion Chamber: 3D WebGL CIR/MSG simulation (Droplet, PMMA Rod, Fabric Slab, CFI-G Sphere), 8 governing equations, ISS R²/RMSE validation, flame audio, and ECLSS SMAC 125 ppm CO survival clock.\n"
+            "- NASA Experiments: 15 verified NASA PSI investigations, orbital rack filters (CIR, MSG, Cygnus, DAFT), intra-run variation matrices, and Space-to-Earth spinoffs.\n"
+            "- Data & Imagery: Live NASA NTRS & OSDR/PSI telemetry stream + local pixel-level flame image analysis and CSV/JSON/PDF parameter extractor.\n"
+            "- Engineering Analysis & Validation: 6-stage NASA-STD-6001B audited engineering console + offline deep-space autonomy + .CSV/.JSON/.MD scientific export.\n\n"
             f"{SCIENTIFIC_EQUATIONS_REFERENCE}\n"
             "=== MANDATORY PHYSICAL & SAFETY VALIDATION CONSTRAINTS ===\n"
             f"{rules_block}\n\n"
@@ -208,10 +208,10 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "") -> st
             "Sen 2026 NASA International Space Apps Challenge ('Flame in Freefall') için geliştirilen ALTAR-NASA v5.1 "
             "Kanıt Sentezi ve Uzay Aracı Yangın Güvenliği Karar Destek Çekirdeğisin.\n\n"
             "=== PLATFORM MODÜLLERİ VE YETENEKLERİ ===\n"
-            "- Sekme 01: 3B WebGL CIR/MSG Dijital İkizi (Damlacık, PMMA Çubuk, Kumaş Plaka, CFI-G Küre), 8 temel denklem, ISS R²/RMSE doğrulaması, akustik sonifikasyon ve ECLSS SMAC 125 ppm CO Yaşam Destek Saati.\n"
-            "- Sekme 02: 15 doğrulanmış NASA PSI soruşturması, donanım raf filtreleri (CIR, MSG, Cygnus, DAFT), deney-içi varyasyon matrisleri ve Dünya'ya teknoloji transferleri.\n"
-            "- Sekme 03: Canlı NASA NTRS & OSDR/PSI sürekli telemetri akışı + alev fotoğrafı piksel kemilüminesans/kurum analizi ve CSV/JSON/PDF parametre çıkarıcı.\n"
-            "- Sekme 04 & 05: 6-katmanlı NASA-STD-6001B denetimli karar konsolu + Zero-Trust 127.0.0.1 / Sunucusuz izolasyon + .CSV/.JSON/.MD veri paketi çıktısı.\n\n"
+            "- Yanma Odası: 3B WebGL CIR/MSG simülasyonu (Damlacık, PMMA Çubuk, Kumaş Plaka, CFI-G Küre), 8 temel denklem, ISS R²/RMSE doğrulaması, alev seslendirme ve ECLSS SMAC 125 ppm CO Yaşam Destek Saati.\n"
+            "- NASA Deneyleri: 15 doğrulanmış NASA PSI soruşturması, donanım raf filtreleri (CIR, MSG, Cygnus, DAFT), deney-içi varyasyon matrisleri ve Dünya uygulamaları.\n"
+            "- Veri ve Görüntü: Canlı NASA NTRS & OSDR/PSI akışı + alev fotoğrafı piksel analizi ve CSV/JSON/PDF parametre çıkarıcı.\n"
+            "- Mühendislik Analizi ve Doğrulama: NASA-STD-6001B denetimli mühendislik analizi + çevrimdışı derin uzay modu + .CSV/.JSON/.MD veri çıktısı.\n\n"
             f"{SCIENTIFIC_EQUATIONS_REFERENCE}\n"
             "=== ZORUNLU FİZİKSEL VE GÜVENLİK DOĞRULAMA KISITLARI ===\n"
             f"{rules_block}\n\n"

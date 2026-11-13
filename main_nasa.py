@@ -229,14 +229,14 @@ def create_nasa_web_app() -> Flask:
         notes_list = parsed.get("extraction_notes") or []
         fields_list = parsed.get("extracted_fields") or []
         summary_tr = (
-            f"◈ **Veri Dosyası Analizi ({fname} • {parsed.get('pages', 1)} sayfa, {parsed.get('char_count', 0)} karakter):**\n"
+            f"**Veri Dosyası Analizi ({fname} • {parsed.get('pages', 1)} sayfa, {parsed.get('char_count', 0)} karakter):**\n"
             f"- **Otomatik Saptanan Alanlar:** `{', '.join(fields_list) if fields_list else 'Standart Mikroçekim Profili'}`\n"
             + (f"- **Ölçüm Notları:** {'; '.join(notes_list)}\n" if notes_list else "")
             + f"- **3B Simülasyona Aktarılan Koşullar:** Yakıt `{sim_params.get('fuel_id')}`, Yerçekimi `{sim_params.get('gravity_g')}G`, O₂ `%{sim_params.get('oxygen_pct')}`, Basınç `{sim_params.get('pressure_psia')} psia`, Akış `{sim_params.get('airflow_cms')} cm/s`.\n"
             + f"- **Belge Özeti (İlk Kesit):** {(parsed.get('content') or '')[:420]}..."
         )
         summary_en = (
-            f"◈ **Dataset & Document Analysis ({fname} • {parsed.get('pages', 1)} page(s), {parsed.get('char_count', 0)} chars):**\n"
+            f"**Dataset & Document Analysis ({fname} • {parsed.get('pages', 1)} page(s), {parsed.get('char_count', 0)} chars):**\n"
             f"- **Detected Fields:** `{', '.join(fields_list) if fields_list else 'Standard Microgravity Profile'}`\n"
             + f"- **3D Chamber Conditions Applied:** Fuel `{sim_params.get('fuel_id')}`, Gravity `{sim_params.get('gravity_g')}G`, O₂ `{sim_params.get('oxygen_pct')}%`, Pressure `{sim_params.get('pressure_psia')} psia`, Airflow `{sim_params.get('airflow_cms')} cm/s`.\n"
             + f"- **Document Excerpt:** {(parsed.get('content') or '')[:420]}..."
@@ -485,7 +485,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
     import tkinter as tk
 
     root = tk.Tk()
-    root.title("ALTAR-NASA v5.1 • İzole Görev Kontrol Sunucusu (Zero-Trust)")
+    root.title("ALTAR-NASA v5.1 • Yerel Uygulama Başlatıcısı")
     serverless_dir = _locate_serverless_web_dir()
     root.geometry("500x315" if serverless_dir else "500x280")
     root.resizable(False, False)
@@ -500,7 +500,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     header = tk.Label(
         root,
-        text="◈ ALTAR-NASA: Flame in Freefall v5.1",
+        text="ALTAR-NASA: Flame in Freefall v5.1",
         font=("Segoe UI", 13, "bold"),
         fg="#f8fafc",
         bg="#070e1c",
@@ -509,7 +509,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     sub = tk.Label(
         root,
-        text=f"[ZERO-TRUST 127.0.0.1 İZOLE • CSRF + CSP + SSRF AKTİF]\nAdres: {url}",
+        text=f"Çevrimdışı Yerel Hesaplama Sunucusu Aktif\nAdres: {url}",
         font=("Consolas", 9),
         fg="#38bdf8",
         bg="#070e1c",
@@ -519,7 +519,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     hint = tk.Label(
         root,
-        text="Dış ağlara port açılmaz (0.0.0.0 kapalı). 'X' tuşu bu pencereyi görev çubuğuna küçültür.",
+        text="Yalnızca bu bilgisayarda çalışır. 'X' tuşu pencereyi görev çubuğuna küçültür.",
         font=("Segoe UI", 8),
         fg="#94a3b8",
         bg="#070e1c",
@@ -531,7 +531,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     btn_app = tk.Button(
         btn_frame,
-        text="▸  3B Görev Kontrol Panelini Uygulama Modunda Aç",
+        text="Uygulamayı Aç",
         command=lambda: open_in_app_window(url),
         font=("Segoe UI", 10, "bold"),
         bg="#0284c7",
@@ -549,7 +549,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     btn_browser = tk.Button(
         row2,
-        text="◫ Varsayılan Tarayıcıda Aç",
+        text="Tarayıcıda Aç",
         command=lambda: webbrowser.open(url),
         font=("Segoe UI", 9, "bold"),
         bg="#152340",
@@ -565,11 +565,11 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
     def _copy_url() -> None:
         root.clipboard_clear()
         root.clipboard_append(url)
-        sub.configure(text=f"[ADRES PANOYA KOPYALANDI]\nAdres: {url}")
+        sub.configure(text=f"Adres Panoya Kopyalandı\nAdres: {url}")
 
     btn_copy = tk.Button(
         row2,
-        text="⌖ Adresi Kopyala",
+        text="Adresi Kopyala",
         command=_copy_url,
         font=("Segoe UI", 9, "bold"),
         bg="#152340",
@@ -591,7 +591,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
         btn_srvless = tk.Button(
             btn_frame,
-            text="◈ Sunucusuz Statik Web Paketini Aç (GitHub/Cloudflare Pages)",
+            text="Statik Web Klasörünü Aç",
             command=_open_serverless_folder,
             font=("Segoe UI", 8, "bold"),
             bg="#0f2942",
@@ -605,7 +605,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
         btn_srvless.pack(fill="x", pady=3)
 
     def _minimize_to_taskbar() -> None:
-        sub.configure(text=f"[İZOLE SUNUCU GÖREV ÇUBUĞUNDA KORUNUYOR]\nAdres: {url}")
+        sub.configure(text=f"Yerel Sunucu Görev Çubuğunda Çalışıyor\nAdres: {url}")
         root.iconify()
 
     def _clean_exit() -> None:
@@ -615,7 +615,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
     btn_quit = tk.Button(
         btn_frame,
-        text="⏻  Sunucuyu Güvenle Durdur ve Tamamen Çık",
+        text="Uygulamayı Kapat",
         command=_clean_exit,
         font=("Segoe UI", 9, "bold"),
         bg="#7f1d1d",

@@ -342,9 +342,9 @@ class HybridNasaAIEngine:
         now = time.time()
         lang_init = str(self.config.get_all().get("language", "tr"))
         init_stage = (
-            "[1/4] ◈ Solving dimensionless transport laws & 3D telemetry..."
+            "[1/4] Solving dimensionless transport laws & 3D telemetry..."
             if lang_init == "en"
-            else "[1/4] ◈ Boyutsuz taşınım denklemleri ve 3B telemetri çözülüyor..."
+            else "[1/4] Boyutsuz taşınım denklemleri ve 3B telemetri çözülüyor..."
         )
         job_obj: Dict[str, Any] = {
             "job_id": job_id,
@@ -464,7 +464,7 @@ class HybridNasaAIEngine:
         cancel_check: Optional[Callable[[], bool]] = None,
     ) -> Dict[str, Any]:
         cfg = self.config.get_all()
-        if provider_override and provider_override in ("auto", "ollama", "antigravity", "gemini", "openrouter", "custom"):
+        if provider_override and provider_override in ("auto", "physics", "deterministic", "ollama", "antigravity", "gemini", "openrouter", "custom"):
             cfg["active_provider"] = provider_override
 
         lang = str(cfg.get("language", "tr"))
@@ -497,9 +497,9 @@ class HybridNasaAIEngine:
         if include_live_nasa and not is_meta_intent and len(user_message.strip()) > 3:
             if on_stage:
                 on_stage(
-                    "[2/4] ◈ Querying live NASA NTRS & PSI databases..."
+                    "[2/4] Querying live NASA NTRS & PSI databases..."
                     if lang == "en"
-                    else "[2/4] ◈ Canlı NASA NTRS & PSI veri tabanları taranıyor..."
+                    else "[2/4] Canlı NASA NTRS & PSI veri tabanları taranıyor..."
                 )
             ntrs_res = self.fetcher.search_ntrs_live(user_message, limit=3)
             if ntrs_res.get("ok"):
@@ -518,9 +518,9 @@ class HybridNasaAIEngine:
 
         if on_stage:
             on_stage(
-                "[3/4] ◈ Synthesizing governing equations & NASA PSI evidence..."
+                "[3/4] Synthesizing governing equations & NASA PSI evidence..."
                 if lang == "en"
-                else "[3/4] ◈ Taşınım denklemleri ve NASA PSI kanıtları sentezleniyor..."
+                else "[3/4] Taşınım denklemleri ve NASA PSI kanıtları sentezleniyor..."
             )
 
         # 2. Sağlayıcıyı Seç ve Çalıştır
@@ -551,13 +551,13 @@ class HybridNasaAIEngine:
             if ntrs_match:
                 q_tool = ntrs_match.group(1).strip()
                 extra_ntrs = self.fetcher.search_ntrs_live(q_tool, limit=3)
-                stages_log.append(f"◈ NTRS Sorgusu: NASA_NTRS('{q_tool}') -> {extra_ntrs.get('count', 0)} kayıt")
+                stages_log.append(f"NTRS Sorgusu: NASA_NTRS('{q_tool}') -> {extra_ntrs.get('count', 0)} kayıt")
                 for it in extra_ntrs.get("items", []):
                     tool_notes.append(f"[{it['id']}] {it['title']}: {it['abstract'][:320]} ({it['url']})")
             if psi_match:
                 q_psi = psi_match.group(1).strip()
                 extra_psi = self.fetcher.search_osdr_psi_live(q_psi, limit=3)
-                stages_log.append(f"◈ PSI Sorgusu: NASA_PSI('{q_psi}') -> {extra_psi.get('count', 0)} kayıt")
+                stages_log.append(f"PSI Sorgusu: NASA_PSI('{q_psi}') -> {extra_psi.get('count', 0)} kayıt")
                 for it in extra_psi.get("items", []):
                     tool_notes.append(f"[{it['id']}] {it['title']}: {it['abstract'][:320]}")
 
@@ -707,11 +707,11 @@ class HybridNasaAIEngine:
         cancel_check: Optional[Callable[[], bool]] = None,
     ) -> Tuple[str, str, str, List[str]]:
         pref = str(cfg.get("active_provider", "auto")).lower()
-        stages: List[str] = ["◈ Boyutsuz Denklemler (K, B_oq, Sh, Ra, Ri, Da) + NASA PSI/NTRS Kanıtları Hazırlandı"]
+        stages: List[str] = ["Boyutsuz Denklemler (K, B_oq, Sh, Ra, Ri, Da) ve NASA PSI/NTRS Kanıtları Hazırlandı"]
         intent = classify_user_intent(user_message, media_context=media_context)
 
-        # Otomatik modda doğrudan sistem yetenek/mimari/selamlama sorularına sıfır gecikmeyle %100 kesin mimari envanter dön
-        if pref == "auto" and intent in ("capabilities_guide", "platform_features", "greeting_identity"):
+        # Doğrudan Analitik Fizik Çözücü seçildiyse veya sistem envanteri sorulduysa kapalı-form çözücü ile anında yanıt dön
+        if pref in ("physics", "deterministic") or (pref == "auto" and intent in ("capabilities_guide", "platform_features", "greeting_identity")):
             fast_text, _ = synthesize_question_driven_report(
                 user_message=user_message,
                 sim_params=active_sim["inputs"],
@@ -723,7 +723,7 @@ class HybridNasaAIEngine:
                 media_context=media_context,
                 lang=str(cfg.get("language", "tr")),
             )
-            stages.append("◈ Sistem Yetenek & Telemetri Envanteri Doğrudan Yanıtlandı")
+            stages.append("Sistem Yetenek ve Telemetri Envanteri Doğrudan Yanıtlandı")
             if on_chunk:
                 on_chunk(fast_text, "deterministic_physics", "ALTAR-Analytical-Solver-Core")
             return ("deterministic_physics", "ALTAR-Analytical-Solver-Core", fast_text, stages)
@@ -838,7 +838,7 @@ class HybridNasaAIEngine:
                 if ok and text:
                     return ("ollama", model_name, text, stages)
 
-        stages.append("◈ Deterministik Soru-Odaklı Termodinamik & NASA PSI Analitik Çekirdeği yanıt üretti")
+        stages.append("Deterministik Soru-Odaklı Termodinamik ve NASA PSI Analitik Çekirdeği yanıt üretti")
         fallback_text, _ = synthesize_question_driven_report(
             user_message=user_message,
             sim_params=active_sim["inputs"],
@@ -900,10 +900,10 @@ class HybridNasaAIEngine:
                     parts = candidates[0].get("content", {}).get("parts") or []
                     text = "".join(str(p.get("text", "")) for p in parts).strip()
                     if text:
-                        return (True, clean_model, text, f"◈ Bulut Çıkarım Geçidi ({clean_model}) ile sentezlendi")
-            return (False, clean_model, "", f"▲ Gemini REST HTTP {resp.status_code}")
+                        return (True, clean_model, text, f"Bulut Çıkarım Geçidi ({clean_model}) ile sentezlendi")
+            return (False, clean_model, "", f"Gemini REST HTTP {resp.status_code}")
         except Exception as exc:
-            return (False, clean_model, "", f"▲ Bulut bağlantı uyarısı: {exc}")
+            return (False, clean_model, "", f"Bulut bağlantı uyarısı: {exc}")
 
     def _call_antigravity(
         self,
@@ -968,7 +968,7 @@ class HybridNasaAIEngine:
                 if proc.returncode == 0 and out_text:
                     if on_chunk:
                         on_chunk(out_text, "local_cli_bridge", chosen_model)
-                    return (True, f"cli/{chosen_model}", out_text, f"◈ Yerel Sistem Çıkarım Köprüsü ({chosen_model}) ile sentezlendi")
+                    return (True, f"cli/{chosen_model}", out_text, f"Yerel Sistem Çıkarım Köprüsü ({chosen_model}) ile sentezlendi")
             except Exception as exc:
                 pass
 
@@ -990,7 +990,7 @@ class HybridNasaAIEngine:
                 if text:
                     if on_chunk:
                         on_chunk(text, "local_cli_bridge", "local.sdk.Agent")
-                    return (True, "local.sdk.Agent", text, "◈ Yerel SDK Çıkarım Köprüsü ile sentezlendi")
+                    return (True, "local.sdk.Agent", text, "Yerel SDK Çıkarım Köprüsü ile sentezlendi")
             except Exception:
                 pass
 
@@ -1007,10 +1007,10 @@ class HybridNasaAIEngine:
             if ok and txt:
                 if on_chunk:
                     on_chunk(txt, "local_cli_bridge", f"bridge/{m_name}")
-                return (True, f"bridge/{m_name}", txt, "◈ Yerel Köprü Geçidi ile sentezlendi")
+                return (True, f"bridge/{m_name}", txt, "Yerel Köprü Geçidi ile sentezlendi")
             return (False, m_name, "", note)
 
-        return (False, "local_cli_bridge", "", "◈ Yerel CLI köprüsü oturumu bulunamadı")
+        return (False, "local_cli_bridge", "", "Yerel CLI köprüsü oturumu bulunamadı")
 
     def _call_openai_compatible(
         self,
@@ -1049,10 +1049,10 @@ class HybridNasaAIEngine:
                 if choices:
                     txt = str(choices[0].get("message", {}).get("content", "")).strip()
                     if txt:
-                        return (True, model, txt, f"◈ {label} ({model}) ile sentezlendi")
-            return (False, model, "", f"▲ {label} HTTP {resp.status_code}")
+                        return (True, model, txt, f"{label} ({model}) ile sentezlendi")
+            return (False, model, "", f"{label} HTTP {resp.status_code}")
         except Exception as exc:
-            return (False, model, "", f"▲ {label} bağlantı uyarısı: {exc}")
+            return (False, model, "", f"{label} bağlantı uyarısı: {exc}")
 
     def _call_ollama_local(
         self,
@@ -1067,7 +1067,7 @@ class HybridNasaAIEngine:
     ) -> Tuple[bool, str, str, str]:
         st = self.get_ollama_status()
         if not st["online"] or not st["models"]:
-            return (False, "ollama", "", "◈ Yerel Ollama servisi kapalı veya yüklü model bulunamadı")
+            return (False, "ollama", "", "Yerel Ollama servisi kapalı veya yüklü model bulunamadı")
 
         available_names = [m["name"] for m in st["models"]]
         chosen = str(cfg.get("ollama_model", "auto")).strip()
@@ -1111,7 +1111,7 @@ class HybridNasaAIEngine:
                 if resp.status_code != 200:
                     code = resp.status_code
                     resp.close()
-                    return (False, chosen, "", f"▲ Ollama HTTP {code}")
+                    return (False, chosen, "", f"Ollama HTTP {code}")
 
                 acc_chunks: List[str] = []
                 acc_thinking: List[str] = []
@@ -1148,10 +1148,10 @@ class HybridNasaAIEngine:
                 if final_txt:
                     if on_chunk:
                         on_chunk(final_txt, "ollama", chosen)
-                    return (True, chosen, final_txt, f"◈ Yerel Çevrimdışı Ollama ({chosen} • Canlı Akış) ile sentezlendi")
-                return (False, chosen, "", "▲ Ollama boş yanıt döndürdü")
+                    return (True, chosen, final_txt, f"Yerel Çevrimdışı Model ({chosen}) ile sentezlendi")
+                return (False, chosen, "", "Yerel model boş yanıt döndürdü")
             except Exception as exc:
-                return (False, chosen, "", f"▲ Ollama çalışma uyarısı: {exc}")
+                return (False, chosen, "", f"Yerel model çalışma uyarısı: {exc}")
 
     @staticmethod
     def _apply_safety_rule_critic(reply_text: str, lang: str) -> Tuple[str, str]:
@@ -1168,8 +1168,8 @@ class HybridNasaAIEngine:
                     "\n\n> **[ALTAR-NASA GÜVENLİK DENETÇİSİ ŞERHİ • CON-05 / NASA-STD-6001B]:** *İnsanlı uzay araçlarında toksik HF/HBr "
                     "gazı ürettiği için Halon 1301 kullanımı yasaktır. Önce HVAC fanlarını kapatın, ardından İnce Su Sisi (ISS PFE) veya CO₂ uygulayın.*"
                 )
-            return (reply_text + patch, "◈ 6-Katmanlı Denetçi: CON-05 Halon Kural Şerhi Eklendi")
-        return (reply_text, "✓ 6-Katmanlı Denklem & NASA-STD-6001B Halon Denetimi Onaylandı")
+            return (reply_text + patch, "Güvenlik Denetçisi: CON-05 Halon Kural Şerhi Eklendi")
+        return (reply_text, "Denklem ve NASA-STD-6001B Halon Denetimi Onaylandı")
 
     @staticmethod
     def _build_deterministic_scientific_report(

@@ -181,19 +181,20 @@
         // Başlık ve Etiketler
         ctx.fillStyle = "#94a3b8";
         ctx.font = "10.5px Segoe UI, sans-serif";
-        ctx.fillText(lang === "en" ? "Airflow (cm/s) →" : "Hava Akışı (cm/s) →", w - 110, h - 10);
+        ctx.fillText(lang === "en" ? "Airflow (cm/s)" : "Hava Akışı (cm/s)", w - 102, h - 10);
         ctx.fillStyle = "#38bdf8";
-        ctx.fillText("── 0G", pad.l + 2, 14);
+        ctx.fillText("0G", pad.l + 2, 14);
         ctx.fillStyle = "#10b981";
-        ctx.fillText(lang === "en" ? "·· 0.16G Moon" : "·· 0.16G Ay", pad.l + 44, 14);
+        ctx.fillText(lang === "en" ? "0.16G Moon" : "0.16G Ay", pad.l + 28, 14);
         ctx.fillStyle = "#f59e0b";
-        ctx.fillText("- - 1G", pad.l + 124, 14);
+        ctx.fillText("1G", pad.l + 96, 14);
         if (showFlightOverlay !== false && flightValidation) {
             ctx.fillStyle = "#f8fafc";
-            ctx.fillText("◆ ISS", pad.l + 170, 14);
+            ctx.fillRect(pad.l + 122, 7, 5, 5);
+            ctx.fillText("ISS", pad.l + 131, 14);
         }
         ctx.fillStyle = "#fca5a5";
-        ctx.fillText(lang === "en" ? "▲ Flammable" : "▲ Yanıcı Bölge", w - 96, 14);
+        ctx.fillText(lang === "en" ? "Flammable Zone" : "Yanıcı Bölge", w - 92, 14);
     }
 
     // =========================================================================
@@ -297,16 +298,21 @@
         // Üst Lejant
         ctx.font = "10.5px Segoe UI, sans-serif";
         ctx.fillStyle = "#38bdf8";
-        ctx.fillText(lang === "en" ? "■ Optical" : "■ Optik", pad.l, 14);
+        ctx.fillRect(pad.l, 7, 6, 6);
+        ctx.fillText(lang === "en" ? "Optical" : "Optik", pad.l + 9, 14);
         ctx.fillStyle = "#f59e0b";
-        ctx.fillText("■ IR Flux", pad.l + 56, 14);
+        ctx.fillRect(pad.l + 54, 7, 6, 6);
+        ctx.fillText("IR Flux", pad.l + 63, 14);
         ctx.fillStyle = "#a855f7";
-        ctx.fillText("■ CO ppm", pad.l + 114, 14);
+        ctx.fillRect(pad.l + 112, 7, 6, 6);
+        ctx.fillText("CO ppm", pad.l + 121, 14);
         ctx.fillStyle = "#10b981";
-        ctx.fillText("■ D²/D₀²", pad.l + 174, 14);
+        ctx.fillRect(pad.l + 172, 7, 6, 6);
+        ctx.fillText("D²/D₀²", pad.l + 181, 14);
         if (showFlightOverlay !== false && flightValidation) {
             ctx.fillStyle = "#ecfdf5";
-            ctx.fillText(`◆ ISS (R²=${flightValidation.r_squared})`, pad.l + 234, 14);
+            ctx.fillRect(pad.l + 230, 7, 6, 6);
+            ctx.fillText(`ISS (R²=${flightValidation.r_squared})`, pad.l + 239, 14);
         }
 
         ctx.fillStyle = "#64748b";

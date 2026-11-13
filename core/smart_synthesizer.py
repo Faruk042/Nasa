@@ -447,7 +447,7 @@ def synthesize_question_driven_report(
                 "| **Atmosphere & EVA Tradeoffs** | Quantitative matrix comparing ISS (`14.7 psia`), Lunar Rover (`10.2 psia / 32% O₂`), and EVA Suit (`4.3 psia / 100% O₂`) | *\"Compare EVA spacesuit and Lunar Rover flammability risks.\"* |\n"
                 "| **NASA PSI & Intra-Run Evidence** | Deep-dive into all 15 PSI investigations (`FLEX`, `CFI-G`, `BASS`, `SPICE`, `Saffire`, `SoFIE`, `DAFT`) & run variations | *\"Explain Saffire-V test variations and highest-O₂ CFI-G findings.\"* |\n"
                 "| **ECLSS Survival & Suppression** | `NASA-STD-6001B` non-Halon protocol, `SMAC 125 ppm CO` countdown, Cool Flame NTC & lunar dust sensing | *\"Why is Halon 1301 banned and how fast does CO hit SMAC limits?\"* |\n"
-                "| **Multimodal Dataset / Flame CV** | Pixel chemiluminescence/soot segmentation (`.png/.jpg`) and `.csv/.json/.pdf` parameter extraction | Upload a file on the left and ask: *\"Analyze my uploaded dataset.\"* |"
+                "| **File & Flame Analysis** | Pixel chemiluminescence/soot segmentation (`.png/.jpg`) and `.csv/.json/.pdf` parameter extraction | Upload a file on the left and ask: *\"Analyze my uploaded dataset.\"* |"
             )
         else:
             text = (
@@ -473,34 +473,34 @@ def synthesize_question_driven_report(
         if is_en:
             text = (
                 "### ALTAR-NASA: Flame in Freefall (v5.1) — Technical Architecture & Feature Inventory\n"
-                "ALTAR-NASA is a physics-informed microgravity and partial-gravity combustion digital twin built around **5 integrated Mission Control subsystems**:\n\n"
-                "1. **`01 // 3D WebGL CIR/MSG Digital Twin & Governing Solver`:**\n"
-                f"   - Real-time 4-geometry WebGL chamber (`Droplet`, `PMMA Rod`, `Fabric Slab`, `CFI-G Porous Sphere`) solving 8 coupled equations (`d²`-law `K`, `B_oq`, `R_f/R_d`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, U-shaped `MOC`).\n"
-                f"   - Calibrated against real ISS flight data with live **`R² = {r2_val}`** (`RMSE = {rmse_val}`), WebAudio acoustic telemetry sonification, and **ECLSS `SMAC 125 ppm CO` Crew Survival Clock**.\n"
-                "2. **`02 // 15 Verified NASA PSI Investigations & Intra-Run Matrix`:**\n"
+                "ALTAR-NASA is a physics-informed microgravity and partial-gravity combustion platform built around **5 integrated engineering modules**:\n\n"
+                "1. **`Combustion Chamber`:**\n"
+                f"   - Real-time 4-geometry 3D WebGL chamber (`Droplet`, `PMMA Rod`, `Fabric Slab`, `CFI-G Porous Sphere`) solving 8 coupled equations (`d²`-law `K`, `B_oq`, `R_f/R_d`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, U-shaped `MOC`).\n"
+                f"   - Calibrated against real ISS flight data with live **`R² = {r2_val}`** (`RMSE = {rmse_val}`), WebAudio flame sonification, and **ECLSS `SMAC 125 ppm CO` Life Support Clock**.\n"
+                "2. **`NASA Experiments`:**\n"
                 "   - Physics + bilingual TF-IDF ranking across `ISS CIR/MDCA`, `MSG Flow Duct`, `Cygnus (Saffire I–VI)`, and `SAME/DAFT` smoke-vs-lunar-dust hardware, with clickable `ntrs.nasa.gov` citations and intra-experiment variable matrices.\n"
-                "3. **`03 // Live NASA NTRS/OSDR Telemetry Stream & Multimodal Analyzer`:**\n"
-                "   - Autonomous polling of official `ntrs.nasa.gov` & `osdr.nasa.gov` APIs plus local pixel-level flame image segmentation and `.CSV/.JSON/.PDF` parameter extraction.\n"
-                "4. **`04 // 6-Stage Audited Evidence Synthesis Console`:**\n"
-                "   - Question-driven analytical kernel + hybrid offline `Ollama` / local CLI / cloud gateways guarded by mandatory `CON-01..CON-09` and `NASA-STD-6001B` Halon-prohibition verification.\n"
-                "5. **`05 // Zero-Trust Isolation & Predictive Dataset Export`:**\n"
-                "   - Runs either `100% Serverless` in browser RAM (`CSP` locked) or on `127.0.0.1` loopback (`CSRF + Host/Origin + SSRF` shields), with one-click **`.CSV`**, **`.JSON`**, and **`.MD`** scientific dossier export."
+                "3. **`Data & Imagery`:**\n"
+                "   - Live polling of official `ntrs.nasa.gov` & `osdr.nasa.gov` APIs plus local pixel-level flame image segmentation and `.CSV/.JSON/.PDF` parameter extraction.\n"
+                "4. **`Engineering Analysis`:**\n"
+                "   - Question-driven analytical solver + hybrid offline/local modules guarded by mandatory `CON-01..CON-09` and `NASA-STD-6001B` Halon-prohibition verification.\n"
+                "5. **`Validation & Settings`:**\n"
+                "   - Enforces physical validation rules (`CON-01..CON-09`), deep-space offline capability, and one-click **`.CSV`**, **`.JSON`**, and **`.MD`** scientific dataset export."
             )
         else:
             text = (
                 "### ALTAR-NASA: Flame in Freefall (v5.1) — Teknik Mimari ve Sistem Özellikleri\n"
-                "Platform, statik bir sohbet arayüzü değil; **5 entegre Görev Kontrol modülünden** oluşan fizik-temelli bir mikroçekim/kısmi yerçekimi yanma güvenliği sistemidir:\n\n"
-                "1. **`01 // 3B WebGL CIR/MSG Dijital İkizi & Analitik Taşınım Çözücüsü`:**\n"
+                "Platform, **5 entegre mühendislik modülünden** oluşan fizik-temelli bir mikroçekim ve kısmi yerçekimi yanma güvenliği sistemidir:\n\n"
+                "1. **`Yanma Odası`:**\n"
                 f"   - 4 farklı 3B numune/brülör geometrisini (`Sıvı Damlacık`, `PMMA Polimer Çubuk`, `Nomex/Sibal Kumaş`, `CFI-G Gözenekli Küre`) ve 8 temel denklemi (`d²` yasası `K`, `B_oq`, `R_f/R_d`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, U-eğrili `MOC`) anlık çözer.\n"
-                f"   - Gerçek ISS uçuş ölçümleriyle **`R² = {r2_val}`** (`RMSE = {rmse_val}`) doğrulama katmanı, WebAudio akustik alev sonifikasyonu ve **ECLSS `SMAC 125 ppm CO` Yaşam Destek Saati** içerir.\n"
-                "2. **`02 // 15 Doğrulanmış NASA PSI Soruşturması & Deney-İçi Varyasyon Matrisi`:**\n"
-                "   - Termodinamik yakınlık + çift dilli TF-IDF motoruyla `CIR/MDCA`, `MSG Fan Kanalı`, `Cygnus (Saffire)` ve `DAFT/SAME` donanımlarını sıralar; aynı deney içinde neyin sabit tutulup neyin değiştirildiğini ve Dünya teknoloji transferlerini listeler.\n"
-                "3. **`03 // Canlı NASA NTRS/OSDR Akışı & Çok Modlu Dosya/Görsel Çözümleyici`:**\n"
-                "   - Resmi `ntrs.nasa.gov` ve `osdr.nasa.gov` API'lerinden sürekli veri akışı sağlar; yüklenen alev fotoğraflarından piksel düzeyinde kemilüminesans/kurum oranını ve `.csv/.json/.pdf` dosyalarından deneysel parametreleri çıkarıp 3B odaya uygular.\n"
-                "4. **`04 // 6-Katmanlı Denetimli Kanıt Sentezi Konsolu`:**\n"
-                "   - Soru-odaklı deterministik analitik çözücü ile yerel çevrimdışı `Ollama`, yerel CLI köprüsü ve isteğe bağlı bulut geçitlerini `CON-01..CON-09` ve `NASA-STD-6001B` Halon yasağı denetimi altında birleştirir.\n"
-                "5. **`05 // Zero-Trust Siber İzolasyon & Öngörücü Veri Paketi Çıktısı`:**\n"
-                "   - Hem tarayıcı RAM'inde `%100 Sunucusuz Statik` olarak hem de masaüstünde `127.0.0.1` izole soket (`CSRF + CSP + SSRF` kalkanlı) olarak çalışır; tek tıkla **`.CSV`**, **`.JSON`** ve **`.MD`** bilimsel veri setleri üretir."
+                f"   - Gerçek ISS uçuş ölçümleriyle **`R² = {r2_val}`** (`RMSE = {rmse_val}`) doğrulama katmanı, alev seslendirme ve **ECLSS `SMAC 125 ppm CO` Yaşam Destek Saati** içerir.\n"
+                "2. **`NASA Deneyleri`:**\n"
+                "   - Termodinamik yakınlık + çift dilli TF-IDF motoruyla `CIR/MDCA`, `MSG Fan Kanalı`, `Cygnus (Saffire)` ve `DAFT/SAME` donanımlarını sıralar; aynı deney içinde neyin sabit tutulup neyin değiştirildiğini ve Dünya uygulamalarını listeler.\n"
+                "3. **`Veri ve Görüntü`:**\n"
+                "   - Resmi `ntrs.nasa.gov` ve `osdr.nasa.gov` API'lerinden canlı veri çeker; yüklenen alev fotoğraflarından kemilüminesans/kurum oranını ve `.csv/.json/.pdf` dosyalarından deneysel parametreleri çıkarıp 3B odaya uygular.\n"
+                "4. **`Mühendislik Analizi`:**\n"
+                "   - Soru-odaklı analitik çözücü ve çevrimdışı/yerel çıkarım katmanlarını `CON-01..CON-09` ve `NASA-STD-6001B` Halon yasağı denetimi altında birleştirir.\n"
+                "5. **`Doğrulama ve Ayarlar`:**\n"
+                "   - Fiziksel doğrulama kurallarını (`CON-01..CON-09`) denetler, derin uzay çevrimdışı modunu yönetir ve tek tıkla **`.CSV`**, **`.JSON`** ve **`.MD`** bilimsel veri setleri üretir."
             )
         return (text, [])
 
@@ -986,7 +986,7 @@ def synthesize_question_driven_report(
         )
         if is_en:
             text = (
-                "### Multimodal Dataset / Flame Imagery Synthesis\n"
+                "### Uploaded Dataset & Flame Imagery Analysis\n"
                 f"{media_context}\n\n"
                 "### Synchronized 3D Chamber & Dimensionless Solver Output\n"
                 f"- **Extracted State (`{inp['fuel_name_en']}`):** `{inp['gravity_g']} G`, `{inp['oxygen_pct']}% O₂` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`), `{inp['airflow_cms']} cm/s` → Regime **`{tel['regime']}`** (`T_f = {tel['flame_temp_k']} K`, Risk **`{tel['risk_score']}/100`**).\n"

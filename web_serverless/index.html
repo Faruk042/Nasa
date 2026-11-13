@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' https://ntrs.nasa.gov https://osdr.nasa.gov https://generativelanguage.googleapis.com https://openrouter.ai; object-src 'none'; base-uri 'self'; form-action 'self';" />
     <link rel="icon" href="./nasa_flame.ico" />
-    <title>ALTAR-NASA • Flame in Freefall v5.1 | Zero-Trust Microgravity Combustion &amp; PSI Analytics Suite</title>
+    <title>ALTAR-NASA • Flame in Freefall v5.1 | Microgravity Combustion &amp; Fire Safety Suite</title>
     <link rel="stylesheet" href="./css/mission_control.css" />
 </head>
 <body>
@@ -16,55 +16,55 @@
             <div class="brand-orb"></div>
             <div class="brand-titles">
                 <h1>ALTAR-NASA • FLAME IN FREEFALL <span style="font-size:11px; color:#6ee7b7; font-weight:700;">v5.1</span></h1>
-                <p id="lbl-brand-sub" data-i18n="brand_sub">Fizik-Temelli Mikroçekim &amp; Kısmi Yerçekimi Yanma Güvenliği, PSI Veri Sentezi ve 3B Dijital İkiz Platformu</p>
+                <p id="lbl-brand-sub" data-i18n="brand_sub">Mikro Yerçekimi Yanma Analizi ve Yangın Güvenliği Platformu</p>
             </div>
         </div>
 
         <nav class="nav-tabs" role="tablist">
-            <button class="nav-tab active" data-tab="tab-lab" id="nav-lab" data-i18n="nav_lab">01 // 3B Yanma Odası &amp; Denklemler</button>
-            <button class="nav-tab" data-tab="tab-rank" id="nav-rank" data-i18n="nav_rank">02 // PSI Sıralama &amp; Kıyaslama</button>
-            <button class="nav-tab" data-tab="tab-live" id="nav-live" data-i18n="nav_live">03 // Telemetri Akışı &amp; Çözümleyici</button>
-            <button class="nav-tab" data-tab="tab-copilot" id="nav-copilot" data-i18n="nav_copilot">04 // Kanıt Sentezi &amp; Karar Konsolu</button>
-            <button class="nav-tab" data-tab="tab-settings" id="nav-settings" data-i18n="nav_settings">05 // Sistem Kalibrasyonu &amp; Kısıtlar</button>
+            <button class="nav-tab active" data-tab="tab-lab" id="nav-lab" data-i18n="nav_lab">Yanma Odası</button>
+            <button class="nav-tab" data-tab="tab-rank" id="nav-rank" data-i18n="nav_rank">NASA Deneyleri</button>
+            <button class="nav-tab" data-tab="tab-live" id="nav-live" data-i18n="nav_live">Veri ve Görüntü</button>
+            <button class="nav-tab" data-tab="tab-copilot" id="nav-copilot" data-i18n="nav_copilot">Mühendislik Analizi</button>
+            <button class="nav-tab" data-tab="tab-settings" id="nav-settings" data-i18n="nav_settings">Doğrulama ve Ayarlar</button>
         </nav>
 
         <div class="header-actions">
-            <div class="status-pill" id="header-stream-pill" title="Continuous Live Telemetry Stream Status">
+            <div class="status-pill" id="header-stream-pill" title="Live Telemetry Stream Status">
                 <span class="status-dot" id="header-stream-dot" style="background:#64748b; box-shadow:none;"></span>
                 <span id="header-stream-text">Akış: Hazır</span>
             </div>
-            <div class="status-pill" id="header-engine-pill" title="Active Analytical Solver &amp; Synthesis Kernel Status">
+            <div class="status-pill" id="header-engine-pill" title="Active Analytical Solver Status">
                 <span class="status-dot" id="header-status-dot"></span>
-                <span id="header-engine-text">Çözücü Denetleniyor...</span>
+                <span id="header-engine-text">Çözücü Hazırlanıyor</span>
             </div>
-            <button class="btn-secondary" id="btn-export-report" style="padding: 5px 10px; font-size: 11.5px;" title="Bilimsel Görev &amp; Jüri Raporu İndir (.md)" data-i18n="btn_export_report">◫ Rapor (.MD)</button>
+            <button class="btn-secondary" id="btn-export-report" style="padding: 5px 10px; font-size: 11.5px;" title="Bilimsel Görev Raporu İndir (.md)" data-i18n="btn_export_report">Rapor İndir</button>
             <button class="lang-btn" id="btn-lang-toggle" title="Dil Değiştir / Switch Language (TR / EN)">TR / EN</button>
         </div>
     </header>
 
-    <!-- ==================== v5.1 İZOLE GÜVENLİK, HEDEF KİTLE MODU, ISS R² & VERİ AYIKLAMA ALT ÇUBUĞU ==================== -->
+    <!-- ==================== ÇALIŞMA MODU, GÖRÜNÜM, ISS R² & VERİ İNDİRME ALT ÇUBUĞU ==================== -->
     <div class="command-subbar">
         <div class="subbar-group">
-            <span class="shield-pill" id="isolation-shield-pill" data-i18n="shield_badge">◈ %100 Sunucusuz Statik İzole</span>
+            <span class="shield-pill" id="isolation-shield-pill" data-i18n="shield_badge">Tarayıcı Modu</span>
             <label style="display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-weight:600;">
-                <span data-i18n="lbl_audience">◈ Hedef Kitle Modu:</span>
+                <span data-i18n="lbl_audience">Görünüm:</span>
                 <select class="nasa-select" id="sel-audience-mode" style="width:auto; padding:3px 9px; font-size:11.8px;">
-                    <option value="researcher" data-tr="◈ Araştırmacı &amp; Profesör" data-en="◈ Researcher &amp; Professor">◈ Araştırmacı &amp; Profesör</option>
-                    <option value="student" data-tr="◈ Lisans Öğrencisi" data-en="◈ Undergraduate Student">◈ Lisans Öğrencisi</option>
-                    <option value="engineer" data-tr="◈ Uçuş Güvenlik Mühendisi" data-en="◈ Flight Safety Engineer">◈ Uçuş Güvenlik Mühendisi</option>
+                    <option value="researcher" data-tr="Araştırmacı" data-en="Researcher">Araştırmacı</option>
+                    <option value="student" data-tr="Öğrenci" data-en="Student">Öğrenci</option>
+                    <option value="engineer" data-tr="Mühendis" data-en="Engineer">Mühendis</option>
                 </select>
             </label>
-            <button class="btn-primary" id="btn-guided-tour" style="padding:4px 11px; font-size:11.8px;" data-i18n="btn_guided_tour">▸ Rehberli Jüri Turu</button>
+            <button class="btn-primary" id="btn-guided-tour" style="padding:4px 11px; font-size:11.8px;" data-i18n="btn_guided_tour">Rehberli Tur</button>
         </div>
 
         <div class="subbar-group">
             <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:#e2e8f0; font-weight:600;">
                 <input type="checkbox" id="chk-flight-overlay" checked />
-                <span data-i18n="chk_flight_pts">◆ ISS Ölçüm Noktaları</span>
+                <span data-i18n="chk_flight_pts">ISS Ölçümleri</span>
             </label>
-            <span class="validation-pill" id="flight-val-badge">◆ ISS R² = 0.988 • RMSE = 0.017</span>
-            <button class="btn-secondary" id="btn-export-csv" style="padding:4px 9px; font-size:11.5px;" data-i18n="btn_export_csv">◫ CSV İndir</button>
-            <button class="btn-secondary" id="btn-export-json" style="padding:4px 9px; font-size:11.5px;" data-i18n="btn_export_json">◫ JSON İndir</button>
+            <span class="validation-pill" id="flight-val-badge">ISS R² = 0.996 • RMSE = 0.015</span>
+            <button class="btn-secondary" id="btn-export-csv" style="padding:4px 9px; font-size:11.5px;" data-i18n="btn_export_csv">CSV İndir</button>
+            <button class="btn-secondary" id="btn-export-json" style="padding:4px 9px; font-size:11.5px;" data-i18n="btn_export_json">JSON İndir</button>
         </div>
     </div>
 
@@ -72,17 +72,17 @@
     <main class="main-container">
 
         <!-- ================================================================
-             SEKME 1: 3B ISS YANMA ODASI, KISMİ YERÇEKİMİ (LUCI/FM2) & CANLI FORMÜLLER
+             SEKME 1: YANMA ODASI
              ================================================================ -->
         <section class="tab-section active" id="tab-lab">
             <div class="audience-guide-banner" id="audience-guide-banner"></div>
             <div class="lab-grid">
 
-                <!-- SOL SÜTUN: HIZLI DOSYA/RESİM -> 3B AKTARICI, SENARYOLAR & KAYDIRICILAR -->
+                <!-- SOL SÜTUN: HIZLI VERİ YÜKLE, SENARYOLAR & KAYDIRICILAR -->
                 <div class="panel-box">
                     <div class="quick-ingest-box">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <strong style="font-size:12px; color:#7dd3fc;" data-i18n="quick_ingest_title">◫ Dosya veya Alev Görüntüsüyle 3B Simüle Et</strong>
+                            <strong style="font-size:12px; color:#7dd3fc;" data-i18n="quick_ingest_title">Hızlı Veri Yükle</strong>
                             <span class="preset-badge">CSV • PDF • PNG • JPG</span>
                         </div>
                         <p style="font-size:11.2px; color:var(--text-muted); margin-bottom:7px;" data-i18n="quick_ingest_desc">
@@ -93,30 +93,30 @@
                     </div>
 
                     <div class="panel-header">
-                        <span class="panel-title" id="t-presets-title" data-i18n="presets_title">◈ Hazır NASA Görev &amp; Giysi Senaryoları</span>
+                        <span class="panel-title" id="t-presets-title" data-i18n="presets_title">Hazır Senaryolar</span>
                     </div>
                     <div class="preset-list" id="preset-buttons-container"></div>
 
                     <div class="panel-header" style="margin-top: 8px;">
-                        <span class="panel-title" id="t-controls-title" data-i18n="controls_title">⌖ Kabin, Uzay Giysisi &amp; Yanma Parametreleri</span>
+                        <span class="panel-title" id="t-controls-title" data-i18n="controls_title">Yanma Ayarları</span>
                     </div>
 
                     <div class="control-group">
-                        <div class="control-label"><span id="lbl-fuel" data-i18n="lbl_fuel">Yakıt / Numune / Brülör Türü</span></div>
+                        <div class="control-label"><span id="lbl-fuel" data-i18n="lbl_fuel">Yakıt Türü</span></div>
                         <select class="nasa-select" id="inp-fuel">
-                            <option value="n_heptane" data-tr="n-Heptan (C₇H₁₆ • FLEX / CFI Sıvı Damlacık)" data-en="n-Heptane (C₇H₁₆ • FLEX / CFI Liquid Droplet)">n-Heptan (C₇H₁₆ • FLEX / CFI Sıvı Damlacık)</option>
-                            <option value="methanol" data-tr="Metanol (CH₃OH • FLEX-2 Kurumsuz Damlacık)" data-en="Methanol (CH₃OH • FLEX-2 Soot-Free Droplet)">Metanol (CH₃OH • FLEX-2 Kurumsuz Damlacık)</option>
-                            <option value="pmma" data-tr="PMMA Akrilik Çubuk (BASS / SoFIE Katı Polimer)" data-en="Cast PMMA Rod (BASS / SoFIE Solid Polymer)">PMMA Akrilik Çubuk (BASS / SoFIE Katı Polimer)</option>
-                            <option value="sibal" data-tr="Sibal Kumaş Plaka (%75 Pamuk / %25 Cam • Saffire)" data-en="Sibal Cloth Slab (75% Cotton / 25% Glass • Saffire)">Sibal Kumaş Plaka (%75 Pamuk / %25 Cam • Saffire)</option>
-                            <option value="nomex" data-tr="Nomex HT90-40 (EVA Uzay Giysisi &amp; BASS-II Kumaşı)" data-en="Nomex HT90-40 (EVA Spacesuit &amp; BASS-II Fabric)">Nomex HT90-40 (EVA Uzay Giysisi &amp; BASS-II Kumaşı)</option>
-                            <option value="propane_cfig" data-tr="Propan Küresel Brülör (C₃H₈ • ACME CFI-G %85 O₂)" data-en="Propane Spherical Burner (C₃H₈ • ACME CFI-G 85% O₂)">Propan Küresel Brülör (C₃H₈ • ACME CFI-G %85 O₂)</option>
-                            <option value="hydrogen" data-tr="Hidrojen Gaz Jeti (H₂ • ACME E-FIELD / SLISE)" data-en="Hydrogen Gas Jet (H₂ • ACME E-FIELD / SLISE)">Hidrojen Gaz Jeti (H₂ • ACME E-FIELD / SLISE)</option>
+                            <option value="n_heptane" data-tr="n-Heptan (C₇H₁₆ • FLEX Sıvı Damlacık)" data-en="n-Heptane (C₇H₁₆ • FLEX Liquid Droplet)">n-Heptan (C₇H₁₆ • FLEX Sıvı Damlacık)</option>
+                            <option value="methanol" data-tr="Metanol (CH₃OH • FLEX-2 Damlacık)" data-en="Methanol (CH₃OH • FLEX-2 Droplet)">Metanol (CH₃OH • FLEX-2 Damlacık)</option>
+                            <option value="pmma" data-tr="PMMA Akrilik Çubuk (BASS / SoFIE)" data-en="Cast PMMA Rod (BASS / SoFIE)">PMMA Akrilik Çubuk (BASS / SoFIE)</option>
+                            <option value="sibal" data-tr="Sibal Kumaş Plaka (Saffire)" data-en="Sibal Cloth Slab (Saffire)">Sibal Kumaş Plaka (Saffire)</option>
+                            <option value="nomex" data-tr="Nomex HT90-40 (Uzay Giysisi Kumaşı)" data-en="Nomex HT90-40 (EVA Suit Fabric)">Nomex HT90-40 (Uzay Giysisi Kumaşı)</option>
+                            <option value="propane_cfig" data-tr="Propan Küresel Brülör (ACME CFI-G)" data-en="Propane Spherical Burner (ACME CFI-G)">Propan Küresel Brülör (ACME CFI-G)</option>
+                            <option value="hydrogen" data-tr="Hidrojen Gaz Jeti (ACME / SLISE)" data-en="Hydrogen Gas Jet (ACME / SLISE)">Hidrojen Gaz Jeti (ACME / SLISE)</option>
                         </select>
                     </div>
 
                     <div class="control-group">
                         <div class="control-label">
-                            <span id="lbl-gravity" data-i18n="lbl_gravity">Yerçekimi İvmesi (0G ISS • 0.16G Ay • 0.38G Mars • 1G)</span>
+                            <span id="lbl-gravity" data-i18n="lbl_gravity">Yerçekimi İvmesi</span>
                             <span class="control-val" id="val-gravity">0.00 G</span>
                         </div>
                         <input type="range" class="nasa-slider" id="inp-gravity" min="0" max="1.0" step="0.01" value="0.0" />
@@ -124,7 +124,7 @@
 
                     <div class="control-group">
                         <div class="control-label">
-                            <span id="lbl-oxygen" data-i18n="lbl_oxygen">Oksijen Konsantrasyonu (%8 – %100 Saf O₂)</span>
+                            <span id="lbl-oxygen" data-i18n="lbl_oxygen">Oksijen Oranı</span>
                             <span class="control-val" id="val-oxygen">%21.0</span>
                         </div>
                         <input type="range" class="nasa-slider" id="inp-oxygen" min="8" max="100" step="0.5" value="21.0" />
@@ -132,7 +132,7 @@
 
                     <div class="control-group">
                         <div class="control-label">
-                            <span id="lbl-pressure" data-i18n="lbl_pressure">Basınç (4.3 psia Giysi – 14.7 psia ISS)</span>
+                            <span id="lbl-pressure" data-i18n="lbl_pressure">Ortam Basıncı</span>
                             <span class="control-val" id="val-pressure">14.7 psia</span>
                         </div>
                         <input type="range" class="nasa-slider" id="inp-pressure" min="3.8" max="18.0" step="0.1" value="14.7" />
@@ -140,7 +140,7 @@
 
                     <div class="control-group">
                         <div class="control-label">
-                            <span id="lbl-airflow" data-i18n="lbl_airflow">Havalandırma Akış Hızı (cm/s)</span>
+                            <span id="lbl-airflow" data-i18n="lbl_airflow">Hava Akış Hızı</span>
                             <span class="control-val" id="val-airflow">0.2 cm/s</span>
                         </div>
                         <input type="range" class="nasa-slider" id="inp-airflow" min="0.0" max="40.0" step="0.2" value="0.2" />
@@ -148,37 +148,37 @@
 
                     <div class="control-group">
                         <div class="control-label">
-                            <span id="lbl-droplet" data-i18n="lbl_droplet">Damlacık / Numune / Brülör Çapı</span>
+                            <span id="lbl-droplet" data-i18n="lbl_droplet">Numune Çapı</span>
                             <span class="control-val" id="val-droplet">2.8 mm</span>
                         </div>
                         <input type="range" class="nasa-slider" id="inp-droplet" min="1.2" max="6.0" step="0.2" value="2.8" />
                     </div>
 
                     <div class="control-group">
-                        <div class="control-label"><span id="lbl-diluent" data-i18n="lbl_diluent">Seyreltici Kabin Gazı</span></div>
+                        <div class="control-label"><span id="lbl-diluent" data-i18n="lbl_diluent">Seyreltici Gaz</span></div>
                         <select class="nasa-select" id="inp-diluent">
                             <option value="N2" data-tr="Azot (N₂ • Standart Kabin)" data-en="Nitrogen (N₂ • Standard Cabin)">Azot (N₂ • Standart Kabin)</option>
-                            <option value="CO2" data-tr="Karbondioksit (CO₂ • Söndürme Seyreltmesi)" data-en="Carbon Dioxide (CO₂ • Suppression Diluent)">Karbondioksit (CO₂ • Söndürme Seyreltmesi)</option>
-                            <option value="He" data-tr="Helyum (He • Yüksek Isıl Difüzyon)" data-en="Helium (He • High Thermal Diffusivity)">Helyum (He • Yüksek Isıl Difüzyon)</option>
+                            <option value="CO2" data-tr="Karbondioksit (CO₂ • Söndürme)" data-en="Carbon Dioxide (CO₂ • Suppression)">Karbondioksit (CO₂ • Söndürme)</option>
+                            <option value="He" data-tr="Helyum (He • Yüksek Difüzyon)" data-en="Helium (He • High Diffusivity)">Helyum (He • Yüksek Difüzyon)</option>
                         </select>
                     </div>
 
-                    <!-- AKUSTİK SONİFİKASYON PANELİ -->
+                    <!-- ALEV SESLENDİRME PANELİ -->
                     <div class="panel-header" style="margin-top: 14px;">
-                        <span class="panel-title" data-i18n="audio_title">◈ Akustik Telemetri Sonifikasyonu</span>
-                        <button class="btn-secondary" id="btn-audio-toggle" style="padding: 4px 10px; font-size: 11.5px;" data-i18n="audio_start">▸ Sesi Başlat</button>
+                        <span class="panel-title" data-i18n="audio_title">Alev Seslendirme</span>
+                        <button class="btn-secondary" id="btn-audio-toggle" style="padding: 4px 10px; font-size: 11.5px;" data-i18n="audio_start">Sesi Aç</button>
                     </div>
                     <p style="font-size: 11.5px; color: var(--text-muted);" data-i18n="audio_desc">
-                        Sıcaklık ve görünmez Soğuk Alev titreşimlerini gerçek zamanlı akustik frekansa dönüştürür.
+                        Sıcaklık ve görünmez Soğuk Alev titreşimlerini gerçek zamanlı ses frekansına dönüştürür.
                     </p>
                     <canvas class="audio-scope" id="audio-scope-canvas"></canvas>
                 </div>
 
-                <!-- ORTA SÜTUN: 3 BOYUTLU WEBGL ISS CIR YANMA ODASI -->
+                <!-- ORTA SÜTUN: 3B YANMA ODASI -->
                 <div class="panel-box">
                     <div class="panel-header">
-                        <span class="panel-title" id="t-3d-title" data-i18n="chamber_title">◈ 3B ISS Yanma Odası Dijital İkizi (CIR / MSG WebGL)</span>
-                        <span style="font-size: 11.5px; color: var(--text-muted);" id="t-3d-hint" data-i18n="chamber_hint">Fare: 360° Döndür • Tekerlek: Yakınlaştır</span>
+                        <span class="panel-title" id="t-3d-title" data-i18n="chamber_title">3B Yanma Odası</span>
+                        <span style="font-size: 11.5px; color: var(--text-muted);" id="t-3d-hint" data-i18n="chamber_hint">Sürükle: Döndür • Tekerlek: Yakınlaştır</span>
                     </div>
 
                     <div class="chamber-wrapper" id="chamber-viewport-wrap">
@@ -188,10 +188,10 @@
                             <div class="regime-pill" id="hud-regime-badge">0G KÜRESEL DİFÜZYON ALEVİ</div>
                             <div class="camera-toolbar">
                                 <button class="cam-btn" data-cam="front" data-i18n="cam_front">Ön Açı</button>
-                                <button class="cam-btn" data-cam="macro" data-i18n="cam_macro">Makro Çekirdek</button>
+                                <button class="cam-btn" data-cam="macro" data-i18n="cam_macro">Yakın Çekirdek</button>
                                 <button class="cam-btn" data-cam="sensors" data-i18n="cam_sensors">Sensör Açısı</button>
                                 <button class="cam-btn" data-cam="top" data-i18n="cam_top">Üst Kesit</button>
-                                <button class="cam-btn" id="btn-reignite" style="border-color:#f59e0b; color:#fcd34d;" data-i18n="cam_reignite">⌖ Yeniden Ateşle</button>
+                                <button class="cam-btn" id="btn-reignite" style="border-color:#f59e0b; color:#fcd34d;" data-i18n="cam_reignite">Yeniden Ateşle</button>
                             </div>
                         </div>
 
@@ -201,22 +201,21 @@
                     </div>
 
                     <div class="legend-strip">
-                        <span class="legend-item"><span class="legend-dot" style="background:#38bdf8;"></span> <span data-i18n="leg_blue">CH*/OH* Mavi Kemilüminesans</span></span>
-                        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> <span data-i18n="leg_soot">Kurum (Soot) Işıması</span></span>
-                        <span class="legend-item"><span class="legend-dot" style="background:#a855f7;"></span> <span data-i18n="leg_cool">Görünmez Soğuk Alev (UV/IR 550-750 K)</span></span>
-                        <span class="legend-item"><span class="legend-dot" style="background:#d97706;"></span> <span data-i18n="leg_geom">Damlacık / Polimer / Küresel Brülör</span></span>
+                        <span class="legend-item"><span class="legend-dot" style="background:#38bdf8;"></span> <span data-i18n="leg_blue">Mavi Alev</span></span>
+                        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> <span data-i18n="leg_soot">Kurum Işıması</span></span>
+                        <span class="legend-item"><span class="legend-dot" style="background:#a855f7;"></span> <span data-i18n="leg_cool">Soğuk Alev</span></span>
+                        <span class="legend-item"><span class="legend-dot" style="background:#d97706;"></span> <span data-i18n="leg_geom">Yakıt Numunesi</span></span>
                     </div>
 
-                    <!-- NASA KISMİ YERÇEKİMİ (LUCI / FM2) VE EVA UZAY GİYSİSİ BİLİMSEL ŞEFFAFLIK BİLDİRİMİ -->
                     <div class="partial-g-notice" id="partial-g-banner"></div>
 
-                    <!-- ÇOKLU SENSÖR TUTARLILIK GRAFİĞİ -->
+                    <!-- SENSÖR ZAMAN GRAFİĞİ -->
                     <div style="margin-top: 14px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:12.5px; font-weight:700; color:var(--accent-cyan);" data-i18n="chart_sensor_title">
-                                ◈ Çoklu Sensör Tutarlılığı &amp; İki Aşamalı Soğuk Alev Anomali Analizi (0–30 sn)
+                                Sensör Zaman Grafiği
                             </span>
-                            <span style="font-size:11px; color:var(--text-muted);" data-i18n="chart_sensor_sub">Optik Kamera vs. IR Radyometre vs. CO</span>
+                            <span style="font-size:11px; color:var(--text-muted);" data-i18n="chart_sensor_sub">Optik • IR • CO</span>
                         </div>
                         <div class="chart-canvas-wrap">
                             <canvas class="sci-chart" id="chart-multisensor"></canvas>
@@ -224,18 +223,18 @@
                     </div>
                 </div>
 
-                <!-- SAĞ SÜTUN: ANLIK TELEMETRİ KARTLARI & MOC SINIR HARİTASI -->
+                <!-- SAĞ SÜTUN: ANLIK ÖLÇÜMLER & TUTUŞMA SINIR HARİTASI -->
                 <div class="panel-box lab-right-col">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="tel_panel_title">◈ Canlı Yanma Telemetrisi</span>
+                        <span class="panel-title" data-i18n="tel_panel_title">Anlık Ölçümler</span>
                         <button class="btn-primary" id="btn-ai-interpret-sim" style="padding: 6px 11px; font-size: 12px;" data-i18n="btn_ai_interpret">
-                            ⌖ Kanıt Konsolunda Analiz Et
+                            Detaylı Analiz
                         </button>
                     </div>
 
                     <div class="risk-meter-box">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:12px; font-weight:700; color:var(--text-muted);" data-i18n="lbl_risk_score">UZAY ARACI / GİYSİ YANGIN RİSK SKORU</span>
+                            <span style="font-size:12px; font-weight:700; color:var(--text-muted);" data-i18n="lbl_risk_score">YANGIN RİSK SKORU</span>
                             <span id="tel-risk-score" style="font-family:Consolas,monospace; font-size:18px; font-weight:800; color:#fcd34d;">42 / 100</span>
                         </div>
                         <div class="risk-bar-track">
@@ -250,27 +249,27 @@
                             <div class="tel-sub" id="tel-temp-c">1726 °C</div>
                         </div>
                         <div class="tel-card">
-                            <div class="tel-label" data-i18n="card_moc">Kritik Oksijen (MOC)</div>
+                            <div class="tel-label" data-i18n="card_moc">Kritik Oksijen</div>
                             <div class="tel-value" id="tel-moc">%16.4</div>
                             <div class="tel-sub" id="tel-po2">P_O₂: 3.09 psia</div>
                         </div>
                         <div class="tel-card">
-                            <div class="tel-label" data-i18n="card_kburn">D² Yanma Sabiti (K)</div>
+                            <div class="tel-label" data-i18n="card_kburn">Yanma Sabiti</div>
                             <div class="tel-value" id="tel-kburn">0.74 mm²/s</div>
                             <div class="tel-sub" id="tel-lifetime">Ömür: ~10.5 sn</div>
                         </div>
                         <div class="tel-card">
-                            <div class="tel-label" data-i18n="card_spread">Yayılma &amp; Spalding B</div>
+                            <div class="tel-label" data-i18n="card_spread">Yayılma Hızı</div>
                             <div class="tel-value" id="tel-spread">0.55 mm/s</div>
                             <div class="tel-sub" id="tel-radius">B_oq: 6.2 • Rf/Rd: 5.4</div>
                         </div>
                         <div class="tel-card">
-                            <div class="tel-label" data-i18n="card_rad">Radyatif Kayıp (χr)</div>
+                            <div class="tel-label" data-i18n="card_rad">Isıl Kayıp</div>
                             <div class="tel-value" id="tel-radloss">%21.0</div>
                             <div class="tel-sub" id="tel-flux">Isı Akısı: 28.4 kW/m²</div>
                         </div>
                         <div class="tel-card">
-                            <div class="tel-label" data-i18n="card_co">CO, Kurum &amp; Sherwood</div>
+                            <div class="tel-label" data-i18n="card_co">Karbonmonoksit</div>
                             <div class="tel-value" id="tel-co">145 ppm</div>
                             <div class="tel-sub" id="tel-soot">Soot: 0.18 • Sh: 2.08</div>
                         </div>
@@ -279,7 +278,7 @@
                     <div style="margin-top: 10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:12.5px; font-weight:700; color:var(--accent-cyan);" data-i18n="chart_moc_title">
-                                ◈ Tutuşabilirlik Sınır Haritası (0G • 0.16G Ay • 1G Sınırları)
+                                Tutuşma Sınır Haritası
                             </span>
                         </div>
                         <p style="font-size:11.5px; color:var(--text-muted); margin-top:2px;" data-i18n="chart_moc_desc">
@@ -293,21 +292,21 @@
 
             </div>
 
-            <!-- ALT BÖLÜM: ANLIK DEĞİŞEN BİLİMSEL DENKLEM SONUÇ TABLOSU VE CANLI ANALİTİK VERİ SENTEZİ -->
+            <!-- ALT BÖLÜM: FİZİKSEL DENKLEMLER VE ANLIK DEĞERLENDİRME -->
             <div class="lab-bottom-grid">
                 <div class="panel-box">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="formula_table_title">◈ Canlı Fiziksel Denklemler, Boyutsuz Sayılar &amp; Sonuç Tablosu</span>
-                        <span class="preset-badge" id="formula-active-source-badge">Kaynak: 3B Dijital İkiz</span>
+                        <span class="panel-title" data-i18n="formula_table_title">Fiziksel Denklemler</span>
+                        <span class="preset-badge" id="formula-active-source-badge">Kaynak: Yanma Odası</span>
                     </div>
                     <div class="nasa-table-wrap">
                         <table class="nasa-table">
                             <thead>
                                 <tr>
-                                    <th data-i18n="th_law">Fiziksel Yasa / Kriter</th>
-                                    <th data-i18n="th_eq">Matematiksel Denklem</th>
-                                    <th data-i18n="th_val">Anlık Sayısal Sonuç</th>
-                                    <th data-i18n="th_status">Rejim Durumu</th>
+                                    <th data-i18n="th_law">Fiziksel Yasa</th>
+                                    <th data-i18n="th_eq">Denklem</th>
+                                    <th data-i18n="th_val">Sayısal Sonuç</th>
+                                    <th data-i18n="th_status">Durum</th>
                                 </tr>
                             </thead>
                             <tbody id="formula-results-tbody"></tbody>
@@ -317,9 +316,9 @@
 
                 <div class="panel-box">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="live_synthesis_title">◈ Anlık Analitik &amp; Formülsel Veri Sentezi</span>
+                        <span class="panel-title" data-i18n="live_synthesis_title">Anlık Değerlendirme</span>
                         <button class="btn-secondary" id="btn-deep-ai-from-formula" style="padding:4px 10px; font-size:11.5px;" data-i18n="btn_full_ai_report">
-                            ▸ Teknik Sentez Raporu Üret
+                            Tam Rapor
                         </button>
                     </div>
                     <div class="live-formula-commentary" id="live-formula-ai-box">
@@ -328,24 +327,24 @@
                 </div>
             </div>
 
-            <!-- v5.1 KABİN / BASINÇLI GEZGİN / EVA UZAY GİYSİSİ YANGIN SENARYOSU VE MÜDAHALE ZAMAN ÇİZELGESİ -->
+            <!-- YAŞAM DESTEK SAATİ -->
             <div class="panel-box cabin-timeline-panel" id="cabin-timeline-panel">
                 <div class="panel-header" style="flex-wrap:wrap; gap:10px;">
-                    <span class="panel-title" data-i18n="cabin_clock_title">◈ Kabin, Basınçlı Gezgin &amp; EVA Uzay Giysisi Yangın Senaryosu — ECLSS Yaşam Destek Saati</span>
+                    <span class="panel-title" data-i18n="cabin_clock_title">Yaşam Destek Saati</span>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <select class="nasa-select" id="sel-habitat-volume" style="width:auto; padding:5px 9px; font-size:12px;">
-                            <option value="iss_module" data-tr="◈ ISS Kabin Modülü (Destiny • 120 m³)" data-en="◈ ISS Cabin Module (Destiny • 120 m³)">◈ ISS Kabin Modülü (Destiny • 120 m³)</option>
-                            <option value="lunar_hab" data-tr="◈ Artemis Ay Yüzey Üssü (45 m³)" data-en="◈ Artemis Lunar Surface Hab (45 m³)">◈ Artemis Ay Yüzey Üssü (45 m³)</option>
-                            <option value="lunar_rover" data-tr="◈ Basınçlı Ay Gezgini / Rover (14 m³)" data-en="◈ Pressurized Lunar Rover (14 m³)">◈ Basınçlı Ay Gezgini / Rover (14 m³)</option>
-                            <option value="eva_suit" data-tr="◈ EVA Uzay Giysisi İç Hacmi (0.18 m³)" data-en="◈ EVA Spacesuit Free Volume (0.18 m³)">◈ EVA Uzay Giysisi İç Hacmi (0.18 m³)</option>
+                            <option value="iss_module" data-tr="ISS Kabini (120 m³)" data-en="ISS Cabin (120 m³)">ISS Kabini (120 m³)</option>
+                            <option value="lunar_hab" data-tr="Ay Üssü (45 m³)" data-en="Lunar Base (45 m³)">Ay Üssü (45 m³)</option>
+                            <option value="lunar_rover" data-tr="Ay Gezgini (14 m³)" data-en="Lunar Rover (14 m³)">Ay Gezgini (14 m³)</option>
+                            <option value="eva_suit" data-tr="Uzay Giysisi (0.18 m³)" data-en="EVA Suit (0.18 m³)">Uzay Giysisi (0.18 m³)</option>
                         </select>
                         <select class="nasa-select" id="sel-crew-response" style="width:auto; padding:5px 9px; font-size:12px;">
-                            <option value="10" data-tr="▸ +10 sn Hızlı Müdahale (Otomatik HVAC Kesme + Su Sisi)" data-en="▸ +10 s Rapid Action (Auto HVAC Cut + Water Mist)">▸ +10 sn Hızlı Müdahale (Otomatik HVAC Kesme + Su Sisi)</option>
-                            <option value="30" selected data-tr="◈ +30 sn Standart Mürettebat Müdahalesi (SoFIE-MIST PFE)" data-en="◈ +30 s Standard Crew Action (SoFIE-MIST PFE)">◈ +30 sn Standart Mürettebat Müdahalesi (SoFIE-MIST PFE)</option>
-                            <option value="60" data-tr="◆ +60 sn Gecikmeli Müdahale" data-en="◆ +60 s Delayed Crew Response">◆ +60 sn Gecikmeli Müdahale</option>
-                            <option value="999" data-tr="▲ Müdahalesiz Serbest Yanma (Worst-Case)" data-en="▲ Unmitigated Free Burn (Worst-Case)">▲ Müdahalesiz Serbest Yanma (Worst-Case)</option>
+                            <option value="10" data-tr="+10 sn Hızlı Müdahale" data-en="+10 s Rapid Action">+10 sn Hızlı Müdahale</option>
+                            <option value="30" selected data-tr="+30 sn Standart Müdahale" data-en="+30 s Standard Action">+30 sn Standart Müdahale</option>
+                            <option value="60" data-tr="+60 sn Gecikmeli Müdahale" data-en="+60 s Delayed Action">+60 sn Gecikmeli Müdahale</option>
+                            <option value="999" data-tr="Müdahalesiz Yanma" data-en="Unmitigated Burn">Müdahalesiz Yanma</option>
                         </select>
-                        <span class="preset-badge" id="cabin-severity-badge">● HESAPLANIYOR</span>
+                        <span class="preset-badge" id="cabin-severity-badge">HESAPLANIYOR</span>
                     </div>
                 </div>
                 <div id="cabin-timeline-summary" style="font-size:12.8px; color:#e2e8f0; margin-bottom:6px;"></div>
@@ -354,37 +353,36 @@
         </section>
 
         <!-- ================================================================
-             SEKME 2: FİZİK-TEMELLİ DENEY SIRALAMA, DONANIM FİLTRESİ, DENEY İÇİ TESTLER & DÜNYA TRANSFERİ
+             SEKME 2: NASA DENEYLERİ
              ================================================================ -->
         <section class="tab-section" id="tab-rank">
             <div class="panel-box">
                 <div class="ranking-toolbar">
                     <div>
-                        <h2 style="font-size:16px; color:#ffffff;" data-i18n="rank_main_title">◈ Fizik-Temelli NASA PSI Yanma Araştırmaları Sıralama, Donanım &amp; Karşılaştırma Matrisi</h2>
+                        <h2 style="font-size:16px; color:#ffffff;" data-i18n="rank_main_title">Deney Sıralaması</h2>
                         <p style="font-size:12.5px; color:var(--text-muted);" data-i18n="rank_main_desc">
-                            Uzay aracı, uzay istasyonu, EVA uzay giysisi, Ay/Mars üsleri ve basınçlı gezginler için en kritik 15 NASA PSI soruşturmasını termodinamik yakınlık ve TF-IDF ile sıralar, özetler ve kıyaslar.
+                            Uzay istasyonu, uzay giysisi, Ay/Mars üsleri ve basınçlı gezginler için en kritik 15 NASA PSI deneyini fiziksel yakınlık ile sıralar ve karşılaştırır.
                         </p>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                        <input type="text" class="nasa-input" id="inp-rank-query" data-i18n-placeholder="rank_placeholder" placeholder="Örn: soğuk alev, CFI-G %85 O2, DAFT toz, SPICE, rover..." style="width:290px;" />
-                        <button class="btn-primary" id="btn-run-rank" data-i18n="btn_rerank">⌖ Yeniden Sırala</button>
-                        <button class="btn-secondary" id="btn-compare-selected" data-i18n="btn_compare">◈ Seçilenleri Kıyasla</button>
+                        <input type="text" class="nasa-input" id="inp-rank-query" data-i18n-placeholder="rank_placeholder" placeholder="Örn: soğuk alev, CFI-G, DAFT toz, SPICE, gezgin..." style="width:290px;" />
+                        <button class="btn-primary" id="btn-run-rank" data-i18n="btn_rerank">Sırala</button>
+                        <button class="btn-secondary" id="btn-compare-selected" data-i18n="btn_compare">Seçilenleri Kıyasla</button>
                     </div>
                 </div>
 
-                <!-- DONANIM RAF FİLTRE ÇUBUĞU (CIR/MDCA vs MSG/SPICE vs CYGNUS vs CABIN/DAFT) -->
+                <!-- DONANIM FİLTRESİ -->
                 <div class="hw-filter-bar" id="hw-filter-container">
-                    <span style="font-size:12px; font-weight:700; color:var(--accent-cyan); margin-right:4px;" data-i18n="lbl_hw_filter">◈ Uzay Donanım Mimarisi:</span>
-                    <button class="hw-filter-btn active" data-hw="ALL" data-i18n="hw_all">Tümü (15 PSI Soruşturması)</button>
-                    <button class="hw-filter-btn" data-hw="CIR" data-i18n="hw_cir">◈ ISS CIR / MDCA &amp; ACME</button>
-                    <button class="hw-filter-btn" data-hw="MSG" data-i18n="hw_msg">◈ ISS MSG Fan Kanalı (SPICE/BASS/SLISE)</button>
-                    <button class="hw-filter-btn" data-hw="CYGNUS" data-i18n="hw_cygnus">◈ Cygnus Otonom Aracı (Saffire)</button>
-                    <button class="hw-filter-btn" data-hw="CABIN" data-i18n="hw_cabin">◈ Kabin Duman &amp; Toz (SAME / DAFT)</button>
+                    <span style="font-size:12px; font-weight:700; color:var(--accent-cyan); margin-right:4px;" data-i18n="lbl_hw_filter">Donanım Filtresi:</span>
+                    <button class="hw-filter-btn active" data-hw="ALL" data-i18n="hw_all">Tüm Deneyler</button>
+                    <button class="hw-filter-btn" data-hw="CIR" data-i18n="hw_cir">ISS CIR / ACME</button>
+                    <button class="hw-filter-btn" data-hw="MSG" data-i18n="hw_msg">MSG Fan Kanalı</button>
+                    <button class="hw-filter-btn" data-hw="CYGNUS" data-i18n="hw_cygnus">Cygnus Aracı</button>
+                    <button class="hw-filter-btn" data-hw="CABIN" data-i18n="hw_cabin">Duman ve Toz</button>
                 </div>
 
-                <!-- NASA RESMİ KAPSAM SINIRI DİPNOTU (ROKET MOTORLARI VS KABİN GÜVENLİĞİ) -->
                 <div class="scope-footnote-banner" data-i18n="psi_rocket_scope_note">
-                    ◆ <strong>NASA PSI Kapsam Notu:</strong> Roket motorları ve iticilerdeki yüksek gaz hızları yanmayı etkili biçimde yerçekiminden bağımsız kıldığından PSI veritabanı mürettebat kabinleri, uzay giysileri ve yüzey habitatlarındaki yangın güvenliğine odaklanır.
+                    NASA PSI Kapsam Notu: Roket motorları ve iticilerdeki yüksek gaz hızları yanmayı yerçekiminden bağımsız kıldığından PSI veritabanı mürettebat kabinleri, uzay giysileri ve yüzey habitatlarındaki yangın güvenliğine odaklanır.
                 </div>
 
                 <div class="nasa-table-wrap">
@@ -393,42 +391,42 @@
                             <tr>
                                 <th style="width:40px;" data-i18n="th_sel">Seç</th>
                                 <th style="width:50px;" data-i18n="th_rank">Sıra</th>
-                                <th style="width:130px;" data-i18n="th_prog">Program &amp; Donanım</th>
-                                <th data-i18n="th_exp_detail">Hedefler, Numune/Brülör Şekli, Sensörler &amp; Bulgular</th>
+                                <th style="width:130px;" data-i18n="th_prog">Program</th>
+                                <th data-i18n="th_exp_detail">Deney Özeti ve Bulgular</th>
                                 <th style="width:148px;" data-i18n="th_cond">Test Koşulları</th>
-                                <th style="width:132px;" data-i18n="th_prio">Termodinamik &amp; TF-IDF Skoru</th>
-                                <th style="width:142px;" data-i18n="th_evid">Kanıt &amp; Varyasyon</th>
+                                <th style="width:132px;" data-i18n="th_prio">Uyum Skoru</th>
+                                <th style="width:142px;" data-i18n="th_evid">İşlemler</th>
                             </tr>
                         </thead>
                         <tbody id="ranking-tbody"></tbody>
                     </table>
                 </div>
 
-                <!-- SORUŞTURMA İÇİ TEST VARYASYONLARI -->
+                <!-- TEST VARYASYONLARI -->
                 <div class="intra-runs-box" id="intra-runs-section">
                     <div class="panel-header" style="margin-bottom:8px;">
-                        <span class="panel-title" id="intra-runs-title">◈ Soruşturma İçi Test Varyasyonları: Aynı Soruşturmadaki Testler Nasıl Farklıydı ve Nasıl Aynıydı?</span>
+                        <span class="panel-title" id="intra-runs-title">Test Varyasyonları</span>
                         <span class="preset-badge" id="intra-runs-badge">PSI-FLEX-01</span>
                     </div>
                     <p style="font-size:12px; color:var(--text-muted);" id="intra-runs-sub" data-i18n="intra_runs_hint">
-                        Yukarıdaki tablodan herhangi bir deneyin <strong>"◈ Test Varyasyonları"</strong> butonuna tıklayarak aynı donanım içindeki testlerin hangi değişkenlerle farklılaştığını inceleyin:
+                        Yukarıdaki tablodan herhangi bir deneyin "Test Varyasyonları" düğmesine tıklayarak aynı donanım içindeki testlerin nasıl farklılaştığını inceleyin:
                     </p>
                     <div class="intra-runs-grid" id="intra-runs-cards"></div>
                 </div>
 
-                <!-- YAN YANA DENEY KARŞILAŞTIRMA MATRİSİ -->
+                <!-- DENEY KARŞILAŞTIRMASI -->
                 <div id="comparison-section" style="margin-top: 20px;">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="cmp_section_title">◈ Farklı Soruşturmalar Arası Benzerlik &amp; Farklılık Karşılaştırması</span>
+                        <span class="panel-title" data-i18n="cmp_section_title">Deney Karşılaştırması</span>
                     </div>
                     <div id="comparison-synthesis-banner" style="padding:11px 14px; background:rgba(14,165,233,0.12); border:1px solid rgba(56,189,248,0.35); border-radius:8px; font-size:13px;"></div>
                     <div class="compare-cards-grid" id="comparison-cards-container"></div>
                 </div>
 
-                <!-- UZAYDAN DÜNYA'YA YANGIN GÜVENLİĞİ TRANSFER MATRİSİ -->
+                <!-- DÜNYA UYGULAMALARI -->
                 <div style="margin-top: 22px;">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="earth_section_title">◈ PSI Verilerinin Dünya'daki Yangın Güvenliği Uygulamaları (Su Sisi • Duman Algılama • İtfaiye Teçhizatı)</span>
+                        <span class="panel-title" data-i18n="earth_section_title">Dünya Uygulamaları</span>
                     </div>
                     <div class="transfer-grid" id="earth-transfer-container"></div>
                 </div>
@@ -436,43 +434,43 @@
         </section>
 
         <!-- ================================================================
-             SEKME 3: SÜREKLİ TELEMETRİ AKIŞI, CANLI NASA API VE ÇOK MODLU ÇÖZÜMLEYİCİ
+             SEKME 3: VERİ VE GÖRÜNTÜ
              ================================================================ -->
         <section class="tab-section" id="tab-live">
 
-            <!-- ÜST TAM GENİŞLİK PANEL: SÜREKLİ CANLI WEB VERİ AKIŞI -->
+            <!-- CANLI NASA AKIŞI -->
             <div class="panel-box" id="continuous-stream-panel" style="margin-bottom: 16px;">
                 <div class="panel-header">
-                    <span class="panel-title" data-i18n="stream_panel_title">◈ Sürekli Canlı Telemetri Akışı &amp; Otonom Simülasyon Besleyici</span>
+                    <span class="panel-title" data-i18n="stream_panel_title">Canlı NASA Akışı</span>
                     <span class="preset-badge" id="stream-state-badge">Kapalı (Hazır)</span>
                 </div>
                 <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;" data-i18n="stream_panel_desc">
-                    Seçtiğiniz NASA veri tabanından (NTRS / OSDR-PSI) veya özel bir web sitesi / JSON / CSV telemetri URL'sinden belirlediğiniz aralıklarla kesintisiz veri çeker; veriler değiştikçe 3B simülasyonu, grafikleri ve sonuç tablolarını anlık olarak günceller.
+                    Seçtiğiniz NASA veri tabanından (NTRS / OSDR-PSI) veya özel bir JSON / CSV bağlantısından belirlediğiniz aralıklarla veri çeker ve simülasyonu günceller.
                 </p>
 
                 <div style="display:grid; grid-template-columns: 220px 1fr 140px auto auto; gap:8px; align-items:center; flex-wrap:wrap;">
                     <select class="nasa-select" id="sel-stream-source">
-                        <option value="ntrs" data-tr="◈ NASA NTRS Canlı Akışı" data-en="◈ NASA NTRS Live Stream">◈ NASA NTRS Canlı Akışı</option>
-                        <option value="osdr" data-tr="◈ NASA OSDR / PSI Veri Akışı" data-en="◈ NASA OSDR / PSI Data Stream">◈ NASA OSDR / PSI Veri Akışı</option>
-                        <option value="custom_url" data-tr="◈ Özel Web / JSON / CSV URL" data-en="◈ Custom Web / JSON / CSV URL">◈ Özel Web / JSON / CSV URL</option>
+                        <option value="ntrs" data-tr="NASA NTRS Akışı" data-en="NASA NTRS Stream">NASA NTRS Akışı</option>
+                        <option value="osdr" data-tr="NASA PSI Akışı" data-en="NASA PSI Stream">NASA PSI Akışı</option>
+                        <option value="custom_url" data-tr="Özel Veri Adresi" data-en="Custom Data URL">Özel Veri Adresi</option>
                     </select>
-                    <input type="text" class="nasa-input" id="inp-stream-target" value="auto" data-i18n-placeholder="stream_target_ph" placeholder="Sorgu ('auto' = tüm NASA deneylerini döngüsel tarar) veya https://... URL girin" />
+                    <input type="text" class="nasa-input" id="inp-stream-target" value="auto" data-i18n-placeholder="stream_target_ph" placeholder="Sorgu ('auto' = tüm NASA deneylerini tarar) veya https://... adresi girin" />
                     <select class="nasa-select" id="sel-stream-interval">
                         <option value="15" data-tr="Her 15 Saniye" data-en="Every 15 Seconds">Her 15 Saniye</option>
                         <option value="25" selected data-tr="Her 25 Saniye" data-en="Every 25 Seconds">Her 25 Saniye</option>
                         <option value="45" data-tr="Her 45 Saniye" data-en="Every 45 Seconds">Her 45 Saniye</option>
                         <option value="90" data-tr="Her 90 Saniye" data-en="Every 90 Seconds">Her 90 Saniye</option>
                     </select>
-                    <button class="btn-primary" id="btn-stream-toggle" data-i18n="btn_stream_start">▸ Sürekli Akışı Başlat</button>
-                    <button class="btn-secondary" id="btn-stream-poll-now" data-i18n="btn_stream_now">⌖ Şimdi Çek</button>
+                    <button class="btn-primary" id="btn-stream-toggle" data-i18n="btn_stream_start">Akışı Başlat</button>
+                    <button class="btn-secondary" id="btn-stream-poll-now" data-i18n="btn_stream_now">Şimdi Çek</button>
                 </div>
 
                 <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                     <label style="display:inline-flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer; color:#e2e8f0;">
                         <input type="checkbox" id="chk-stream-autosync" checked />
-                        <span data-i18n="chk_stream_sync">◈ Web'den yeni veri geldikçe 3B Yanma Odası, Grafikler ve Sonuç Tablolarını Anlık Senkronize Et</span>
+                        <span data-i18n="chk_stream_sync">Yeni verileri 3B Yanma Odasına otomatik uygula</span>
                     </label>
-                    <span id="stream-meta-info" style="font-size:11.5px; color:var(--text-muted);" data-i18n="stream_not_started">Henüz akış döngüsü başlatılmadı.</span>
+                    <span id="stream-meta-info" style="font-size:11.5px; color:var(--text-muted);" data-i18n="stream_not_started">Henüz akış başlatılmadı.</span>
                 </div>
 
                 <div id="stream-events-box" style="margin-top:12px; max-height:230px; overflow-y:auto;"></div>
@@ -480,22 +478,22 @@
 
             <div class="two-col-grid">
 
-                <!-- SOL: MANUEL CANLI NASA NTRS & OSDR/PSI ARAMA -->
+                <!-- SOL: NASA ARŞİV SORGUSU -->
                 <div class="panel-box">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="live_search_title">◈ Canlı NASA NTRS &amp; OSDR/PSI Veri Tabanı Sorgusu</span>
+                        <span class="panel-title" data-i18n="live_search_title">NASA Arşiv Sorgusu</span>
                         <span class="preset-badge" id="live-api-badge">Hazır</span>
                     </div>
                     <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;" data-i18n="live_search_desc">
-                        Doğrudan resmi ntrs.nasa.gov ve osdr.nasa.gov REST API uç noktalarından gerçek zamanlı bilimsel rapor, özet ve deney kayıtlarını sorgulayın.
+                        Doğrudan resmi ntrs.nasa.gov ve osdr.nasa.gov servislerinden gerçek zamanlı bilimsel rapor ve deney kayıtlarını sorgulayın.
                     </p>
                     <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
                         <input type="text" class="nasa-input" id="inp-live-nasa-q" value="FLEX microgravity droplet cool flame" style="flex:1; min-width:220px;" />
                         <select class="nasa-select" id="sel-live-source" style="width:170px;">
                             <option value="ntrs" data-tr="NASA NTRS Makaleleri" data-en="NASA NTRS Papers">NASA NTRS Makaleleri</option>
-                            <option value="osdr" data-tr="NASA OSDR / PSI Veri" data-en="NASA OSDR / PSI Datasets">NASA OSDR / PSI Veri</option>
+                            <option value="osdr" data-tr="NASA PSI Veri Kayıtları" data-en="NASA PSI Datasets">NASA PSI Veri Kayıtları</option>
                         </select>
-                        <button class="btn-primary" id="btn-fetch-nasa-live" data-i18n="btn_fetch_live">▸ Canlı Çek</button>
+                        <button class="btn-primary" id="btn-fetch-nasa-live" data-i18n="btn_fetch_live">Arşivde Ara</button>
                     </div>
 
                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
@@ -510,43 +508,43 @@
                     <div id="live-nasa-results-list" style="max-height:460px; overflow-y:auto;"></div>
                 </div>
 
-                <!-- SAĞ: ÇOK MODLU DOSYA (.PDF/.CSV/.JSON/.TXT), ALEV RESMİ (.PNG/.JPG) & WEB ÇÖZÜMLEYİCİ -->
+                <!-- SAĞ: DOSYA VE FOTOĞRAF ANALİZİ -->
                 <div class="panel-box">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="ingest_panel_title">◫ Çok Modlu Dosya, Alev Görüntüsü &amp; Web Telemetri Çözümleyici</span>
+                        <span class="panel-title" data-i18n="ingest_panel_title">Dosya ve Fotoğraf Analizi</span>
                     </div>
                     <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;" data-i18n="ingest_panel_desc">
-                        Alev fotoğraflarını (.png, .jpg, .webp), bilimsel veri tablolarını (.csv, .json, .pdf, .txt) veya makale bağlantılarını yükleyin; çıkarılan parametreler 3B odaya ve vektör indeksine aktarılır.
+                        Alev fotoğraflarını (.png, .jpg) veya veri tablolarını (.csv, .json, .pdf, .txt) yükleyin; çıkarılan parametreler 3B odaya aktarılır.
                     </p>
 
                     <div class="control-group">
-                        <div class="control-label"><span data-i18n="lbl_scrape_url">Bilimsel Web Sayfası / JSON / CSV / PDF URL Çözümle</span></div>
+                        <div class="control-label"><span data-i18n="lbl_scrape_url">Web Bağlantısı Çözümle</span></div>
                         <div style="display:flex; gap:8px;">
                             <input type="text" class="nasa-input" id="inp-scrape-url" placeholder="https://ntrs.nasa.gov/citations/20140010282" />
-                            <button class="btn-secondary" id="btn-scrape-url" data-i18n="btn_scrape_url">Çözümle &amp; 3B'ye Aktar</button>
+                            <button class="btn-secondary" id="btn-scrape-url" data-i18n="btn_scrape_url">3B'ye Aktar</button>
                         </div>
                     </div>
 
                     <div class="control-group" style="margin-top:14px;">
-                        <div class="control-label"><span data-i18n="lbl_choose_file">Yerel Veri Dosyası veya Alev Görüntüsü Seç (.png, .jpg, .csv, .json, .pdf, .txt)</span></div>
+                        <div class="control-label"><span data-i18n="lbl_choose_file">Veri Dosyası veya Fotoğraf Seç</span></div>
                         <input type="file" class="nasa-input" id="inp-doc-file" accept="image/*,.pdf,.txt,.csv,.json,.md" />
                         <label style="display:inline-flex; align-items:center; gap:7px; font-size:12px; color:#cbd5e1; margin-top:7px; cursor:pointer;">
                             <input type="checkbox" id="chk-media-autosync" checked />
-                            <span data-i18n="chk_media_sync">Çıkarılan verileri otomatik olarak 3B Yanma Odası ve Tablolara uygula</span>
+                            <span data-i18n="chk_media_sync">Çıkarılan verileri otomatik olarak 3B Yanma Odasına uygula</span>
                         </label>
                         <button class="btn-primary" id="btn-upload-doc" style="margin-top:8px; width:100%;" data-i18n="btn_upload_doc">
-                            ▸ Dosya / Görüntüyü Analiz Et, 3B Odaya &amp; Vektör İndeksine Aktar
+                            Dosyayı Analiz Et
                         </button>
                     </div>
 
                     <div id="media-analysis-result-box"></div>
 
                     <div class="panel-header" style="margin-top:16px;">
-                        <span class="panel-title" data-i18n="rag_test_title">⌖ Semantik Vektör Korpusu Sorgusu</span>
+                        <span class="panel-title" data-i18n="rag_test_title">Metin Arama</span>
                     </div>
                     <div style="display:flex; gap:8px; margin-bottom:10px;">
-                        <input type="text" class="nasa-input" id="inp-rag-search" data-i18n-placeholder="rag_search_ph" placeholder="Vektör korpusunda kavram ara (TR veya EN)..." />
-                        <button class="btn-secondary" id="btn-rag-search" data-i18n="btn_rag_search">Sorgula</button>
+                        <input type="text" class="nasa-input" id="inp-rag-search" data-i18n-placeholder="rag_search_ph" placeholder="Deney kayıtlarında kavram ara..." />
+                        <button class="btn-secondary" id="btn-rag-search" data-i18n="btn_rag_search">Ara</button>
                     </div>
                     <div id="rag-search-results" style="max-height:200px; overflow-y:auto;"></div>
                 </div>
@@ -555,39 +553,39 @@
         </section>
 
         <!-- ================================================================
-             SEKME 4: KANIT SENTEZİ & KARAR DESTEK KONSOLU
+             SEKME 4: MÜHENDİSLİK ANALİZİ
              ================================================================ -->
         <section class="tab-section" id="tab-copilot">
             <div class="copilot-layout">
 
-                <!-- SOL: HAZIR MÜHENDİSLİK ANALİZ PROTOKOLLERİ VE ÇOK MODLU BAĞLAM EKLEME -->
+                <!-- SOL: HAZIR SORULAR VE DOSYA EKLEME -->
                 <div class="panel-box">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="copilot_tasks_title">◈ Hazır Mühendislik Analiz Protokolleri</span>
+                        <span class="panel-title" data-i18n="copilot_tasks_title">Hazır Sorular</span>
                     </div>
                     <div class="preset-list">
                         <button class="preset-btn copilot-prompt-btn" data-prompt-tr="Mevcut 3B yanma odası telemetrisini ve boyutsuz sayıları (K, B_oq, Sh, Ra, Ri, Da, χ_r, MOC) formüllerle analiz et; en yakın NASA PSI deneylerini sıralayarak uzay aracı yangın güvenliği ve Dünya transferi önerilerini sun." data-prompt-en="Analyze my active 3D combustion chamber telemetry and dimensionless numbers (K, B_oq, Sh, Ra, Ri, Da, χ_r, MOC) using governing equations; rank matching NASA PSI investigations and provide spacecraft fire safety & Earth transfer insights.">
-                            <span data-i18n="cp_btn_1">◈ Aktif 3B &amp; Denklemleri Kanıtlarla Sentezle</span>
+                            <span data-i18n="cp_btn_1">Aktif Odayı Değerlendir</span>
                         </button>
                         <button class="preset-btn copilot-prompt-btn" data-prompt-tr="EVA uzay giysisi (4.3 psia, %100 O2), Ay Üssü / Basınçlı Gezgin (10.2 psia, %32 O2) ve ACME CFI-G (%85 O2) atmosferlerini standart ISS atmosferiyle (14.7 psia, %21 O2) kısmi oksijen basıncı ve yanıcılık riski açısından kıyasla." data-prompt-en="Compare EVA Spacesuit (4.3 psia, 100% O2), Lunar Base / Pressurized Rover (10.2 psia, 32% O2), and ACME CFI-G (85% O2) atmospheres against standard ISS air (14.7 psia, 21% O2) in terms of P_O2, pre-breathe tradeoffs, and flame spread.">
-                            <span data-i18n="cp_btn_2">◈ Uzay Giysisi (%100 O₂) &amp; Ay Gezgini Kıyasla</span>
+                            <span data-i18n="cp_btn_2">Giysi ve Gezgin Kıyasla</span>
                         </button>
                         <button class="preset-btn copilot-prompt-btn" data-prompt-tr="NASA PSI veritabanında kısmi yerçekimi (Ay 0.16G ve Mars 0.38G) verilerinin mevcut durumunu, beklenen LUCI ve FM2 deneylerini, 0G-1G sınırlandırma (bounding) yöntemini ve ACME E-FIELD iyon rüzgarı taklidini açıkla." data-prompt-en="Explain the current partial-gravity (Lunar 0.16G & Martian 0.38G) data gap in NASA PSI, upcoming LUCI and FM2 experiments, how 0G and 1G bound intermediate flammability, and ACME E-FIELD ionic-wind emulation.">
-                            <span data-i18n="cp_btn_3">◈ Kısmi Yerçekimi (LUCI/FM2 &amp; E-FIELD) Analizi</span>
+                            <span data-i18n="cp_btn_3">Kısmi Yerçekimi Analizi</span>
                         </button>
                         <button class="preset-btn copilot-prompt-btn" data-prompt-tr="FLEX, CFI ve ACME CFI-G deneylerindeki görünmez Soğuk Alev (Cool Flame) rejimini, radyatif kayıp kesri (χ_r) ve DAFT/SAME toz-duman ayrımı sensör mimarisiyle açıkla." data-prompt-en="Explain invisible Cool Flame NTC regimes across FLEX, CFI, and ACME CFI-G via radiative loss χ_r, alongside DAFT/SAME multi-channel smoke vs. lunar-dust sensor discrimination.">
-                            <span data-i18n="cp_btn_4">◈ Görünmez Soğuk Alev &amp; DAFT Duman/Toz Sensörü</span>
+                            <span data-i18n="cp_btn_4">Soğuk Alev ve Sensörler</span>
                         </button>
                         <button class="preset-btn copilot-prompt-btn" data-prompt-tr="İnsanlı uzay araçlarında Halon 1301 neden yasaktır? SoFIE-MIST ince su sisi, HVAC kapatma protokolü ve NASA teknolojilerinin Dünya'daki itfaiyeci giysileri, hava tankları ve duman dedektörlerine katkılarını açıkla." data-prompt-en="Why is Halon 1301 strictly banned in crewed spacecraft? Compare SoFIE-MIST fine water mist and HVAC shutoff, and detail NASA spinoffs to terrestrial smoke detectors, firefighter turnout gear, and SCBA air tanks.">
-                            <span data-i18n="cp_btn_5">◈ Su Sisi (SoFIE-MIST) &amp; İtfaiye Teknoloji Transferi</span>
+                            <span data-i18n="cp_btn_5">Su Sisi ve İtfaiye</span>
                         </button>
                     </div>
 
                     <div class="panel-header" style="margin-top:14px;">
-                        <span class="panel-title" data-i18n="copilot_attach_title">◫ Analize Dosya veya Alev Görüntüsü Bağla</span>
+                        <span class="panel-title" data-i18n="copilot_attach_title">Dosya Ekle</span>
                     </div>
                     <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px;" data-i18n="copilot_attach_desc">
-                        Alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.pdf/.json/.txt) seçtiğinizde hem 3B simülasyon güncellenir hem de denklemlerle sentezlenir:
+                        Alev fotoğrafı (.png/.jpg) veya veri dosyası (.csv/.pdf/.json/.txt) seçtiğinizde hem 3B simülasyon güncellenir hem de denklemlerle değerlendirilir:
                     </p>
                     <input type="file" class="nasa-input" id="inp-chat-image" accept="image/*,.csv,.json,.pdf,.txt,.md" />
                     <div id="chat-image-status" style="font-size:11.5px; color:var(--accent-emerald); margin-top:6px;"></div>
@@ -595,62 +593,63 @@
                     <div style="margin-top:14px; display:flex; align-items:center; gap:8px;">
                         <input type="checkbox" id="chk-deep-6stage" checked />
                         <label for="chk-deep-6stage" style="font-size:12px; color:var(--text-main); cursor:pointer;" data-i18n="chk_6stage">
-                            ◈ 6-Katmanlı Denklem &amp; NASA-STD-6001B Halon Denetçisi Aktif
+                            NASA-STD-6001B Güvenlik Denetimi Aktif
                         </label>
                     </div>
                 </div>
 
-                <!-- SAĞ: KANIT SENTEZİ VE KARAR DESTEK PENCERESİ -->
+                <!-- SAĞ: MÜHENDİSLİK ANALİZ PENCERESİ -->
                 <div class="chat-window">
                     <div class="chat-topbar">
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:12px; font-weight:700; color:var(--accent-cyan);" data-i18n="lbl_active_engine">◈ Aktif Sentez Çekirdeği:</span>
-                            <select class="nasa-select" id="sel-copilot-provider" style="min-width:340px; max-width:410px; width:auto; padding:5px 10px; font-size:12px;">
-                                <option value="auto" data-tr="◈ Otomatik (Analitik Fizik + Aktif Çıkarım Çekirdeği)" data-en="◈ Auto (Analytical Solver + Active Inference Kernel)">◈ Otomatik (Analitik Fizik + Aktif Çıkarım Çekirdeği)</option>
-                                <option value="ollama" data-tr="◈ Yerel Çevrimdışı Ollama (Derin Uzay Otonom Modu)" data-en="◈ Local Offline Ollama (Deep-Space Autonomous Mode)">◈ Yerel Çevrimdışı Ollama (Derin Uzay Otonom Modu)</option>
-                                <option value="antigravity" data-tr="◈ Yerel Sistem Çıkarım Köprüsü (CLI / SDK)" data-en="◈ Local System Inference Bridge (CLI / SDK)">◈ Yerel Sistem Çıkarım Köprüsü (CLI / SDK)</option>
-                                <option value="gemini" data-tr="◈ Google Gemini Bulut Geçidi (REST)" data-en="◈ Google Gemini Cloud Gateway (REST)">◈ Google Gemini Bulut Geçidi (REST)</option>
-                                <option value="openrouter" data-tr="◈ OpenRouter Çoklu-Model Geçidi" data-en="◈ OpenRouter Multi-Model Gateway">◈ OpenRouter Çoklu-Model Geçidi</option>
+                            <span style="font-size:12px; font-weight:700; color:var(--accent-cyan);" data-i18n="lbl_active_engine">Hesaplama Modu:</span>
+                            <select class="nasa-select" id="sel-copilot-provider" style="min-width:300px; max-width:390px; width:auto; padding:5px 10px; font-size:12px;">
+                                <option value="auto" data-tr="Otomatik (Fizik Çözücü + Aktif Motor)" data-en="Auto (Physics Solver + Active Engine)">Otomatik (Fizik Çözücü + Aktif Motor)</option>
+                                <option value="physics" data-tr="Analitik Fizik Çözücü" data-en="Analytical Physics Solver">Analitik Fizik Çözücü</option>
+                                <option value="ollama" data-tr="Çevrimdışı Yerel Model" data-en="Offline Local Model">Çevrimdışı Yerel Model</option>
+                                <option value="antigravity" data-tr="Yerel Sistem Köprüsü" data-en="Local System Bridge">Yerel Sistem Köprüsü</option>
+                                <option value="gemini" data-tr="Google Gemini Geçidi" data-en="Google Gemini Gateway">Google Gemini Geçidi</option>
+                                <option value="openrouter" data-tr="OpenRouter Geçidi" data-en="OpenRouter Gateway">OpenRouter Geçidi</option>
                             </select>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="font-size:11.5px; color:var(--text-muted);" id="copilot-live-context-tag" data-i18n="copilot_ctx_tag">
-                                Canlı 3B Telemetri + 15 PSI Deneyi + Denklem Bağlamı Aktif
+                                3B Yanma Odası ve 15 PSI Deneyi Bağlı
                             </span>
-                            <button class="btn-secondary" id="btn-clear-chat" style="padding:4px 9px; font-size:11px;" data-i18n="btn_clear_chat">✕ Sıfırla</button>
+                            <button class="btn-secondary" id="btn-clear-chat" style="padding:4px 9px; font-size:11px;" data-i18n="btn_clear_chat">Sıfırla</button>
                         </div>
                     </div>
 
                     <div class="chat-messages" id="chat-messages-box">
                         <div class="msg-bubble msg-ai console-readiness-card" id="welcome-ai-bubble">
-                            <h3 data-i18n="welcome_title">◈ ALTAR-NASA // KANIT SENTEZİ VE KARAR DESTEK KONSOLU [v5.1]</h3>
+                            <h3 data-i18n="welcome_title">Mühendislik Analizi ve Karar Desteği</h3>
                             <div class="console-readiness-grid">
                                 <div class="console-kv-item">
                                     <div class="console-kv-label" data-i18n="kv_solver_lbl">SAYISAL ÇÖZÜCÜ</div>
-                                    <div class="console-kv-val" data-i18n="kv_solver_val">d² • B_oq • Sh • Da • MOC [AKTİF]</div>
+                                    <div class="console-kv-val" data-i18n="kv_solver_val">d² • B_oq • Sh • Da • MOC</div>
                                 </div>
                                 <div class="console-kv-item">
-                                    <div class="console-kv-label" data-i18n="kv_corpus_lbl">REFERANS KORPUSU</div>
+                                    <div class="console-kv-label" data-i18n="kv_corpus_lbl">VERİ KAYNAKLARI</div>
                                     <div class="console-kv-val">15 NASA PSI + NTRS + OSDR</div>
                                 </div>
                                 <div class="console-kv-item">
-                                    <div class="console-kv-label" data-i18n="kv_auditor_lbl">GÜVENLİK DENETÇİSİ</div>
+                                    <div class="console-kv-label" data-i18n="kv_auditor_lbl">GÜVENLİK STANDARDI</div>
                                     <div class="console-kv-val">NASA-STD-6001B • SMAC 125 ppm</div>
                                 </div>
                             </div>
                             <p data-i18n="welcome_p1">
-                                Telemetri bağlamı kilitlendi. Bu konsol; aktif 3B yanma odası durum vektörünü, boyutsuz taşınım sayılarını, ISS uçuş doğrulama kalıntılarını (R² / RMSE) ve 15 doğrulanmış NASA PSI soruşturmasını deterministik fizik çözücü ve çevrimdışı/hibrit çıkarım katmanlarıyla sentezler.
+                                Bu modül; aktif 3B yanma odası durumunu, boyutsuz taşınım sayılarını, ISS uçuş doğrulama sonuçlarını (R² / RMSE) ve 15 doğrulanmış NASA PSI deneyini analitik çözücü üzerinden değerlendirir.
                             </p>
                             <p style="margin-top:6px;" data-i18n="welcome_p2">
-                                Uzay istasyonları (ISS), EVA uzay giysileri (%100 O₂ @ 4.3 psia), Ay/Mars yüzey habitatları ve basınçlı gezginler (10.2 psia) için rejim sınırları, soğuk alev anomalileri ve SoFIE-MIST söndürme protokollerini sorgulayabilirsiniz.
+                                Uzay istasyonları (ISS), EVA uzay giysileri (%100 O₂ @ 4.3 psia), Ay/Mars yüzey üsleri ve basınçlı gezginler (10.2 psia) için tutuşma sınırlarını, soğuk alev davranışını ve su sisi protokollerini sorgulayabilirsiniz.
                             </p>
                         </div>
                     </div>
 
                     <div class="chat-input-bar">
-                        <input type="text" class="nasa-input" id="inp-chat-msg" data-i18n-placeholder="chat_input_ph" placeholder="Mikroçekim yanma denklemleri, EVA giysisi/Ay gezgini rejimi veya NASA PSI kanıt sorgusu girin..." />
-                        <button class="btn-danger" id="btn-cancel-chat" style="display:none;" data-i18n="btn_stop_chat">■ Durdur</button>
-                        <button class="btn-primary" id="btn-send-chat" data-i18n="btn_send_chat">Analizi Çalıştır ▸</button>
+                        <input type="text" class="nasa-input" id="inp-chat-msg" data-i18n-placeholder="chat_input_ph" placeholder="Yanma denklemleri, uzay giysisi/gezgin atmosferi veya NASA PSI deney sorusu yazın..." />
+                        <button class="btn-danger" id="btn-cancel-chat" style="display:none;" data-i18n="btn_stop_chat">Durdur</button>
+                        <button class="btn-primary" id="btn-send-chat" data-i18n="btn_send_chat">Analiz Et</button>
                     </div>
                 </div>
 
@@ -658,65 +657,66 @@
         </section>
 
         <!-- ================================================================
-             SEKME 5: SİSTEM KALİBRASYONU, DOĞRULAMA KISITLARI VE ÇEVRİMDIŞI ÇIKARIM
+             SEKME 5: DOĞRULAMA VE AYARLAR
              ================================================================ -->
         <section class="tab-section" id="tab-settings">
             <div class="settings-grid">
 
-                <!-- ÜST TAM GENİŞLİK MODÜL: NASA-STD-6001B & PSI FİZİKSEL DOĞRULAMA KISITLARI MATRİSİ -->
+                <!-- ÜST TAM GENİŞLİK MODÜL: FİZİKSEL KURALLAR -->
                 <div class="panel-box" style="grid-column: 1 / -1;">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="set_card3_title">◈ NASA-STD-6001B &amp; PSI Fiziksel Doğrulama Kısıtları Matrisi (CON-01 .. CON-09)</span>
-                        <span class="preset-badge" data-i18n="con_enforced_badge">ZORUNLU DENETİM AKTİF</span>
+                        <span class="panel-title" data-i18n="set_card3_title">Fiziksel Kurallar</span>
+                        <span class="preset-badge" data-i18n="con_enforced_badge">AKTİF DENETİM</span>
                     </div>
                     <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;" data-i18n="set_card3_desc">
-                        Aşağıdaki taşınım yasaları, boyutsuz rejim sınırları ve uçuş güvenliği kısıtları analitik fizik çekirdeği ve tüm kanıt sentez katmanlarında zorunlu olarak denetlenmektedir:
+                        Aşağıdaki taşınım yasaları, boyutsuz rejim sınırları ve NASA-STD-6001B uçuş güvenliği kuralları tüm hesaplama adımlarında zorunlu olarak denetlenmektedir:
                     </p>
                     <div id="directives-list-container"></div>
                 </div>
 
-                <!-- ORTA SOL MODÜL: SAYISAL ÇÖZÜCÜ KALİBRASYONU & SENTEZ ÇEKİRDEĞİ SEÇİMİ -->
+                <!-- ORTA SOL MODÜL: ÇÖZÜCÜ DURUMU -->
                 <div class="panel-box">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="set_card1_title">◈ Sayısal Çözücü Kalibrasyonu &amp; Sentez Çekirdeği</span>
-                        <button class="btn-secondary" id="btn-refresh-ollama" style="padding:4px 10px; font-size:11.5px;" data-i18n="btn_check_all">⌖ Durumu Denetle</button>
+                        <span class="panel-title" data-i18n="set_card1_title">Çözücü Durumu</span>
+                        <button class="btn-secondary" id="btn-refresh-ollama" style="padding:4px 10px; font-size:11.5px;" data-i18n="btn_check_all">Durumu Yenile</button>
                     </div>
 
                     <div class="solver-spec-grid">
                         <div class="solver-spec-card">
-                            <div class="spec-k" data-i18n="spec_k1">ANALİTİK TAŞINIM ÇÖZÜCÜ</div>
+                            <div class="spec-k" data-i18n="spec_k1">TAŞINIM ÇÖZÜCÜ</div>
                             <div class="spec-v">d² • B_oq • Sh • Da • χ_r</div>
                         </div>
                         <div class="solver-spec-card">
-                            <div class="spec-k" data-i18n="spec_k2">ISS UÇUŞ KALİBRASYONU</div>
-                            <div class="spec-v">R² = 0.988 • RMSE = 0.017</div>
+                            <div class="spec-k" data-i18n="spec_k2">ISS DOĞRULAMASI</div>
+                            <div class="spec-v">R² = 0.996 • RMSE = 0.015</div>
                         </div>
                         <div class="solver-spec-card">
-                            <div class="spec-k" data-i18n="spec_k3">ZERO-TRUST SOKET SINIRI</div>
-                            <div class="spec-v">127.0.0.1 Loopback • CSRF</div>
+                            <div class="spec-k" data-i18n="spec_k3">ÇALIŞMA MODU</div>
+                            <div class="spec-v" data-i18n="spec_v3">Tarayıcı İçi</div>
                         </div>
                         <div class="solver-spec-card">
-                            <div class="spec-k" data-i18n="spec_k4">ECLSS GÜVENLİK STANDARDI</div>
+                            <div class="spec-k" data-i18n="spec_k4">GÜVENLİK STANDARDI</div>
                             <div class="spec-v">NASA-STD-6001B • SMAC 125 ppm</div>
                         </div>
                     </div>
 
                     <div class="control-group">
-                        <div class="control-label"><span data-i18n="lbl_def_provider">Varsayılan Kanıt Sentez Çekirdeği</span></div>
+                        <div class="control-label"><span data-i18n="lbl_def_provider">Varsayılan Hesaplama Modu</span></div>
                         <select class="nasa-select" id="cfg-active-provider">
-                            <option value="auto" data-tr="◈ Otomatik (Analitik Fizik + Aktif Çıkarım Çekirdeği)" data-en="◈ Auto (Analytical Solver + Active Inference Kernel)">◈ Otomatik (Analitik Fizik + Aktif Çıkarım Çekirdeği)</option>
-                            <option value="ollama" data-tr="◈ Yerel Çevrimdışı Ollama (Derin Uzay Otonom Modu)" data-en="◈ Local Offline Ollama (Deep-Space Autonomous Mode)">◈ Yerel Çevrimdışı Ollama (Derin Uzay Otonom Modu)</option>
-                            <option value="antigravity" data-tr="◈ Yerel Sistem Çıkarım Köprüsü (CLI / SDK)" data-en="◈ Local System Inference Bridge (CLI / SDK)">◈ Yerel Sistem Çıkarım Köprüsü (CLI / SDK)</option>
-                            <option value="gemini" data-tr="◈ Google Gemini Bulut Geçidi (REST)" data-en="◈ Google Gemini Cloud Gateway (REST)">◈ Google Gemini Bulut Geçidi (REST)</option>
-                            <option value="openrouter" data-tr="◈ OpenRouter Çoklu-Model Geçidi" data-en="◈ OpenRouter Multi-Model Gateway">◈ OpenRouter Çoklu-Model Geçidi</option>
-                            <option value="custom" data-tr="◈ Özel OpenAI-Uyumlu Kurumsal Uç Nokta" data-en="◈ Custom OpenAI-Compatible Endpoint">◈ Özel OpenAI-Uyumlu Kurumsal Uç Nokta</option>
+                            <option value="auto" data-tr="Otomatik (Fizik Çözücü + Aktif Motor)" data-en="Auto (Physics Solver + Active Engine)">Otomatik (Fizik Çözücü + Aktif Motor)</option>
+                            <option value="physics" data-tr="Analitik Fizik Çözücü" data-en="Analytical Physics Solver">Analitik Fizik Çözücü</option>
+                            <option value="ollama" data-tr="Çevrimdışı Yerel Model" data-en="Offline Local Model">Çevrimdışı Yerel Model</option>
+                            <option value="antigravity" data-tr="Yerel Sistem Köprüsü" data-en="Local System Bridge">Yerel Sistem Köprüsü</option>
+                            <option value="gemini" data-tr="Google Gemini Geçidi" data-en="Google Gemini Gateway">Google Gemini Geçidi</option>
+                            <option value="openrouter" data-tr="OpenRouter Geçidi" data-en="OpenRouter Gateway">OpenRouter Geçidi</option>
+                            <option value="custom" data-tr="Özel Kurumsal Uç Nokta" data-en="Custom Endpoint">Özel Kurumsal Uç Nokta</option>
                         </select>
                     </div>
 
                     <div class="control-group">
                         <div class="control-label">
-                            <span data-i18n="lbl_agy_model">Yerel Sistem CLI Çıkarım Köprüsü &amp; Model Profili</span>
-                            <span class="control-val" id="agy-cli-badge">Denetleniyor</span>
+                            <span data-i18n="lbl_agy_model">Yerel Sistem Köprüsü</span>
+                            <span class="control-val" id="agy-cli-badge">Hazırlanıyor</span>
                         </div>
                         <select class="nasa-select" id="cfg-agy-model">
                             <option value="gemini-3.8-flash-high">Gemini 3.8 Flash (High) — Bilimsel Sentez</option>
@@ -724,88 +724,88 @@
                     </div>
                 </div>
 
-                <!-- ORTA SAĞ MODÜL: YEREL ÇEVRİMDIŞI OLLAMA MERKEZİ VE CANLI DOĞRULAMA TESTİ -->
+                <!-- ORTA SAĞ MODÜL: YEREL MODEL AYARLARI -->
                 <div class="panel-box">
                     <div class="panel-header">
-                        <span class="panel-title" data-i18n="set_ollama_hub_title">◈ Yerel Çevrimdışı Çıkarım Merkezi (Derin Uzay Otonom Modu)</span>
+                        <span class="panel-title" data-i18n="set_ollama_hub_title">Yerel Model Ayarları</span>
                     </div>
 
                     <div class="control-group">
-                        <div class="control-label"><span data-i18n="lbl_ollama_host">Yerel Ollama Sunucu Adresi</span></div>
+                        <div class="control-label"><span data-i18n="lbl_ollama_host">Yerel Servis Adresi</span></div>
                         <input type="text" class="nasa-input" id="cfg-ollama-host" value="http://127.0.0.1:11434" />
                     </div>
 
                     <div class="control-group">
                         <div class="control-label">
-                            <span data-i18n="lbl_ollama_model">Yüklü Yerel Çevrimdışı Model</span>
-                            <span class="control-val" id="ollama-online-badge">Denetleniyor</span>
+                            <span data-i18n="lbl_ollama_model">Yüklü Yerel Model</span>
+                            <span class="control-val" id="ollama-online-badge">Hazırlanıyor</span>
                         </div>
                         <select class="nasa-select" id="cfg-ollama-model">
-                            <option value="auto">Otomatik (Önerilen NASA Modeli)</option>
+                            <option value="auto">Otomatik (Önerilen Yerel Model)</option>
                         </select>
                     </div>
 
                     <div class="control-group" style="margin-top:10px;">
-                        <div class="control-label"><span data-i18n="lbl_ollama_pull">Yeni Yerel Model İndir veya Bellek (VRAM/RAM) Boşalt</span></div>
+                        <div class="control-label"><span data-i18n="lbl_ollama_pull">Model İndir veya Bellek Temizle</span></div>
                         <div style="display:flex; gap:8px;">
-                            <input type="text" class="nasa-input" id="inp-ollama-pull" placeholder="qwen2.5:3b / llava" />
+                            <input type="text" class="nasa-input" id="inp-ollama-pull" placeholder="Model adı" />
                             <button class="btn-secondary" id="btn-ollama-pull" data-i18n="btn_pull">İndir</button>
-                            <button class="btn-secondary" id="btn-ollama-unload" title="RAM/VRAM Boşalt" data-i18n="btn_unload">✕ Boşalt</button>
+                            <button class="btn-secondary" id="btn-ollama-unload" title="Bellek Boşalt" data-i18n="btn_unload">Temizle</button>
                         </div>
                     </div>
 
                     <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-subtle);">
                         <button class="btn-secondary" id="btn-test-provider" style="width:100%; justify-content:center;" data-i18n="btn_test_provider">
-                            ▸ Aktif Sentez Çekirdeğini Bilimsel Doğrulama İle Test Et
+                            Çözücüyü Test Et
                         </button>
                         <div id="provider-test-output" style="font-size:12px; color:#93c5fd; margin-top:8px;"></div>
                     </div>
                 </div>
 
-                <!-- ALT KAPALI AKORDEON: HARİCİ BULUT ÇIKARIM GEÇİDİ, KİMLİK KASASI VE RAPORLAMA BİÇİMİ -->
+                <!-- ALT KAPALI AKORDEON: GELİŞMİŞ BAĞLANTILAR -->
                 <details class="nasa-accordion" id="ext-gateway-accordion">
                     <summary>
                         <span>
-                            <span class="acc-chevron">▸</span>
-                            <span data-i18n="set_card2_title">Gelişmiş Harici Bulut Çıkarım Geçidi, Kimlik Doğrulama Kasası &amp; Raporlama Biçimi (İsteğe Bağlı)</span>
+                            <span class="acc-chevron"></span>
+                            <span data-i18n="set_card2_title">Gelişmiş Bağlantılar</span>
                         </span>
-                        <span class="preset-badge" data-i18n="acc_opt_badge">OPSİYONEL • YEREL KASA</span>
+                        <span class="preset-badge" data-i18n="acc_opt_badge">İSTEĞE BAĞLI</span>
                     </summary>
 
                     <div class="nasa-accordion-body">
                         <div class="panel-box" style="margin:0;">
                             <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;" data-i18n="set_card2_desc">
-                                Harici bulut geçidi kimlik bilgileri asla kaynak koda veya çalıştırılabilir pakete gömülmez; yalnızca yerel kullanıcı kasasında (%APPDATA%\AltarNasa\config.json) saklanır.
+                                Bağlantı anahtarları kaynak koda gömülmez; yalnızca yerel kullanıcı yapılandırma dosyasında saklanır.
                             </p>
 
                             <div class="control-group">
                                 <div class="control-label">
-                                    <span data-i18n="lbl_gemini_key">Google Gemini REST Geçit Anahtarı (GEMINI_API_KEY)</span>
+                                    <span data-i18n="lbl_gemini_key">Google Gemini Anahtarı</span>
                                     <span id="st-gemini-key" style="font-size:11px;"></span>
                                 </div>
                                 <input type="password" class="nasa-input" id="cfg-gemini-key" placeholder="AIzaSy..." />
                             </div>
 
                             <div class="control-group">
-                                <div class="control-label"><span data-i18n="lbl_gemini_model">Google Gemini Model Tanımlayıcısı</span></div>
+                                <div class="control-label"><span data-i18n="lbl_gemini_model">Google Gemini Modeli</span></div>
                                 <input type="text" class="nasa-input" id="cfg-gemini-model" value="gemini-2.5-flash" />
                             </div>
 
                             <div class="control-group">
                                 <div class="control-label">
-                                    <span data-i18n="lbl_agy_key">Yerel CLI Köprüsü Yedek Geçit Anahtarı (CLI Aktifse Gerekmez)</span>
+                                    <span data-i18n="lbl_agy_key">Yerel Köprü Anahtarı (İsteğe Bağlı)</span>
                                     <span id="st-agy-sdk" style="font-size:11px; color:var(--accent-cyan);"></span>
                                 </div>
-                                <input type="password" class="nasa-input" id="cfg-antigravity-key" placeholder="Optional Local Bridge Token..." />
+                                <input type="password" class="nasa-input" id="cfg-antigravity-key" placeholder="Optional Token..." />
                             </div>
 
                             <div class="control-group">
-                                <div class="control-label"><span data-i18n="lbl_or_key">OpenRouter Geçit Anahtarı (OPENROUTER_API_KEY)</span></div>
+                                <div class="control-label"><span data-i18n="lbl_or_key">OpenRouter Anahtarı</span></div>
                                 <input type="password" class="nasa-input" id="cfg-openrouter-key" placeholder="sk-or-v1-..." />
                             </div>
 
                             <div class="control-group">
-                                <div class="control-label"><span data-i18n="lbl_or_model">OpenRouter Model Tanımlayıcısı</span></div>
+                                <div class="control-label"><span data-i18n="lbl_or_model">OpenRouter Modeli</span></div>
                                 <input type="text" class="nasa-input" id="cfg-openrouter-model" value="google/gemini-2.0-flash-exp:free" />
                             </div>
                         </div>
@@ -813,7 +813,7 @@
                         <div class="panel-box" style="margin:0; display:flex; flex-direction:column; justify-content:space-between;">
                             <div>
                                 <div class="control-group">
-                                    <div class="control-label"><span data-i18n="lbl_custom_gw">Özel OpenAI-Uyumlu Kurumsal Uç Nokta &amp; Anahtar (İsteğe Bağlı)</span></div>
+                                    <div class="control-label"><span data-i18n="lbl_custom_gw">Özel Uç Nokta Bağlantısı</span></div>
                                     <div style="display:grid; grid-template-columns:1fr 1fr 110px; gap:6px;">
                                         <input type="text" class="nasa-input" id="cfg-custom-url" placeholder="https://api.example.com/v1" />
                                         <input type="password" class="nasa-input" id="cfg-custom-key" placeholder="Auth Token" />
@@ -822,14 +822,14 @@
                                 </div>
 
                                 <div class="control-group" style="margin-top:14px;">
-                                    <div class="control-label"><span data-i18n="lbl_extra_dir">Özel Birim &amp; Raporlama Biçimi Kısıtları (İsteğe Bağlı)</span></div>
-                                    <textarea class="nasa-textarea" id="cfg-extra-directives" rows="4" data-i18n-placeholder="extra_dir_ph" placeholder="Örn: Teknik sentez çıktılarında her zaman kPa biriminin yanında psia karşılığını da raporla..."></textarea>
-                                    <button class="btn-secondary" id="btn-save-directives" style="margin-top:8px;" data-i18n="btn_save_dir">▸ Raporlama Biçimi Kısıtlarını Güncelle</button>
+                                    <div class="control-label"><span data-i18n="lbl_extra_dir">Raporlama Notları</span></div>
+                                    <textarea class="nasa-textarea" id="cfg-extra-directives" rows="4" data-i18n-placeholder="extra_dir_ph" placeholder="Örn: Teknik çıktılarda her zaman kPa biriminin yanında psia karşılığını da belirt..."></textarea>
+                                    <button class="btn-secondary" id="btn-save-directives" style="margin-top:8px;" data-i18n="btn_save_dir">Notları Güncelle</button>
                                 </div>
                             </div>
 
                             <button class="btn-primary" id="btn-save-config" style="width:100%; margin-top:14px;" data-i18n="btn_save_cfg">
-                                ◈ Tüm Kalibrasyon ve Geçit Yapılandırmasını Kaydet
+                                Ayarları Kaydet
                             </button>
                         </div>
                     </div>
@@ -840,22 +840,22 @@
 
     </main>
 
-    <!-- v5.1 İNTERAKTİF REHBERLİ JÜRİ SUNUM TURU HUD KARTI -->
+    <!-- REHBERLİ TUR KARTI -->
     <div class="guided-tour-hud" id="guided-tour-hud">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
             <span class="preset-badge" id="tour-step-badge">Adım 1 / 5</span>
-            <button class="btn-secondary" id="btn-tour-close" style="padding:2px 8px; font-size:11px;" data-i18n="btn_tour_end">✕ Bitir</button>
+            <button class="btn-secondary" id="btn-tour-close" style="padding:2px 8px; font-size:11px;" data-i18n="btn_tour_end">Bitir</button>
         </div>
         <div style="font-size:13.8px; font-weight:700; color:#38bdf8; margin-bottom:5px;" id="tour-step-title"></div>
         <div style="font-size:12.4px; color:#e2e8f0; line-height:1.55; margin-bottom:10px;" id="tour-step-body"></div>
         <div style="display:flex; justify-content:flex-end; gap:8px;">
-            <button class="btn-primary" id="btn-tour-next" style="padding:5px 12px; font-size:12px;" data-i18n="btn_tour_next">Sonraki Adım ▸</button>
+            <button class="btn-primary" id="btn-tour-next" style="padding:5px 12px; font-size:12px;" data-i18n="btn_tour_next">Sonraki Adım</button>
         </div>
     </div>
 
     <div class="toast-banner" id="app-toast"></div>
 
-    <!-- YEREL PAKETLENMİŞ THREE.JS (ÇEVRİMDIŞI %100 ÇALIŞIR) VE UYGULAMA MODÜLLERİ -->
+    <!-- YEREL PAKETLENMİŞ THREE.JS VE UYGULAMA MODÜLLERİ -->
     <script src="./js/vendor/three.min.js"></script>
     <script src="./js/three_chamber_3d.js"></script>
     <script src="./js/charts_and_audio.js"></script>

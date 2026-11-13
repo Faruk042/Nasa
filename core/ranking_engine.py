@@ -331,7 +331,7 @@ class ExperimentRankingEngine:
         )
 
         synthesis_tr = (
-            f"◈ **Soruşturmalar Arası Benzerlik & Farklılık Sentezi ({len(selected)} NASA PSI Kaydı):** {hw_note_tr}"
+            f"**Deneyler Arası Karşılaştırma Özeti ({len(selected)} NASA PSI Kaydı):** {hw_note_tr}"
             f"En düşük oksijen sınırına sahip (en kolay tutuşan) deney **%{lowest_moc_exp['moc_measured_pct']} MOC** ile "
             f"**{lowest_moc_exp['program']}** ({lowest_moc_exp['material']}); en yüksek test oksijenine çıkan ise "
             f"**%{highest_o2_exp['oxygen_pct']} O₂** ile **{highest_o2_exp['program']}** kaydıdır. "
@@ -345,7 +345,7 @@ class ExperimentRankingEngine:
             synthesis_tr += "Havalandırma fanlarının (HVAC) anında kapatılması ve ince su sisi (SoFIE-MIST) tüm seçili rejimlerde ortak birincil bastırma adımıdır."
 
         synthesis_en = (
-            f"◈ **Cross-Investigation Similarity & Difference Synthesis ({len(selected)} NASA PSI Records):** {hw_note_en}"
+            f"**Cross-Experiment Comparison Summary ({len(selected)} NASA PSI Records):** {hw_note_en}"
             f"**{lowest_moc_exp['program']}** ({lowest_moc_exp['material']}) exhibits the lowest Minimum Oxygen Concentration "
             f"(**{lowest_moc_exp['moc_measured_pct']}% O₂**), whereas **{highest_o2_exp['program']}** spans up to **{highest_o2_exp['oxygen_pct']}% O₂**. "
         )

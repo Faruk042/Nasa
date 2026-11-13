@@ -654,35 +654,35 @@ def _build_partial_gravity_notice(
 
     if is_partial:
         tr_msg = (
-            f"◈ **NASA PSI Kısmi Yerçekimi Veri Şeffaflığı ({env_tag_tr}):** Şu anda NASA PSI veritabanında doğrudan kısmi yerçekimi "
+            f"**NASA PSI Kısmi Yerçekimi Veri Şeffaflığı ({env_tag_tr}):** Şu anda NASA PSI veritabanında doğrudan kısmi yerçekimi "
             f"yanma verisi bulunmamaktadır; bu verilerin gelecekteki **LUCI (Lunar-g Combustion Investigation)** ve "
             f"**FM2 (Flammability of Materials on the Moon)** deneyleriyle eklenmesi beklenmektedir. Bu süreçte **0G sınırı (MOC %{moc_0g_bound})** "
             f"ile **1G sınırı (MOC %{moc_1g_bound})** ara yerçekimi davranışını sınırlar (`Tahmini MOC ≈ %{moc_current}`) ve **ACME E-FIELD Flames** "
             f"elektrik alanı/iyon rüzgarı verileri kısmi konveksiyon emülasyonu olarak kullanılır."
         )
         en_msg = (
-            f"◈ **NASA PSI Partial-Gravity Transparency ({env_tag_en}):** NASA PSI currently contains no direct partial-gravity combustion datasets; "
+            f"**NASA PSI Partial-Gravity Transparency ({env_tag_en}):** NASA PSI currently contains no direct partial-gravity combustion datasets; "
             f"upcoming **LUCI (Lunar-g Combustion Investigation)** and **FM2 (Flammability of Materials on the Moon)** missions will populate this gap. "
             f"Until then, **0G (MOC {moc_0g_bound}%)** and **1G (MOC {moc_1g_bound}%)** bound intermediate flammability (`Bounded Est. MOC ≈ {moc_current}%`), "
             f"complemented by **ACME E-FIELD Flames** ionic-wind partial-gravity emulation."
         )
     elif is_eva_suit:
         tr_msg = (
-            f"◈ **EVA Uzay Giysisi Saf Oksijen Rejimi ({pressure_psia:.1f} psia / %{oxygen_pct:.0f} O₂):** Dekompresyon hastalığını (vurgun) önlemek ve "
+            f"**EVA Uzay Giysisi Saf Oksijen Rejimi ({pressure_psia:.1f} psia / %{oxygen_pct:.0f} O₂):** Dekompresyon hastalığını (vurgun) önlemek ve "
             f"eldiven/eklem esnekliğini korumak için uzay giysileri ~4.3 psia basınçta %100 saf O₂ ile çalışır. Seyreltici N₂ gazı sıfırlandığı için "
             f"tutuşma enerjisi dramatik biçimde düşer ve standart kumaşlar patlayıcı hızda yanar!"
         )
         en_msg = (
-            f"◈ **EVA Spacesuit Pure-O₂ Regime ({pressure_psia:.1f} psia / {oxygen_pct:.0f}% O₂):** Spacesuits operate at ~4.3 psia with 100% O₂ to maintain "
+            f"**EVA Spacesuit Pure-O₂ Regime ({pressure_psia:.1f} psia / {oxygen_pct:.0f}% O₂):** Spacesuits operate at ~4.3 psia with 100% O₂ to maintain "
             f"suit mobility and eliminate nitrogen decompression sickness (pre-breathe). With zero N₂ thermal ballast, ignition thresholds plummet and flame spread is extreme."
         )
     elif is_lunar_rover:
         tr_msg = (
-            f"◈ **Ay Üssü & Basınçlı Gezgin (Rover) Atmosferi ({pressure_psia:.1f} psia / %{oxygen_pct:.0f} O₂):** EVA ön-soluma süresini kısaltmak için "
+            f"**Ay Üssü ve Basınçlı Gezgin Atmosferi ({pressure_psia:.1f} psia / %{oxygen_pct:.0f} O₂):** EVA ön-soluma süresini kısaltmak için "
             f"Ay üssü ve basınçlı rover kabinleri ≤10.2 psia ve ≥%30 O₂ (Dünya'ya göre ~%40 bağıl O₂ artışı) kullanır; malzemeler standart ISS kabinine göre çok daha yanıcıdır."
         )
         en_msg = (
-            f"◈ **Lunar Base & Pressurized Rover Atmosphere ({pressure_psia:.1f} psia / {oxygen_pct:.0f}% O₂):** Designed between spacesuit and Earth air to minimize "
+            f"**Lunar Base & Pressurized Rover Atmosphere ({pressure_psia:.1f} psia / {oxygen_pct:.0f}% O₂):** Designed between spacesuit and Earth air to minimize "
             f"EVA pre-breathe time, ≥30% O₂ at ≤10.2 psia represents a >40% relative O₂ enrichment over Earth, markedly elevating material flammability."
         )
 
@@ -827,7 +827,7 @@ def _build_instant_formula_commentary(
     """Parametreler değiştikçe milisaniyeler içinde güncellenen formül tabanlı bilimsel durum özeti."""
     margin = oxygen_pct - moc_current
     tr_text = (
-        f"◈ **Analitik Taşınım & Rejim Sentezi ({fuel['formula']}):** Kabin kısmi oksijen basıncı "
+        f"**Analitik Taşınım ve Rejim Özeti ({fuel['formula']}):** Kabin kısmi oksijen basıncı "
         f"`P_O2 = {po2_psia:.2f} psia` ve Spalding transfer sayısı `B_oq = {spalding_b:.2f}` olarak hesaplandı. "
         f"Taşınım korelasyonunda `Sh = {sh_conv:.2f}` (`g = {gravity_g:.2f}G`, `U = {airflow_cms:.1f} cm/s`) ve "
         f"Damköhler sayısı `Da = {damkohler_da:.2f}` değerindedir. "
@@ -855,7 +855,7 @@ def _build_instant_formula_commentary(
         )
 
     en_text = (
-        f"◈ **Analytical Transport & Regime Synthesis ({fuel['formula']}):** Partial oxygen pressure `P_O2 = {po2_psia:.2f} psia`, "
+        f"**Analytical Transport & Regime Summary ({fuel['formula']}):** Partial oxygen pressure `P_O2 = {po2_psia:.2f} psia`, "
         f"Spalding number `B_oq = {spalding_b:.2f}`, Sherwood transport `Sh = {sh_conv:.2f}`, and Damköhler `Da = {damkohler_da:.2f}`. "
     )
     if 0.03 <= gravity_g <= 0.88:
@@ -1004,8 +1004,8 @@ def _build_human_callouts(
         }
     if regime == "COOL_FLAME_NTC":
         return {
-            "badge_tr": "▲ GÖRÜNMEZ SOĞUK ALEV (COOL FLAME • UV/IR MODU)",
-            "badge_en": "▲ INVISIBLE COOL FLAME (NTC REGIME • UV/IR VIEW)",
+            "badge_tr": "GÖRÜNMEZ SOĞUK ALEV (UV/IR MODU)",
+            "badge_en": "INVISIBLE COOL FLAME (UV/IR VIEW)",
             "summary_tr": (
                 f"Radyatif ısı kaybı sıcak alevi söndürdü ancak yanma DURMADI! {flame_temp_k:.0f} K sıcaklıkta çıplak gözle "
                 f"görülemeyen Soğuk Alev (FLEX / CFI / CFI-G) aktif; toksik CO/formaldehit üretiyor ve yeniden tutuşma riski taşıyor."
@@ -1017,8 +1017,8 @@ def _build_human_callouts(
         }
     if regime == "BLOWOFF_EXTINGUISHED":
         return {
-            "badge_tr": "◈ YÜKSEK HIZLI ÜFLEME SÖNMESİ (BLOWOFF)",
-            "badge_en": "◈ CONVECTIVE BLOWOFF EXTINCTION",
+            "badge_tr": "YÜKSEK HIZLI ÜFLEME SÖNMESİ (BLOWOFF)",
+            "badge_en": "CONVECTIVE BLOWOFF EXTINCTION",
             "summary_tr": (
                 f"Hava akış hızı ({airflow_cms:.1f} cm/s) kimyasal reaksiyon süresini aştı (Damköhler Da < 1); "
                 f"alev cephesi tutunamayarak üfleme sınırında söndü."
@@ -1029,8 +1029,8 @@ def _build_human_callouts(
             ),
         }
     return {
-        "badge_tr": f"◈ OKSİJEN / RADYATİF SÖNÜMLENME (MOC < %{moc_current})",
-        "badge_en": f"◈ DIFFUSIVE / RADIATIVE QUENCHING (O₂ < {moc_current}%)",
+        "badge_tr": f"OKSİJEN / RADYATİF SÖNÜMLENME (MOC < %{moc_current})",
+        "badge_en": f"DIFFUSIVE / RADIATIVE QUENCHING (O₂ < {moc_current}%)",
         "summary_tr": (
             f"Mevcut oksijen (%{oxygen_pct:.1f}) bu atmosfer ({pressure_psia:.1f} psia) için gereken Minimum Oksijen "
             f"Konsantrasyonunun (%{moc_current}) altında veya radyatif kayıp üretilen ısıyı aştı. Alev kendi kendine söndü."
@@ -1125,8 +1125,8 @@ def _build_iss_flight_validation(
         "rmse": rmse,
         "d2_points": d2_points,
         "moc_points": moc_points,
-        "benchmark_tr": f"◆ NASA PSI Uçuş Doğrulaması ({campaign_short}): R² = {r_sq:.3f} • RMSE = {rmse:.3f}",
-        "benchmark_en": f"◆ NASA PSI Flight Validation ({campaign_short}): R² = {r_sq:.3f} • RMSE = {rmse:.3f}",
+        "benchmark_tr": f"ISS Uçuş Doğrulaması ({campaign_short}): R² = {r_sq:.3f} • RMSE = {rmse:.3f}",
+        "benchmark_en": f"ISS Flight Validation ({campaign_short}): R² = {r_sq:.3f} • RMSE = {rmse:.3f}",
     }
 
 
@@ -1167,8 +1167,8 @@ def compute_cabin_scenario_timeline(
             "co_at_response_ppm": 18.0,
             "peak_temp_rise_c": 0.4,
             "severity": "SAFE",
-            "badge_tr": "● SÖNÜMLENMİŞ / GÜVENLİ KABİN",
-            "badge_en": "● EXTINGUISHED / SAFE HABITAT",
+            "badge_tr": "SÖNÜMLENMİŞ / GÜVENLİ KABİN",
+            "badge_en": "EXTINGUISHED / SAFE HABITAT",
             "summary_tr": (
                 f"{hab['name_tr']} içinde aktif ekzotermik yanma bulunmuyor (MOC sınırı altında veya üfleme sönmesi). "
                 f"Kabin CO seviyesi bazal düzeyde (~18 ppm) kararlıdır."
@@ -1227,16 +1227,16 @@ def compute_cabin_scenario_timeline(
 
     if co_at_response >= 180.0 or (vol_m3 < 1.0 and oxygen_pct >= 60.0) or unmitigated:
         severity = "CRITICAL"
-        badge_tr = "▲ KRİTİK YAŞAM DESTEK AŞIMI"
-        badge_en = "▲ CRITICAL ECLSS / SMAC BREACH"
+        badge_tr = "KRİTİK YAŞAM DESTEK AŞIMI"
+        badge_en = "CRITICAL ECLSS / SMAC BREACH"
     elif co_at_response >= 85.0 or optical_blind:
         severity = "WARNING"
-        badge_tr = "◆ DİKKAT: HIZLI MÜDAHALE GEREKLİ"
-        badge_en = "◆ WARNING: RAPID ACTION REQUIRED"
+        badge_tr = "DİKKAT: HIZLI MÜDAHALE GEREKLİ"
+        badge_en = "WARNING: RAPID ACTION REQUIRED"
     else:
         severity = "SAFE"
-        badge_tr = "● KONTROLLÜ BASTIRMA PENCERESİ"
-        badge_en = "● CONTROLLED SUPPRESSION WINDOW"
+        badge_tr = "KONTROLLÜ BASTIRMA PENCERESİ"
+        badge_en = "CONTROLLED SUPPRESSION WINDOW"
 
     sensor_note_tr = (
         "Optik duman dedektörü KÖR! UV/IR + Kuantum-Kaskad CO sensör füzyonu alarm üretti."
