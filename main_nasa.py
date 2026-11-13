@@ -269,6 +269,8 @@ def create_nasa_web_app() -> Flask:
         scraped = live_fetcher.scrape_scientific_url(url)
         if not scraped.get("ok"):
             return jsonify(scraped), 400
+        if scraped.get("mode") == "search_results":
+            return jsonify(scraped)
         chunks = knowledge_idx.add_custom_document(
             title=scraped.get("title") or url,
             content=scraped.get("content") or "",

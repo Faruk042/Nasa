@@ -16,6 +16,7 @@ added_datas = [
     (str(project_root / "web" / "static"), "web/static"),
     (str(project_root / "web_serverless"), "web_serverless"),
     (str(project_root / "sample_data"), "sample_data"),
+    (str(project_root / "core" / "psi_archive_snapshot.json"), "core"),
 ]
 
 hidden_imports = [

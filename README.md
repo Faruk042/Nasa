@@ -56,7 +56,7 @@ Uygulama üst çubuğunda her özelliği en sade haliyle anlatan **5 ana modül*
 
 ![Veri ve Görüntü — Canlı NASA Akışı ve Alev Fotoğrafı Analizi](docs/screenshots/04_live_nasa_stream_and_rag.png)
 
-- **Canlı NASA PSI ve NTRS Arşiv Sorgusu:** Resmi `psi.nasa.gov`, `ntrs.nasa.gov` ve `osdr.nasa.gov` servislerinden güncel bilimsel makale ve deney kayıtlarını sorgular; doğrudan `https://psi.nasa.gov/physci/repo/data/investigations/PSI-XX` soruşturma bağlantılarını çözümleyerek deneysel tablosunu indirir ve 3B Yanma Odasına aktarır.
+- **Canlı NASA PSI ve NTRS Arşiv Sorgusu:** Resmi `psi.nasa.gov`, `ntrs.nasa.gov` ve `osdr.nasa.gov` servislerinden güncel bilimsel makale ve deney kayıtlarını sorgular; hem `https://psi.nasa.gov/physci/repo/search?q=combustion` gibi arama bağlantılarını (36 doğrulanmış NASA PSI yanma araştırmasını etkileşimli seçim listesiyle açarak) hem de doğrudan `https://psi.nasa.gov/physci/repo/data/investigations/PSI-XX` soruşturma bağlantılarını çözümleyerek deneysel tablosunu 3B Yanma Odasına aktarır.
 - **NASA PSI Deney Tablosu ve Alev Fotoğrafı Analizi:** NASA PSI veri deposundan indirilen ham `Experimental Table` dosyalarını (`.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, `.json`) doğrudan okur; oksijen mol kesrini (`X_O2 -> %O₂`), basınç birimlerini (`mmHg`/`torr`, `bar`, `atm`, `kPa -> psia`), sıcaklıkları (`°C -> K`) ve helyum/karbondioksit seyrelticilerini otomatik dönüştürerek çoklu test satırlarını etkileşimli `Faz 1..N` adımlarına ayırır. Yüklenen alev fotoğraflarını (`.png`, `.jpg`) RGB/HSV renk uzayında tarayarak mavi `CH*` kemilüminesans oranını, sarı kurum ışımasını ve en/boy (`H/W`) küresellik indeksini hesaplar.
 
 ---
@@ -145,6 +145,7 @@ Nasa/
 │   ├── smart_synthesizer.py     # Çok noktalı parametre taraması ve çift dilli (TR/EN) mühendislik analizi
 │   ├── data_vision_processor.py # RGB/HSV alev piksel analizi ve NASA PSI CSV/XLSX/ZIP/PDF/JSON okuyucu
 │   ├── nasa_live_fetcher.py     # Resmi NASA PSI (psi.nasa.gov), NTRS ve OSDR REST API istemcisi
+│   ├── psi_archive_snapshot.json # 36 doğrulanmış NASA PSI yanma araştırması ve çok fazlı tablo arşivi
 │   ├── ai_engine.py             # Analitik çözücü ve isteğe bağlı yerel model yönlendiricisi
 │   ├── directives.py            # CON-01..CON-09 fiziksel doğrulama ve NASA-STD-6001B kuralları
 │   └── security_guard.py        # Yerel ağ ve girdi doğrulama yardımcıları

@@ -49,6 +49,11 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
     const EARTH_TRANSFERS = EMBEDDED_DATA.SPACE_TO_EARTH_TRANSFERS;
     const DIRECTIVES = EMBEDDED_DATA.CORE_DIRECTIVES_LIST;
     const SYNONYMS = EMBEDDED_DATA.BILINGUAL_SCIENTIFIC_SYNONYMS;
+    const PSI_SNAPSHOT = EMBEDDED_DATA.PSI_ARCHIVE_SNAPSHOT || [];
+    const PSI_SNAPSHOT_MAP = {};
+    PSI_SNAPSHOT.forEach((row) => {
+        if (row && row.id) PSI_SNAPSHOT_MAP[String(row.id).toUpperCase()] = row;
+    });
 
     // Oturum içi geçici yapılandırma (yalnızca bellek içi; diske/çereze asla yazılmaz)
     const runtimeConfig = {
@@ -76,6 +81,15 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         url: exp.ntrs_url,
         text: `${exp.exp_id} ${exp.program} ${exp.hardware_group || ""} ${exp.facility} ${exp.title} ${exp.title_tr} ${exp.material} ${exp.key_finding_tr} ${exp.key_finding_en} ${exp.safety_insight_tr} ${exp.safety_insight_en} ${(exp.tags || []).join(" ")}`,
     }));
+    PSI_SNAPSHOT.forEach((row) => {
+        ragDocs.push({
+            doc_id: row.id,
+            title: row.title || `${row.id} — ${row.raw_title || ""}`,
+            source: `NASA PSI (${row.id})`,
+            url: row.url || `https://psi.nasa.gov/physci/repo/data/investigations/${row.id}`,
+            text: `${row.id} ${row.acronym || ""} ${row.raw_title || ""} ${row.hardware || ""} ${row.platform || ""} ${row.table_file || ""} ${row.abstract || ""}`,
+        });
+    });
 
     const streamState = {
         enabled: false,
@@ -657,26 +671,97 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         };
     }
 
+    function psiRowToItemJs(row) {
+        const acc = String(row.id || "PSI");
+        const acro = String(row.acronym || "");
+        const rawT = String(row.raw_title || row.title || acc);
+        const dispTitle = (acro && !rawT.toLowerCase().includes(acro.toLowerCase()) && !rawT.startsWith(acc))
+            ? `${acc} (${acro}) — ${rawT}`
+            : (rawT.startsWith(acc) ? rawT : `${acc} — ${rawT}`);
+        const hw = String(row.hardware || "").trim();
+        const plat = String(row.platform || "ISS").trim();
+        const phases = Array.isArray(row.phases) ? row.phases : [];
+        return {
+            id: acc,
+            acronym: acro,
+            source: "NASA PSI Repository (psi.nasa.gov)",
+            title: dispTitle,
+            abstract: String(row.abstract || "NASA Physical Sciences Informatics (PSI) deneysel veri kaydı.").slice(0, 850),
+            mission: hw ? `${plat} • ${hw}` : plat,
+            date: String(row.date || plat).slice(0, 16),
+            url: String(row.url || `https://psi.nasa.gov/physci/repo/data/investigations/${acc}`),
+            pdf_url: "",
+            table_file: String(row.table_file || ""),
+            phase_count: phases.length,
+            extracted_sim_params: Object.assign({}, row.extracted_sim_params || {}),
+            phases: phases,
+            summary_tr: String(row.summary_tr || ""),
+            summary_en: String(row.summary_en || ""),
+        };
+    }
+
+    function searchPsiSnapshotJs(query, limit) {
+        if (!PSI_SNAPSHOT.length) return [];
+        const qRaw = String(query || "").trim().toLowerCase();
+        const broad = ["", "all", "combustion", "flame", "fire", "microgravity", "psi"].includes(qRaw);
+        const expanded = expandQueryText(qRaw);
+        const tokens = (expanded.match(/[a-z0-9\-]{2,}/g) || []).filter(
+            (t) => !["microgravity", "spacecraft", "investigation", "experiment", "nasa"].includes(t)
+        );
+        const scored = [];
+        PSI_SNAPSHOT.forEach((row, idx) => {
+            const accL = String(row.id || "").toLowerCase();
+            const acroL = String(row.acronym || "").toLowerCase();
+            const blob = `${accL} ${acroL} ${row.raw_title || ""} ${row.title || ""} ${row.hardware || ""} ${row.platform || ""} ${row.table_file || ""} ${row.abstract || ""}`.toLowerCase();
+            let sc = 0;
+            if (qRaw && qRaw === accL) sc += 120;
+            if (acroL && qRaw && (qRaw.includes(acroL) || acroL.includes(qRaw))) sc += 25;
+            tokens.forEach((tok) => {
+                if (tok === accL) sc += 80;
+                else if (acroL && acroL.includes(tok)) sc += 12;
+                else if (blob.includes(tok)) sc += 4;
+            });
+            if (broad && sc === 0) sc = 1;
+            const hasTbl = (row.phases && row.phases.length) || row.table_file ? 1 : 0;
+            if (sc > 0 || broad) scored.push({ sc, hasTbl, idx, row });
+        });
+        const finalArr = scored.length
+            ? scored
+            : PSI_SNAPSHOT.map((row, idx) => ({ sc: 1, hasTbl: (row.phases && row.phases.length) ? 1 : 0, idx, row }));
+        finalArr.sort((a, b) => (b.sc - a.sc) || (b.hasTbl - a.hasTbl) || (a.idx - b.idx));
+        return finalArr.slice(0, Math.max(1, limit || 12)).map((x) => psiRowToItemJs(x.row));
+    }
+
     async function fetchLiveNasaBrowser(source, q) {
         const query = q || "microgravity combustion";
-        const srcNorm = String(source || "ntrs").toLowerCase();
+        const srcNorm = String(source || "osdr").toLowerCase();
 
-        // Tarayıcı Modu (GitHub Pages): psi.nasa.gov ve ntrs.nasa.gov tarayıcı CORS başlığı sunmadığından,
-        // konsolda CORS hatası üretmeden doğrulanmış NASA PSI / NTRS kayıtlarını anında sorgu benzerliğine göre döndür.
+        if (srcNorm === "osdr" && PSI_SNAPSHOT.length) {
+            const psiItems = searchPsiSnapshotJs(query, 12);
+            return { ok: true, source_status: "cached_live", count: psiItems.length, items: psiItems };
+        }
+
         const scored = NASA_CATALOG.map((e) => ({
             e,
             sim: computeTextSimilarity(query, `${e.program} ${e.title} ${e.title_tr} ${e.key_finding_en} ${e.key_finding_tr} ${(e.tags || []).join(" ")}`),
         })).sort((a, b) => b.sim - a.sim);
         const items = scored.slice(0, 8).map(({ e }) => ({
-            id: srcNorm === "osdr" ? e.exp_id : `NTRS-${e.ntrs_id}`,
-            source: srcNorm === "osdr" ? `NASA PSI (${e.program})` : `NASA PSI/NTRS (${e.program})`,
+            id: `NTRS-${e.ntrs_id}`,
+            source: `NASA PSI/NTRS (${e.program})`,
             title: e.title,
             abstract: e.key_finding_en,
             date: String(e.year),
-            url: srcNorm === "osdr"
-                ? `https://psi.nasa.gov/physci/repo/search?q=${encodeURIComponent(e.program)}`
-                : e.ntrs_url,
+            url: e.ntrs_url,
             pdf_url: "",
+            extracted_sim_params: {
+                fuel_id: e.fuel_id || "n_heptane",
+                gravity_g: Number(e.gravity_g ?? 0.0),
+                oxygen_pct: Number(e.oxygen_pct ?? 21.0),
+                pressure_psia: Number(e.pressure_psia ?? 14.7),
+                airflow_cms: Number(e.airflow_cms ?? 2.4),
+                droplet_d0_mm: e.cool_flame_observed ? 4.4 : 3.2,
+                diluent: "N2",
+            },
         }));
         return { ok: true, source_status: "cached_live", count: items.length, items };
     }
@@ -781,10 +866,31 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         return null;
     }
 
+    function extractChemSubtokenJs(rawVal) {
+        const s = String(rawVal || "").toLowerCase().trim();
+        if (!s) return "";
+        const toks = [
+            "ch4", "methane", "c2h4", "ethylene", "c2h6", "ethane", "c3h6", "propylene",
+            "c3h8", "propane", "c4h10", "butane", "heptane", "dodecane", "decane", "octane",
+            "methanol", "ethanol", "butanol", "propanol", "pmma", "acrylic", "teflon", "ptfe",
+            "delrin", "polyethylene", "polycarbonate", "ultem", "cotton", "sibal", "cellulose",
+            "whatman", "nomex", "kevlar", "kapton", "hydrogen", "h2",
+        ];
+        for (let i = 0; i < toks.length; i++) {
+            if (s.includes(toks[i])) return toks[i];
+        }
+        return s.slice(0, 14);
+    }
+
     function classifyTableColJs(colName) {
         const kl = String(colName || "").trim().toLowerCase().replace(/\s+/g, " ");
         if (!kl) return null;
         if (["test name", "test_name", "test id", "test_id", "test #", "test number", "run id", "run_id", "point #", "sample id", "drop #", "droplet id", "flame id", "experiment id"].some((w) => kl.includes(w)) || ["test", "run", "trial", "test_no"].includes(kl)) return "test_id";
+        if (["test type", "test_type", "flame type", "configuration", "burner mode", "flow configuration"].includes(kl)) return "test_type";
+        if (kl.includes("polarity") || kl.includes("electrode")) return "polarity";
+        if ((kl.includes("voltage") || kl.includes("electric field") || kl.includes("e-field")) && !kl.includes("current")) return "voltage_kv";
+        if ((kl.includes("fuel") && (kl.includes("conc") || kl.includes("mole frac") || kl.includes("mol frac") || kl === "xf" || kl === "x_f")) || ["xf", "x_f", "fuel %", "fuel conc"].includes(kl)) return "fuel_conc";
+        if (kl.includes("fuel") && (kl.includes("rate") || kl.includes("flow") || kl.includes("sccm") || kl.includes("slpm") || kl.includes("mg/s"))) return "fuel_rate";
         if (!["date", "ignition", "burn time", "delay", "duration", "lifetime", "extinct"].some((b) => kl.includes(b)) &&
             (["t", "time", "time_s", "t_s", "zaman", "zaman_sn", "sec", "seconds"].includes(kl) || kl.includes("zaman") || kl.includes("time_s") || kl.includes("time (s)"))) return "time_s";
         if (kl === "faz_kodu" || kl === "phase_code") return "phase_code";
@@ -839,6 +945,26 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         if (kl.includes("su_sisi") || kl.includes("mist")) return "mist_um";
         if (kl.includes("partikul") || kl.includes("aerosol") || kl.includes("dust_um")) return "aerosol_um";
         return null;
+    }
+
+    function looksLikeTabularTextJs(text, filename) {
+        const fnLow = String(filename || "").toLowerCase().replace(/\)+$/, "").trim();
+        if ([".csv", ".tsv", ".xlsx"].some((ext) => fnLow.endsWith(ext))) return true;
+        const lines = String(text || "").split(/\r?\n/).map((ln) => ln.trim()).filter(Boolean).slice(0, 15);
+        if (lines.length < 2) return false;
+        const first = lines[0];
+        const delims = [",", ";", "\t"];
+        let bestD = ",", bestCnt = 0;
+        delims.forEach((d) => {
+            const c = first.split(d).length - 1;
+            if (c > bestCnt) { bestCnt = c; bestD = d; }
+        });
+        if (bestCnt < 2) return false;
+        const hdrCells = splitCsvLineJs(first, bestD);
+        if (hdrCells.some((c) => c.length > 68)) return false;
+        if (!hdrCells.some((c) => Boolean(classifyTableColJs(c)))) return false;
+        const secondCnt = lines[1].split(bestD).length - 1;
+        return Math.abs(secondCnt - bestCnt) <= Math.max(2, Math.floor(bestCnt / 2));
     }
 
     function splitCsvLineJs(line, delim) {
@@ -997,6 +1123,13 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             return "N2";
         };
 
+        const anchorRoles = ["test_id", "test_type", "fuel", "oxygen_pct", "oxygen_mole_frac", "pressure_psia", "pressure_atm", "pressure_bar", "pressure_kpa", "pressure_mmhg", "airflow_cms", "d0_mm", "d2_mm2", "time_s", "phase_code"];
+        const activeAnchors = anchorRoles.map((rk) => colMap[rk]).filter(Boolean);
+        if (activeAnchors.length >= 2) {
+            const filteredRows = rows.filter((r) => activeAnchors.some((c) => String(r[c] ?? "").trim() !== ""));
+            if (filteredRows.length >= 1) rows = filteredRows;
+        }
+
         const flowColLow = String(colMap.airflow_cms || "").toLowerCase();
         const flowScale = (flowColLow.includes("m/s") && !flowColLow.includes("cm/s") && !flowColLow.includes("mm/s")) ? 100.0 : 1.0;
         const fuelCounts = {};
@@ -1052,24 +1185,40 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
                     const buckets = {};
                     const bucketList = [];
                     rows.forEach((r) => {
-                        const rFuel = parseFuelStrJs(firstStr([r], "fuel")) || fallbackFuel;
+                        const rawFuelCell = firstStr([r], "fuel");
+                        const rFuel = parseFuelStrJs(rawFuelCell) || fallbackFuel;
+                        const subFuel = rawFuelCell ? extractChemSubtokenJs(rawFuelCell) : rFuel;
                         const rO2L = extractO2Values([r]);
                         const rO2B = rO2L.length ? Math.round(rO2L[0] / 3.0) * 3 : 21;
                         const rPL = extractPressurePsia([r]);
                         const rPB = rPL.length ? Math.round(rPL[0] / 2.0) * 2 : 15;
                         const rFL = numList([r], "airflow_cms").map((v) => v * flowScale);
-                        const rFB = rFL.length ? (rFL[0] < 0.8 ? 0 : (rFL[0] <= 10 ? 5 : (rFL[0] <= 24 ? 15 : 30))) : 2;
+                        const rFB = rFL.length ? (rFL[0] < 0.8 ? 0 : (rFL[0] <= 10 ? 5 : (rFL[0] <= 24 ? 15 : 30))) : -1;
                         const rGL = numList([r], "gravity_g");
                         const rGB = rGL.length ? Math.round(rGL[0] * 10) / 10 : 0;
                         const rDil = extractDiluent([r]);
-                        const bKey = `${rFuel}|${rO2B}|${rPB}|${rFB}|${rGB}|${rDil}`;
+                        const rPol = firstStr([r], "polarity").slice(0, 8).toLowerCase();
+                        const rTT = firstStr([r], "test_type").slice(0, 12).toLowerCase();
+                        const rFCL = numList([r], "fuel_conc");
+                        const rFCB = rFCL.length ? Math.round((rFCL[0] <= 1.05 ? rFCL[0] * 100 : rFCL[0]) / 20) * 20 : -1;
+                        const rVL = numList([r], "voltage_kv");
+                        const rVB = rVL.length ? Math.round(Math.abs(rVL[0]) / 2) * 2 : -1;
+                        const rFRL = numList([r], "fuel_rate");
+                        const rFRB = (rFB === -1 && rFRL.length) ? Math.round(rFRL[0] / 50) * 50 : -1;
+                        const bKey = `${subFuel}|${rO2B}|${rPB}|${rFB}|${rGB}|${rDil}|${rPol}|${rFCB}|${rTT}|${rVB}|${rFRB}`;
                         if (!buckets[bKey]) {
                             if (bucketList.length < 7) {
                                 const tid = String((colMap.test_id && r[colMap.test_id]) || "").trim();
+                                const parts = [rawFuelCell || rFuel];
+                                if (rO2L.length) parts.push(`%${rO2B} O₂`);
+                                if (rPL.length) parts.push(`${rPB} psia`);
+                                if (rFCL.length && rFCB < 100) parts.push(`%${rFCB} Yakıt`);
+                                if (rPol) parts.push(rPol);
+                                if (rVL.length) parts.push(`${rVL[0]} kV`);
                                 const bObj = {
                                     key: bKey,
                                     code: tid || `GRUP_${bucketList.length + 1}`,
-                                    desc: `${rFuel} • %${rO2B} O₂ • ${rPB} psia`,
+                                    desc: parts.join(" • "),
                                     rows: [],
                                 };
                                 buckets[bKey] = bObj;
@@ -1118,13 +1267,41 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             const coolStr = firstStr(pr, "cool_flag").toLowerCase();
             const rowCoolObserved = ["y", "yes", "true", "1", "evet", "observed", "cool"].includes(coolStr);
 
-            const o2Mean = avg(o2Vals, 21.0);
+            const fcVals = numList(pr, "fuel_conc").map((x) => (x <= 1.05 ? x * 100.0 : x)).filter((x) => x >= 2 && x <= 100);
+            const vkvVals = numList(pr, "voltage_kv").map((x) => Math.abs(x)).filter((x) => x >= 0 && x <= 30);
+            const frVals = numList(pr, "fuel_rate").filter((x) => x > 0);
+            const polVal = firstStr(pr, "polarity").toLowerCase();
+            const ttVal = firstStr(pr, "test_type").toLowerCase();
+
+            let o2Mean = avg(o2Vals, 21.0);
             const pPsia = avg(psiaVals, 14.7);
-            const flowMean = Number(Math.min(45.0, avg(flowVals, 2.4)).toFixed(2));
+            let flowMean;
+            if (flowVals.length) {
+                flowMean = Number(Math.min(45.0, avg(flowVals, 2.4)).toFixed(2));
+            } else if (vkvVals.length) {
+                flowMean = Number(Math.min(18.0, 1.8 + avg(vkvVals, 0) * 1.35).toFixed(2));
+            } else if (ttVal.includes("coflow") || ttVal.includes("co-flow")) {
+                flowMean = polVal.includes("neg") ? 5.8 : (polVal.includes("pos") ? 4.2 : 3.4);
+            } else if (frVals.length) {
+                flowMean = Number(Math.min(14.0, Math.max(1.2, avg(frVals, 50) / 45.0)).toFixed(2));
+            } else {
+                flowMean = 2.4;
+            }
             const gravMean = avg(gravVals, 0.0);
-            const d0Init = d0Vals.length
-                ? Number(Math.max(0.8, Math.min(8.0, d0Vals[0])).toFixed(2))
-                : (d2Vals.length ? Number(Math.max(0.8, Math.min(8.0, Math.sqrt(Math.max(0.64, d2Vals[0])))).toFixed(2)) : 3.2);
+            let d0Init;
+            if (d0Vals.length) {
+                d0Init = Number(Math.max(0.8, Math.min(8.0, d0Vals[0])).toFixed(2));
+            } else if (d2Vals.length) {
+                d0Init = Number(Math.max(0.8, Math.min(8.0, Math.sqrt(Math.max(0.64, d2Vals[0])))).toFixed(2));
+            } else if (fcVals.length) {
+                const fcAvg = avg(fcVals, 100);
+                d0Init = Number(Math.max(1.5, Math.min(5.2, 1.5 + (fcAvg / 100.0) * 2.5)).toFixed(2));
+                if (!o2Vals.length && fcAvg < 65) {
+                    o2Mean = Number(Math.max(15.5, 21.0 - (100.0 - fcAvg) * 0.03).toFixed(1));
+                }
+            } else {
+                d0Init = 3.2;
+            }
 
             if (!habitatId) {
                 if (o2Mean >= 75 && pPsia <= 6) habitatId = "eva_suit";
@@ -1245,8 +1422,14 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         }
 
         const sp0 = primary.sim_params;
-        const summaryTr = `**Çok Fazlı Telemetri Analizi (\`${filename}\` • ${rows.length} satır • ${phasesOut.length} fiziksel faz):**\n- **3B Yanma Odasına Aktarılan Aktif Faz:** **Faz ${primary.index}** (\`${sp0.fuel_id}\`, \`${sp0.gravity_g}G\`, \`%${sp0.oxygen_pct} O₂\`, \`${sp0.pressure_psia} psia\`, \`${sp0.airflow_cms} cm/s\` -> \`${primary.flame_temp_k} K\`).\n` + (diagTr.length ? diagTr.join("\n") + "\n\n" : "\n") + tblTr.join("\n");
-        const summaryEn = `**Multi-Phase Telemetry Analysis (\`${filename}\` • ${rows.length} rows • ${phasesOut.length} physical phases):**\n- **Active Phase Synced to 3D Chamber:** **Phase ${primary.index}** (\`${sp0.fuel_id}\`, \`${sp0.gravity_g}G\`, \`${sp0.oxygen_pct}% O₂\`, \`${sp0.pressure_psia} psia\`, \`${sp0.airflow_cms} cm/s\` -> \`${primary.flame_temp_k} K\`).\n` + (diagEn.length ? diagEn.join("\n") + "\n\n" : "\n") + tblEn.join("\n");
+        const hdrTr = phasesOut.length > 1
+            ? `**Çok Fazlı Telemetri Analizi (\`${filename}\` • ${rows.length} satır • ${phasesOut.length} fiziksel faz):**`
+            : `**Tek Fazlı Deney Kaydı (\`${filename}\` • ${rows.length} satır):**`;
+        const hdrEn = phasesOut.length > 1
+            ? `**Multi-Phase Telemetry Analysis (\`${filename}\` • ${rows.length} rows • ${phasesOut.length} physical phases):**`
+            : `**Single-Phase Experiment Record (\`${filename}\` • ${rows.length} rows):**`;
+        const summaryTr = `${hdrTr}\n- **3B Yanma Odasına Aktarılan Aktif Durum:** **Faz ${primary.index}** (\`${sp0.fuel_id}\`, \`${sp0.gravity_g}G\`, \`%${sp0.oxygen_pct} O₂\`, \`${sp0.pressure_psia} psia\`, \`${sp0.airflow_cms} cm/s\` — Sıcaklık: \`${primary.flame_temp_k} K\`).\n` + (diagTr.length ? diagTr.join("\n") + "\n\n" : "\n") + tblTr.join("\n");
+        const summaryEn = `${hdrEn}\n- **Active State Synced to 3D Chamber:** **Phase ${primary.index}** (\`${sp0.fuel_id}\`, \`${sp0.gravity_g}G\`, \`${sp0.oxygen_pct}% O₂\`, \`${sp0.pressure_psia} psia\`, \`${sp0.airflow_cms} cm/s\` — Temp: \`${primary.flame_temp_k} K\`).\n` + (diagEn.length ? diagEn.join("\n") + "\n\n" : "\n") + tblEn.join("\n");
 
         return {
             extracted_sim_params: sp0,
@@ -1503,8 +1686,8 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
                 metrics: { detected_regime_tr: regLabelTr, detected_regime_en: regLabelEn },
                 extracted_sim_params: extracted,
                 simulation: sim,
-                summary_tr: `**Görüntü Piksel Analizi (${name}):** Mavi alev oranı \`%${bluePct}\`, kurum/sıcak ışıma \`%${warmPct}\` -> **${regLabelTr}** tespit edildi.`,
-                summary_en: `**Flame Pixel Analysis (${name}):** Blue chemiluminescence \`${bluePct}%\`, warm soot index \`${warmPct}%\` -> **${regLabelEn}** detected.`,
+                summary_tr: `**Görüntü Piksel Analizi (${name}):** Mavi alev oranı \`%${bluePct}\`, kurum/sıcak ışıma \`%${warmPct}\` — **${regLabelTr}** tespit edildi.`,
+                summary_en: `**Flame Pixel Analysis (${name}):** Blue chemiluminescence \`${bluePct}%\`, warm soot index \`${warmPct}%\` — **${regLabelEn}** detected.`,
             };
         }
 
@@ -1521,10 +1704,14 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             text = await file.text();
         }
 
+        return parseTextOrTablePayloadInBrowser(text, name);
+    }
+
+    function parseTextOrTablePayloadInBrowser(text, name) {
         ragDocs.push({ doc_id: `USR-${Date.now()}`, title: name, source: "Browser Local File", url: "", text: text.slice(0, 12000) });
 
         // 1. Çok fazlı JSON / CSV / TSV / XLSX / ZIP tablo çözümlemesi
-        const trimmed = text.replace(/^\uFEFF/, "").trim();
+        const trimmed = String(text || "").replace(/^\uFEFF/, "").trim();
         let tabRes = null;
         if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
             try {
@@ -1537,7 +1724,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
                     tabRes = analyzeTabularRowsInBrowser([parsedJson], name);
                 }
             } catch (_) {}
-        } else if (trimmed.includes(",") || trimmed.includes(";") || trimmed.includes("\t")) {
+        } else if (looksLikeTabularTextJs(trimmed, name)) {
             const csvRows = parseCsvRowsJs(trimmed);
             if (csvRows.length > 0) {
                 tabRes = analyzeTabularRowsInBrowser(csvRows, name);
@@ -1548,8 +1735,9 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             return {
                 ok: true,
                 filename: name,
+                title: name,
                 media_type: "document",
-                chunks: Math.max(1, Math.ceil(text.length / 800)),
+                chunks: Math.max(1, Math.ceil(trimmed.length / 800)),
                 phases: tabRes.phases,
                 extracted_sim_params: tabRes.extracted_sim_params,
                 simulation: tabRes.simulation,
@@ -1558,7 +1746,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             };
         }
 
-        // 2. Serbest metin / PDF çıkarımı (sıkı kelime sınırı + birim dönüşümleri)
+        // 2. Serbest metin / PDF çıkarımı (sıkı kelime sınırı + birim dönüşümleri + soğuk alev / kabin bağlamı)
         const extracted = {
             fuel_id: parseFuelStrJs(trimmed) || parseFuelStrJs(name) || "n_heptane",
             gravity_g: /0\.16|lunar|moon/i.test(trimmed) ? 0.16 : (/0\.38|mars/i.test(trimmed) ? 0.38 : (/1\.0\s*g|earth/i.test(trimmed) ? 1.0 : 0.0)),
@@ -1587,17 +1775,40 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         else if (torrMatch) extracted.pressure_psia = Number(Math.min(25, Math.max(3.0, parseFloat(torrMatch[1]) / 51.7149)).toFixed(2));
         if (uMatch) extracted.airflow_cms = Math.min(45, Math.max(0, parseFloat(uMatch[1])));
 
+        const lowTxt = `${name} ${trimmed}`.toLowerCase();
+        if (["cool flame", "cool-flame", "soğuk alev", "soguk alev", "ntc", "two-stage", "psi-117"].some((w) => lowTxt.includes(w))) {
+            if (!["pmma", "sibal", "nomex", "hydrogen"].includes(extracted.fuel_id)) {
+                if (lowTxt.includes("cfi-g") || lowTxt.includes("propane")) {
+                    extracted.fuel_id = "propane_cfig";
+                    if (!o2Match) extracted.oxygen_pct = 85.0;
+                } else {
+                    extracted.fuel_id = "n_heptane";
+                    if (!o2Match) extracted.oxygen_pct = 16.5;
+                }
+                if (!uMatch) extracted.airflow_cms = 0.4;
+                extracted.droplet_d0_mm = 4.4;
+            }
+        } else if (lowTxt.includes("spacesuit") || lowTxt.includes("eva suit") || lowTxt.includes("uzay giysisi")) {
+            if (!o2Match) extracted.oxygen_pct = 100.0;
+            if (!pMatch && !atmMatch && !barMatch && !kpaMatch && !torrMatch) extracted.pressure_psia = 4.3;
+            extracted.fuel_id = "nomex";
+        } else if (lowTxt.includes("exploration atmosphere") || lowTxt.includes("sofie")) {
+            if (!o2Match) extracted.oxygen_pct = 34.0;
+            if (!pMatch && !atmMatch && !barMatch && !kpaMatch && !torrMatch) extracted.pressure_psia = 8.2;
+        }
+
         const sim = simulateCombustionClient(extracted);
         return {
             ok: true,
             filename: name,
+            title: name,
             media_type: "document",
-            chunks: Math.max(1, Math.ceil(text.length / 800)),
+            chunks: Math.max(1, Math.ceil(trimmed.length / 800)),
             phases: [],
             extracted_sim_params: extracted,
             simulation: sim,
-            summary_tr: `**Veri Dosyası Analizi (${name}):** Yakıt \`${extracted.fuel_id}\`, Yerçekimi \`${extracted.gravity_g}G\`, O₂ \`%${extracted.oxygen_pct}\`, Basınç \`${extracted.pressure_psia} psia\`, Akış \`${extracted.airflow_cms} cm/s\`.`,
-            summary_en: `**Data File Analysis (${name}):** Fuel \`${extracted.fuel_id}\`, Gravity \`${extracted.gravity_g}G\`, O₂ \`${extracted.oxygen_pct}%\`, Pressure \`${extracted.pressure_psia} psia\`, Airflow \`${extracted.airflow_cms} cm/s\`.`,
+            summary_tr: `**Veri Dosyası Analizi (${name}):** Yakıt \`${extracted.fuel_id}\`, Yerçekimi \`${extracted.gravity_g}G\`, O₂ \`%${extracted.oxygen_pct}\`, Basınç \`${extracted.pressure_psia} psia\`, Akış \`${extracted.airflow_cms} cm/s\` — Rejim: **${sim.callouts.badge_tr}**.`,
+            summary_en: `**Data File Analysis (${name}):** Fuel \`${extracted.fuel_id}\`, Gravity \`${extracted.gravity_g}G\`, O₂ \`${extracted.oxygen_pct}%\`, Pressure \`${extracted.pressure_psia} psia\`, Airflow \`${extracted.airflow_cms} cm/s\` — Regime: **${sim.callouts.badge_en}**.`,
         };
     }
 
@@ -2279,11 +2490,172 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
         return null;
     }
 
-    function emitNextBrowserStreamPacket() {
-        const pick = NASA_CATALOG[streamState.seq_id % NASA_CATALOG.length];
+    async function emitNextBrowserStreamPacket() {
+        const nowTime = new Date().toTimeString().slice(0, 8);
+        const isEn = runtimeConfig.language === "en";
+        const src = String(streamState.source || "ntrs").toLowerCase();
+        const rawTarget = String(streamState.query_or_url || "").trim();
+
+        if (src === "custom_url") {
+            const target = rawTarget || "https://psi.nasa.gov/physci/repo/data/investigations/PSI-69";
+            const mPsi = target.match(/\b(PSI-\d+)\b/i);
+            const psiCode = mPsi ? mPsi[1].toUpperCase() : "";
+
+            if (psiCode && PSI_SNAPSHOT_MAP[psiCode]) {
+                const snap = PSI_SNAPSHOT_MAP[psiCode];
+                const phases = Array.isArray(snap.phases) ? snap.phases : [];
+                streamState.seq_id += 1;
+                streamState.last_tick_ms = Date.now();
+                streamState.last_fetch_time = nowTime;
+                streamState.last_error = "";
+                let chosenParams = Object.assign({
+                    fuel_id: "n_heptane", gravity_g: 0.0, oxygen_pct: 21.0,
+                    pressure_psia: 14.7, airflow_cms: 2.4, droplet_d0_mm: 3.4, diluent: "N2",
+                }, snap.extracted_sim_params || {});
+                let phaseSuffix = "";
+                let summaryTxt = String(snap.abstract || "").slice(0, 320);
+                if (phases.length > 0) {
+                    const ph = phases[(streamState.seq_id - 1) % phases.length];
+                    if (ph && ph.sim_params) chosenParams = Object.assign({}, chosenParams, ph.sim_params);
+                    phaseSuffix = isEn ? ` [Phase ${ph.index}/${phases.length}]` : ` [Faz ${ph.index}/${phases.length}]`;
+                    summaryTxt = isEn
+                        ? `Phase ${ph.index}/${phases.length} (${snap.table_file || psiCode}): ${chosenParams.fuel_id}, ${chosenParams.gravity_g}G, ${chosenParams.oxygen_pct}% O₂, ${chosenParams.pressure_psia} psia, ${chosenParams.airflow_cms} cm/s — Temp: ${ph.flame_temp_k || ""} K.`
+                        : `Faz ${ph.index}/${phases.length} (${snap.table_file || psiCode}): ${chosenParams.fuel_id}, ${chosenParams.gravity_g}G, %${chosenParams.oxygen_pct} O₂, ${chosenParams.pressure_psia} psia, ${chosenParams.airflow_cms} cm/s — Sıcaklık: ${ph.flame_temp_k || ""} K.`;
+                }
+                streamState.latest_sim_params = chosenParams;
+                streamState.events.unshift({
+                    seq_id: streamState.seq_id,
+                    time: nowTime,
+                    source: "Custom PSI Stream (psi.nasa.gov)",
+                    id: snap.id || psiCode,
+                    title: `${snap.title || psiCode}${phaseSuffix}`,
+                    summary: summaryTxt,
+                    url: snap.url || target,
+                    extracted_sim_params: chosenParams,
+                });
+                streamState.events = streamState.events.slice(0, 12);
+                return;
+            }
+
+            if (/psi\.nasa\.gov|osdr\.nasa\.gov/i.test(target)) {
+                let qTerm = "combustion";
+                try {
+                    const pu = new URL(target, window.location.href);
+                    qTerm = pu.searchParams.get("q") || pu.searchParams.get("term") || pu.searchParams.get("search") || "combustion";
+                } catch (_) {}
+                const hits = searchPsiSnapshotJs(qTerm, 36);
+                if (hits.length > 0) {
+                    const hit = hits[streamState.seq_id % hits.length];
+                    streamState.seq_id += 1;
+                    streamState.last_tick_ms = Date.now();
+                    streamState.last_fetch_time = nowTime;
+                    streamState.last_error = "";
+                    streamState.latest_sim_params = Object.assign({
+                        fuel_id: "n_heptane", gravity_g: 0.0, oxygen_pct: 21.0,
+                        pressure_psia: 14.7, airflow_cms: 2.4, droplet_d0_mm: 3.4, diluent: "N2",
+                    }, hit.extracted_sim_params || {});
+                    streamState.events.unshift({
+                        seq_id: streamState.seq_id,
+                        time: nowTime,
+                        source: "Custom PSI Search Stream",
+                        id: hit.id,
+                        title: hit.title,
+                        summary: hit.abstract,
+                        url: hit.url,
+                        extracted_sim_params: streamState.latest_sim_params,
+                    });
+                    streamState.events = streamState.events.slice(0, 12);
+                    return;
+                }
+            }
+
+            try {
+                const res = await window.fetch(target, { method: "GET" });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const cleanName = decodeURIComponent((target.split("?")[0].split("/").pop() || "stream_data.csv"));
+                let parsed = null;
+                if (/\.(xlsx|zip)$/i.test(cleanName)) {
+                    const ab = await res.arrayBuffer();
+                    const arch = await extractArchiveBufferInBrowser(ab, cleanName);
+                    parsed = parseTextOrTablePayloadInBrowser(arch.text || "", arch.effectiveName || cleanName);
+                } else {
+                    const txt = await res.text();
+                    parsed = parseTextOrTablePayloadInBrowser(txt, cleanName);
+                }
+                streamState.seq_id += 1;
+                streamState.last_tick_ms = Date.now();
+                streamState.last_fetch_time = nowTime;
+                streamState.last_error = "";
+                const phases = Array.isArray(parsed.phases) ? parsed.phases : [];
+                let chosenParams = Object.assign({}, parsed.extracted_sim_params || {});
+                let phaseSuffix = "";
+                if (phases.length > 0) {
+                    const ph = phases[(streamState.seq_id - 1) % phases.length];
+                    if (ph && ph.sim_params) chosenParams = Object.assign({}, chosenParams, ph.sim_params);
+                    phaseSuffix = isEn ? ` [Phase ${ph.index}/${phases.length}]` : ` [Faz ${ph.index}/${phases.length}]`;
+                }
+                streamState.latest_sim_params = chosenParams;
+                streamState.events.unshift({
+                    seq_id: streamState.seq_id,
+                    time: nowTime,
+                    source: "Custom URL Stream",
+                    id: `URL-${streamState.seq_id}`,
+                    title: `${parsed.title || cleanName}${phaseSuffix}`,
+                    summary: (isEn ? parsed.summary_en : parsed.summary_tr || "").replace(/[#*`]/g, "").slice(0, 260),
+                    url: target,
+                    extracted_sim_params: chosenParams,
+                });
+                streamState.events = streamState.events.slice(0, 12);
+                return;
+            } catch (_) {
+                streamState.last_tick_ms = Date.now();
+                streamState.last_fetch_time = nowTime;
+                streamState.last_error = isEn
+                    ? "External URL blocked direct browser reading (CORS policy). Use a psi.nasa.gov link or Nasa_4.exe."
+                    : "Dış bağlantı tarayıcıdan doğrudan veri okumayı (CORS kuralı) kısıtladı. Resmi psi.nasa.gov adresi veya Nasa_4.exe kullanın.";
+                return;
+            }
+        }
+
+        if (src === "osdr" && PSI_SNAPSHOT.length > 0) {
+            const qVal = (!rawTarget || rawTarget.toLowerCase() === "auto") ? "combustion" : rawTarget;
+            const psiPool = searchPsiSnapshotJs(qVal, 36);
+            const item = psiPool[streamState.seq_id % Math.max(1, psiPool.length)] || psiRowToItemJs(PSI_SNAPSHOT[0]);
+            streamState.seq_id += 1;
+            streamState.last_tick_ms = Date.now();
+            streamState.last_fetch_time = nowTime;
+            streamState.last_error = "";
+            streamState.latest_sim_params = Object.assign({
+                fuel_id: "n_heptane", gravity_g: 0.0, oxygen_pct: 21.0,
+                pressure_psia: 14.7, airflow_cms: 2.4, droplet_d0_mm: 3.4, diluent: "N2",
+            }, item.extracted_sim_params || {});
+            streamState.events.unshift({
+                seq_id: streamState.seq_id,
+                time: nowTime,
+                source: "NASA PSI Repository Stream",
+                id: item.id,
+                title: item.title,
+                summary: item.abstract,
+                url: item.url,
+                extracted_sim_params: streamState.latest_sim_params,
+            });
+            streamState.events = streamState.events.slice(0, 12);
+            return;
+        }
+
+        let catPool = NASA_CATALOG;
+        if (rawTarget && rawTarget.toLowerCase() !== "auto") {
+            const scored = NASA_CATALOG
+                .map((e) => ({ e, s: computeTextSimilarity(rawTarget, `${e.program} ${e.title} ${e.title_tr} ${(e.tags || []).join(" ")}`) }))
+                .filter((x) => x.s > 0.05)
+                .sort((a, b) => b.s - a.s)
+                .map((x) => x.e);
+            if (scored.length > 0) catPool = scored;
+        }
+        const pick = catPool[streamState.seq_id % catPool.length];
         streamState.seq_id += 1;
         streamState.last_tick_ms = Date.now();
-        streamState.last_fetch_time = new Date().toTimeString().slice(0, 8);
+        streamState.last_fetch_time = nowTime;
         streamState.last_error = "";
         streamState.latest_sim_params = {
             fuel_id: pick.fuel_id,
@@ -2291,17 +2663,16 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             oxygen_pct: pick.oxygen_pct,
             pressure_psia: pick.pressure_psia,
             airflow_cms: pick.airflow_cms,
-            droplet_d0_mm: 3.2,
+            droplet_d0_mm: pick.cool_flame_observed ? 4.4 : 3.2,
             diluent: "N2",
         };
-        const isOsdr = streamState.source === "osdr";
         streamState.events.unshift({
             seq_id: streamState.seq_id,
-            time: streamState.last_fetch_time,
-            source: isOsdr ? "NASA OSDR / PSI Stream" : "NASA NTRS Live Stream",
-            id: isOsdr ? pick.exp_id : `NTRS-${pick.ntrs_id}`,
+            time: nowTime,
+            source: "NASA NTRS Live Stream",
+            id: `NTRS-${pick.ntrs_id}`,
             title: pick.title,
-            summary: runtimeConfig.language === "en" ? pick.key_finding_en : pick.key_finding_tr,
+            summary: isEn ? pick.key_finding_en : pick.key_finding_tr,
             url: pick.ntrs_url,
             extracted_sim_params: streamState.latest_sim_params,
         });
@@ -2317,7 +2688,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             const periodMs = Math.max(5000, (Number(streamState.interval_sec) || 25) * 1000);
             streamState.timerId = window.setInterval(() => {
                 if (streamState.enabled) {
-                    emitNextBrowserStreamPacket();
+                    emitNextBrowserStreamPacket().catch(() => {});
                 }
             }, periodMs);
         }
@@ -2391,82 +2762,183 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
 
         if (path === "/api/scrape-url" && method === "POST") {
             const targetUrl = String(jsonBody.url || "").trim();
-            if (!/^https:\/\/(psi\.nasa\.gov|ntrs\.nasa\.gov|osdr\.nasa\.gov)/i.test(targetUrl)) {
+            const isEn = runtimeConfig.language === "en";
+            if (!targetUrl || !/^(https?:\/\/|\.\/|\/)/i.test(targetUrl)) {
                 return makeJsonResponse({
                     ok: false,
-                    error: "Tarayıcı Modunda güvenlik (CSP) gereği yalnızca resmi https://psi.nasa.gov, https://ntrs.nasa.gov ve https://osdr.nasa.gov kaynakları sorgulanabilir.",
+                    error: isEn
+                        ? "Please enter a valid https:// web link (e.g. https://psi.nasa.gov/physci/repo/data/investigations/PSI-117)."
+                        : "Lütfen geçerli bir https:// web bağlantısı girin (örn. https://psi.nasa.gov/physci/repo/data/investigations/PSI-117).",
                 });
             }
-            if (/psi\.nasa\.gov/i.test(targetUrl)) {
-                const psiIdMap = {
-                    "PSI-69": "PSI-FLEX-01",
-                    "PSI-116": "PSI-FLEX2-02",
-                    "PSI-71": "PSI-BASS-03",
-                    "PSI-72": "PSI-BASS2-04",
-                    "PSI-120": "PSI-ACME-09",
-                    "PSI-131": "PSI-ACME-CFIG-14",
-                    "PSI-125": "PSI-BRE-05",
-                    "PSI-135": "PSI-SAFFIRE5-07",
-                    "PSI-143": "PSI-SOFIE-08",
-                    "PSI-55": "PSI-SAME-10",
-                    "PSI-117": "PSI-CFI-11",
-                    "PSI-111": "PSI-SPICE-12",
-                    "PSI-107": "PSI-SLISE-13",
-                };
-                const mPsi = targetUrl.match(/PSI-\d+/i);
-                const psiCode = mPsi ? mPsi[0].toUpperCase() : "";
-                const targetExpId = psiIdMap[psiCode] || "";
-                const matchedExp = NASA_CATALOG.find((e) => e.exp_id === targetExpId)
-                    || NASA_CATALOG.find((e) => targetUrl.toLowerCase().includes(e.program.toLowerCase()))
-                    || NASA_CATALOG[0];
-                const baseParams = {
-                    fuel_id: matchedExp.fuel_id || "n_heptane",
-                    gravity_g: Number(matchedExp.gravity_g ?? 0.0),
-                    oxygen_pct: Number(matchedExp.oxygen_pct ?? 21.0),
-                    pressure_psia: Number(matchedExp.pressure_psia ?? 14.7),
-                    airflow_cms: Number(matchedExp.airflow_cms ?? 2.4),
-                    droplet_d0_mm: 3.4,
-                    diluent: "N2",
-                };
-                const sim0 = simulateCombustionClient(baseParams);
-                const titleStr = `${psiCode || matchedExp.exp_id}: ${matchedExp.title} (${matchedExp.program})`;
-                ragDocs.push({ doc_id: psiCode || matchedExp.exp_id, title: titleStr, source: "NASA PSI Portal", url: targetUrl, text: `${matchedExp.title} ${matchedExp.key_finding_en}` });
+
+            let parsedTarget = null;
+            try {
+                parsedTarget = new URL(targetUrl, window.location.href);
+            } catch (_) {
+                return makeJsonResponse({
+                    ok: false,
+                    error: isEn ? "Malformed web URL." : "Geçersiz web adresi biçimi.",
+                });
+            }
+
+            const host = parsedTarget.hostname.toLowerCase();
+            const pPath = parsedTarget.pathname || "";
+            const qParam = (
+                parsedTarget.searchParams.get("q")
+                || parsedTarget.searchParams.get("term")
+                || parsedTarget.searchParams.get("search")
+                || ""
+            ).trim();
+            const mPsi = targetUrl.match(/\b(PSI-\d+)\b/i);
+            const mNtrs = /ntrs\.nasa\.gov$/i.test(host) ? pPath.match(/\/citations\/(\d{6,14})/i) : null;
+            const isNasaPortal = /(?:^|\.)(psi|osdr|ntrs)\.nasa\.gov$/i.test(host);
+
+            // 1. Arama / listeleme adresi (örn. psi.nasa.gov/physci/repo/search?q=combustion)
+            if (isNasaPortal && !mPsi && !mNtrs && (/\/search\b/i.test(pPath) || Boolean(qParam) || /^(\/|\/physci\/repo\/?)$/i.test(pPath))) {
+                if (/ntrs\.nasa\.gov$/i.test(host)) {
+                    const ntrsRes = await fetchLiveNasaBrowser("ntrs", qParam || "microgravity combustion");
+                    const nItems = Array.isArray(ntrsRes.items) ? ntrsRes.items : [];
+                    return makeJsonResponse({
+                        ok: true,
+                        mode: "search_results",
+                        repository: "NASA NTRS Technical Reports Server (ntrs.nasa.gov)",
+                        query: qParam || "microgravity combustion",
+                        url: targetUrl,
+                        title: `NASA NTRS: '${qParam || "combustion"}' (${nItems.length})`,
+                        count: nItems.length,
+                        search_items: nItems,
+                    });
+                }
+                const psiItems = searchPsiSnapshotJs(qParam || "combustion", 36);
                 return makeJsonResponse({
                     ok: true,
-                    title: titleStr,
-                    preview: matchedExp.key_finding_en,
-                    summary_tr: `**NASA PSI Kaydı (${psiCode || matchedExp.exp_id} • ${matchedExp.program}):** ${matchedExp.title_tr}\n- **Test Koşulları:** \`${baseParams.fuel_id}\`, \`${baseParams.gravity_g}G\`, \`%${baseParams.oxygen_pct} O₂\`, \`${baseParams.pressure_psia} psia\`, \`${baseParams.airflow_cms} cm/s\` (Ölçülen MOC: \`%${matchedExp.moc_measured_pct}\`).\n- **Bulgu:** ${matchedExp.key_finding_tr}`,
-                    summary_en: `**NASA PSI Record (${psiCode || matchedExp.exp_id} • ${matchedExp.program}):** ${matchedExp.title}\n- **Conditions:** \`${baseParams.fuel_id}\`, \`${baseParams.gravity_g}G\`, \`${baseParams.oxygen_pct}% O₂\`, \`${baseParams.pressure_psia} psia\`, \`${baseParams.airflow_cms} cm/s\` (Measured MOC: \`${matchedExp.moc_measured_pct}%\`).\n- **Finding:** ${matchedExp.key_finding_en}`,
-                    chunks: 2,
-                    phases: [],
-                    extracted_sim_params: baseParams,
-                    simulation: sim0,
+                    mode: "search_results",
+                    repository: "NASA Physical Sciences Informatics (psi.nasa.gov)",
+                    query: qParam || "combustion",
+                    url: targetUrl,
+                    title: `NASA PSI: '${qParam || "combustion"}' (${psiItems.length})`,
+                    count: psiItems.length,
+                    search_items: psiItems,
                 });
             }
-            const srcType = /osdr\.nasa\.gov/i.test(targetUrl) ? "osdr" : "ntrs";
-            const qHint = (targetUrl.match(/\d{8,12}/) || ["Saffire microgravity fire"])[0];
-            const live = await fetchLiveNasaBrowser(srcType, qHint);
-            const first = (live.items && live.items[0]) || { title: "NASA Citation", abstract: "" };
-            const extracted = {
-                fuel_id: parseFuelStrJs(`${first.title} ${first.abstract}`) || "sibal",
-                gravity_g: 0.0,
-                oxygen_pct: 21.0,
-                pressure_psia: 14.7,
-                airflow_cms: 3.0,
-                droplet_d0_mm: 3.4,
-                diluent: "N2",
-            };
-            return makeJsonResponse({
-                ok: true,
-                title: first.title,
-                preview: first.abstract,
-                summary_tr: `**Web (${targetUrl}):** ${first.title}\n${first.abstract}`,
-                summary_en: `**Web (${targetUrl}):** ${first.title}\n${first.abstract}`,
-                chunks: 2,
-                phases: [],
-                extracted_sim_params: extracted,
-                simulation: simulateCombustionClient(extracted),
-            });
+
+            // 2. Tekil PSI-XX deney kaydı adresi (örn. psi.nasa.gov/physci/repo/data/investigations/PSI-117 veya PSI-22)
+            if (mPsi) {
+                const psiCode = mPsi[1].toUpperCase();
+                const snap = PSI_SNAPSHOT_MAP[psiCode];
+                if (snap) {
+                    const baseParams = Object.assign({
+                        fuel_id: "n_heptane",
+                        gravity_g: 0.0,
+                        oxygen_pct: 21.0,
+                        pressure_psia: 14.7,
+                        airflow_cms: 2.4,
+                        droplet_d0_mm: 3.4,
+                        diluent: "N2",
+                    }, snap.extracted_sim_params || {});
+                    const sim0 = simulateCombustionClient(baseParams);
+                    const phases = Array.isArray(snap.phases) ? snap.phases : [];
+                    const titleStr = snap.title || `${psiCode} — ${snap.raw_title || ""}`;
+                    if (!ragDocs.some((d) => d.doc_id === psiCode)) {
+                        ragDocs.push({
+                            doc_id: psiCode,
+                            title: titleStr,
+                            source: "NASA PSI Portal",
+                            url: snap.url || targetUrl,
+                            text: `${titleStr} ${snap.abstract || ""}`,
+                        });
+                    }
+                    const fallbackTr = `**NASA PSI Deney Kaydı (${psiCode}${snap.acronym ? " • " + snap.acronym : ""}):** ${snap.raw_title || titleStr}\n- **Test Koşulları:** \`${baseParams.fuel_id}\`, \`${baseParams.gravity_g}G\`, \`%${baseParams.oxygen_pct} O₂\`, \`${baseParams.pressure_psia} psia\`, \`${baseParams.airflow_cms} cm/s\`.\n- **Özet:** ${snap.abstract || ""}`;
+                    const fallbackEn = `**NASA PSI Investigation (${psiCode}${snap.acronym ? " • " + snap.acronym : ""}):** ${snap.raw_title || titleStr}\n- **Conditions:** \`${baseParams.fuel_id}\`, \`${baseParams.gravity_g}G\`, \`${baseParams.oxygen_pct}% O₂\`, \`${baseParams.pressure_psia} psia\`, \`${baseParams.airflow_cms} cm/s\`.\n- **Abstract:** ${snap.abstract || ""}`;
+                    return makeJsonResponse({
+                        ok: true,
+                        filename: snap.table_file || `${psiCode}.json`,
+                        title: titleStr,
+                        preview: snap.abstract || "",
+                        summary_tr: snap.summary_tr || fallbackTr,
+                        summary_en: snap.summary_en || fallbackEn,
+                        chunks: Math.max(1, phases.length || 2),
+                        phases: phases,
+                        extracted_sim_params: baseParams,
+                        simulation: sim0,
+                    });
+                }
+                return makeJsonResponse({
+                    ok: false,
+                    error: isEn
+                        ? `Record ${psiCode} is outside the 36 verified combustion investigations bundled in Browser Mode. Use the desktop app (Nasa_4.exe) for live Geode API access to all PSI disciplines.`
+                        : `${psiCode} kaydı Tarayıcı Modunda yer alan 36 doğrulanmış yanma deneyinin dışındadır. Yanma dışı PSI disiplinlerini canlı çekmek için masaüstü uygulamasını (Nasa_4.exe) kullanabilirsiniz.`,
+                });
+            }
+
+            // 3. Tekil NTRS makale adresi (örn. ntrs.nasa.gov/citations/20150023456)
+            if (mNtrs) {
+                const ntrsId = mNtrs[1];
+                const matchedExp = NASA_CATALOG.find((e) => String(e.ntrs_id) === ntrsId);
+                if (matchedExp) {
+                    const baseParams = {
+                        fuel_id: matchedExp.fuel_id || "n_heptane",
+                        gravity_g: Number(matchedExp.gravity_g ?? 0.0),
+                        oxygen_pct: Number(matchedExp.oxygen_pct ?? 21.0),
+                        pressure_psia: Number(matchedExp.pressure_psia ?? 14.7),
+                        airflow_cms: Number(matchedExp.airflow_cms ?? 2.4),
+                        droplet_d0_mm: matchedExp.cool_flame_observed ? 4.4 : 3.4,
+                        diluent: "N2",
+                    };
+                    return makeJsonResponse({
+                        ok: true,
+                        filename: `NTRS-${ntrsId}.json`,
+                        title: `NTRS-${ntrsId} — ${matchedExp.title}`,
+                        preview: matchedExp.key_finding_en,
+                        summary_tr: `**NASA NTRS Makale Kaydı (\`NTRS-${ntrsId}\` • ${matchedExp.program}):** ${matchedExp.title_tr}\n- **Koşullar:** \`${baseParams.fuel_id}\`, \`${baseParams.gravity_g}G\`, \`%${baseParams.oxygen_pct} O₂\`, \`${baseParams.pressure_psia} psia\`, \`${baseParams.airflow_cms} cm/s\`.\n- **Temel Bulgu:** ${matchedExp.key_finding_tr}`,
+                        summary_en: `**NASA NTRS Citation (\`NTRS-${ntrsId}\` • ${matchedExp.program}):** ${matchedExp.title}\n- **Conditions:** \`${baseParams.fuel_id}\`, \`${baseParams.gravity_g}G\`, \`${baseParams.oxygen_pct}% O₂\`, \`${baseParams.pressure_psia} psia\`, \`${baseParams.airflow_cms} cm/s\`.\n- **Key Finding:** ${matchedExp.key_finding_en}`,
+                        chunks: 2,
+                        phases: [],
+                        extracted_sim_params: baseParams,
+                        simulation: simulateCombustionClient(baseParams),
+                    });
+                }
+                return makeJsonResponse({
+                    ok: false,
+                    error: isEn
+                        ? `ntrs.nasa.gov blocks direct cross-origin browser requests (CORS) for citation #${ntrsId}. Download the PDF and upload it below, or open this URL in the desktop app (Nasa_4.exe).`
+                        : `ntrs.nasa.gov sunucusu #${ntrsId} makalesi için doğrudan tarayıcı sorgusunu (CORS güvenlik kuralı) kısıtlamaktadır. Makale PDF dosyasını indirip aşağıdan yükleyebilir veya bağlantıyı masaüstü uygulamasında (Nasa_4.exe) doğrudan çözümleyebilirsiniz.`,
+                });
+            }
+
+            // 4. Doğrudan CSV / JSON / XLSX / ZIP / metin bağlantıları (CORS açık kaynaklar veya yerel göreli yollar)
+            try {
+                const res = await window.fetch(targetUrl, { method: "GET" });
+                if (!res.ok) {
+                    return makeJsonResponse({
+                        ok: false,
+                        error: isEn
+                            ? `Remote server returned HTTP ${res.status} for this URL.`
+                            : `Karşı sunucu bu bağlantı için HTTP ${res.status} yanıtı döndürdü.`,
+                    });
+                }
+                const cleanName = decodeURIComponent((pPath.split("/").pop() || "web_dataset.csv"));
+                if (/\.(xlsx|zip)$/i.test(cleanName)) {
+                    const ab = await res.arrayBuffer();
+                    const arch = await extractArchiveBufferInBrowser(ab, cleanName);
+                    return makeJsonResponse(parseTextOrTablePayloadInBrowser(arch.text || "", arch.effectiveName || cleanName));
+                }
+                if (/\.pdf$/i.test(cleanName)) {
+                    const ab = await res.arrayBuffer();
+                    const pdfTxt = extractReadableTextFromPdfBuffer(ab);
+                    return makeJsonResponse(parseTextOrTablePayloadInBrowser(pdfTxt, cleanName));
+                }
+                const rawText = await res.text();
+                return makeJsonResponse(parseTextOrTablePayloadInBrowser(rawText, cleanName));
+            } catch (_) {
+                return makeJsonResponse({
+                    ok: false,
+                    error: isEn
+                        ? "This external server restricts direct browser reading (CORS security policy). Download the file (.csv/.xlsx/.zip/.pdf) and upload it below, or use the desktop app (Nasa_4.exe) for live server fetching."
+                        : "Bu dış sunucu tarayıcı üzerinden doğrudan veri çekimini (CORS güvenlik kuralı) kısıtlamaktadır. Veri dosyasını (.csv/.xlsx/.zip/.pdf) indirip aşağıdan yükleyebilir veya canlı sunucu çekimi için masaüstü uygulamasını (Nasa_4.exe) kullanabilirsiniz.",
+                });
+            }
         }
 
         if (path === "/api/rag-add-text" && method === "POST") {
@@ -2497,7 +2969,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             if ("auto_sync_sim" in jsonBody) streamState.auto_sync_sim = Boolean(jsonBody.auto_sync_sim);
 
             if (jsonBody.trigger_immediate || streamState.enabled) {
-                emitNextBrowserStreamPacket();
+                await emitNextBrowserStreamPacket();
             }
             syncBrowserStreamTimer();
             return makeJsonResponse(Object.assign({}, streamState, { timerId: null }));
@@ -2507,7 +2979,7 @@ SERVERLESS_KERNEL_TEMPLATE = r"""/* ============================================
             if (streamState.enabled) {
                 const elapsed = Date.now() - (streamState.last_tick_ms || 0);
                 if (elapsed >= Math.max(8000, (Number(streamState.interval_sec) || 25) * 1000)) {
-                    emitNextBrowserStreamPacket();
+                    await emitNextBrowserStreamPacket();
                 }
             }
             return makeJsonResponse(Object.assign({}, streamState, { timerId: null }));
@@ -2669,7 +3141,13 @@ def build_bundle() -> None:
     shutil.copy2(WEB_SRC / "static" / "js" / "charts_and_audio.js", OUT_DIR / "js" / "charts_and_audio.js")
     shutil.copy2(WEB_SRC / "static" / "js" / "app_controller.js", OUT_DIR / "js" / "app_controller.js")
 
-    # 2. serverless_kernel.js dosyasını gömülü doğrulanmış bilimsel katalogla oluştur
+    # 2. serverless_kernel.js dosyasını gömülü doğrulanmış bilimsel katalogla ve 36 PSI arşiviyle oluştur
+    psi_snapshot_path = PROJECT_ROOT / "core" / "psi_archive_snapshot.json"
+    psi_archive_snapshot = (
+        json.loads(psi_snapshot_path.read_text(encoding="utf-8"))
+        if psi_snapshot_path.is_file()
+        else []
+    )
     embedded_payload = {
         "FUEL_PROPERTIES": FUEL_PROPERTIES,
         "DILUENT_FACTORS": DILUENT_FACTORS,
@@ -2679,6 +3157,7 @@ def build_bundle() -> None:
         "SPACE_TO_EARTH_TRANSFERS": SPACE_TO_EARTH_TRANSFERS,
         "CORE_DIRECTIVES_LIST": CORE_DIRECTIVES_LIST,
         "BILINGUAL_SCIENTIFIC_SYNONYMS": BILINGUAL_SCIENTIFIC_SYNONYMS,
+        "PSI_ARCHIVE_SNAPSHOT": psi_archive_snapshot,
     }
     embedded_json = json.dumps(embedded_payload, ensure_ascii=False)
     kernel_code = SERVERLESS_KERNEL_TEMPLATE.replace("__EMBEDDED_JSON__", embedded_json)
@@ -2686,7 +3165,7 @@ def build_bundle() -> None:
 
     # 3. index.html dosyasını sunucusuz statik CSP ve göreli yollarla dönüştür
     src_html = (WEB_SRC / "templates" / "index.html").read_text(encoding="utf-8")
-    # Sunucu CSRF meta etiketini kaldır ve yerine sıkı statik CSP koy
+    # Sunucu CSRF meta etiketini kaldır ve yerine statik CSP koy
     csp_meta = (
         '<meta http-equiv="Content-Security-Policy" content="'
         "default-src 'self'; "
@@ -2695,26 +3174,41 @@ def build_bundle() -> None:
         "img-src 'self' data: blob:; "
         "media-src 'self' blob:; "
         "font-src 'self' data:; "
-        "connect-src 'self' https://ntrs.nasa.gov https://osdr.nasa.gov https://generativelanguage.googleapis.com https://openrouter.ai; "
+        "connect-src 'self' https: http://127.0.0.1:11434; "
         "object-src 'none'; "
         "base-uri 'self'; "
         "form-action 'self';"
         '" />\n    <link rel="icon" href="./nasa_flame.ico" />'
     )
     out_html = re.sub(r'<meta\s+name="altar-csrf"[^>]*>', csp_meta, src_html)
-    out_html = out_html.replace('href="/static/css/mission_control.css?v=5.3"', 'href="./css/mission_control.css?v=5.3"')
+    out_html = re.sub(
+        r'href="/static/css/mission_control\.css(\?v=[0-9.]+)?"',
+        lambda m: f'href="./css/mission_control.css{m.group(1) or ""}"',
+        out_html,
+    )
     out_html = out_html.replace('src="/static/js/vendor/three.min.js"', 'src="./js/vendor/three.min.js"')
-    out_html = out_html.replace('src="/static/js/three_chamber_3d.js?v=5.3"', 'src="./js/three_chamber_3d.js?v=5.3"')
-    out_html = out_html.replace('src="/static/js/charts_and_audio.js?v=5.3"', 'src="./js/charts_and_audio.js?v=5.3"')
-    out_html = out_html.replace(
-        'src="/static/js/app_controller.js?v=5.3"',
-        'src="./js/serverless_kernel.js?v=5.3"></script>\n    <script src="./js/app_controller.js?v=5.3"',
+    out_html = re.sub(
+        r'src="/static/js/three_chamber_3d\.js(\?v=[0-9.]+)?"',
+        lambda m: f'src="./js/three_chamber_3d.js{m.group(1) or ""}"',
+        out_html,
+    )
+    out_html = re.sub(
+        r'src="/static/js/charts_and_audio\.js(\?v=[0-9.]+)?"',
+        lambda m: f'src="./js/charts_and_audio.js{m.group(1) or ""}"',
+        out_html,
+    )
+    out_html = re.sub(
+        r'src="/static/js/app_controller\.js(\?v=[0-9.]+)?"',
+        lambda m: f'src="./js/serverless_kernel.js{m.group(1) or ""}"></script>\n    <script src="./js/app_controller.js{m.group(1) or ""}"',
+        out_html,
     )
     out_html = out_html.replace(">Çevrimdışı Mod<", ">Tarayıcı Modu<")
     out_html = out_html.replace(">Çevrimdışı / Yerel<", ">Tarayıcı İçi<")
     (OUT_DIR / "index.html").write_text(out_html, encoding="utf-8")
 
-    # 4. Dağıtım kılavuzunu yaz ve Jekyll işlemesini devre dışı bırakan .nojekyll ekle
+    # 4. Örnek veri paketlerini ve dağıtım kılavuzunu yaz
+    if (PROJECT_ROOT / "sample_data").is_dir():
+        shutil.copytree(PROJECT_ROOT / "sample_data", OUT_DIR / "sample_data", dirs_exist_ok=True)
     (OUT_DIR / "README_GITHUB_CLOUDFLARE_PAGES.md").write_text(README_STATIC_DEPLOY, encoding="utf-8")
     (OUT_DIR / ".nojekyll").write_text("", encoding="utf-8")
 

@@ -56,7 +56,7 @@ The interface is organized into **5 clear modules** with instant **TR / EN** bil
 
 ![Data & Imagery — Live NASA Stream & Flame Pixel Analysis](docs/screenshots/04_live_nasa_stream_and_rag.png)
 
-- **Live NASA PSI & NTRS Archive Search:** Queries official `psi.nasa.gov`, `ntrs.nasa.gov`, and `osdr.nasa.gov` REST APIs for microgravity combustion papers and datasets, and directly resolves `https://psi.nasa.gov/physci/repo/data/investigations/PSI-XX` URLs by downloading their `Experimental Table` records into the 3D chamber.
+- **Live NASA PSI & NTRS Archive Search:** Queries official `psi.nasa.gov`, `ntrs.nasa.gov`, and `osdr.nasa.gov` REST APIs for microgravity combustion papers and datasets, and directly resolves both search URLs (`https://psi.nasa.gov/physci/repo/search?q=combustion` via an interactive 36-investigation picker) and individual `https://psi.nasa.gov/physci/repo/data/investigations/PSI-XX` URLs into multi-phase 3D chamber runs.
 - **NASA PSI Experimental Table & Flame Analysis:** Directly parses raw NASA PSI `Experimental Table` files across `.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, and `.json` formats — automatically converting oxygen mole fractions (`X_O2 -> %O₂`), pressure units (`mmHg`/`torr`, `bar`, `atm`, `kPa -> psia`), temperatures (`°C -> K`), and helium/carbon-dioxide diluents while grouping multi-run matrices into interactive `Phase 1..N` chamber presets. Also analyzes uploaded flame photographs (`.png`, `.jpg`) pixel-by-pixel in RGB/HSV space to quantify blue `CH*` chemiluminescence vs. yellow soot incandescence and aspect-ratio (`H/W`) sphericity.
 
 ---
