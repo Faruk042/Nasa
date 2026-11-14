@@ -191,7 +191,7 @@
         if (showFlightOverlay !== false && flightValidation) {
             ctx.fillStyle = "#f8fafc";
             ctx.fillRect(pad.l + 122, 7, 5, 5);
-            ctx.fillText("ISS", pad.l + 131, 14);
+            ctx.fillText("ISS 0G", pad.l + 131, 14);
         }
         ctx.fillStyle = "#fca5a5";
         ctx.fillText(lang === "en" ? "Flammable Zone" : "Yanıcı Bölge", w - 92, 14);
@@ -312,7 +312,7 @@
         if (showFlightOverlay !== false && flightValidation) {
             ctx.fillStyle = "#ecfdf5";
             ctx.fillRect(pad.l + 230, 7, 6, 6);
-            ctx.fillText(`ISS (R²=${flightValidation.r_squared})`, pad.l + 239, 14);
+            ctx.fillText(`ISS 0G (R²=${flightValidation.r_squared})`, pad.l + 239, 14);
         }
 
         ctx.fillStyle = "#64748b";

@@ -29,10 +29,10 @@
             lbl_airflow: "Hava Akış Hızı",
             lbl_droplet: "Numune Çapı",
             lbl_diluent: "Seyreltici Gaz",
-            audio_title: "Alev Seslendirme",
+            audio_title: "Telemetri Seslendirme",
             audio_start: "Sesi Aç",
             audio_stop: "Sesi Kapat",
-            audio_desc: "Sıcaklık ve görünmez Soğuk Alev titreşimlerini gerçek zamanlı ses frekansına dönüştürür.",
+            audio_desc: "Sıcaklık, ısı akısı ve görünmez Soğuk Alev telemetrisini göz-serbest izleme için ses frekansına dönüştürür (veri işitselleştirme).",
             chamber_title: "3B Yanma Odası",
             chamber_hint: "Sürükle: Döndür • Tekerlek: Yakınlaştır",
             cam_front: "Ön Açı",
@@ -121,7 +121,7 @@
             copilot_ctx_tag: "3B Yanma Odası ve 15 PSI Deneyi Bağlı",
             welcome_title: "Mühendislik Analizi ve Karar Desteği",
             kv_solver_lbl: "SAYISAL ÇÖZÜCÜ",
-            kv_solver_val: "d² • B_oq • Sh • Da • MOC",
+            kv_solver_val: "d² • de Ris • B_oq • Sh • Da",
             kv_corpus_lbl: "VERİ KAYNAKLARI",
             kv_auditor_lbl: "GÜVENLİK STANDARDI",
             welcome_p1: "Bu modül; aktif 3B yanma odası durumunu, boyutsuz taşınım sayılarını, ISS uçuş doğrulama sonuçlarını (R² / RMSE) ve 15 doğrulanmış NASA PSI deneyini analitik çözücü üzerinden değerlendirir.",
@@ -166,7 +166,7 @@
             shield_badge: "Çevrimdışı Mod",
             lbl_audience: "Görünüm:",
             btn_guided_tour: "Rehberli Tur",
-            chk_flight_pts: "ISS Ölçümleri",
+            chk_flight_pts: "ISS 0G Referansı",
             btn_export_csv: "CSV İndir",
             btn_export_json: "JSON İndir",
             btn_tour_end: "Bitir",
@@ -190,10 +190,10 @@
             lbl_airflow: "Airflow Speed",
             lbl_droplet: "Sample Diameter",
             lbl_diluent: "Diluent Gas",
-            audio_title: "Flame Audio",
+            audio_title: "Telemetry Sonification",
             audio_start: "Play Audio",
             audio_stop: "Mute Audio",
-            audio_desc: "Converts flame temperature and invisible Cool Flame oscillations into real-time audio frequencies.",
+            audio_desc: "Maps flame temperature, radiative flux, and invisible Cool Flame telemetry to audio frequencies for eyes-free monitoring (data sonification).",
             chamber_title: "3D Combustion Chamber",
             chamber_hint: "Drag: Orbit • Scroll: Zoom",
             cam_front: "Front View",
@@ -282,7 +282,7 @@
             copilot_ctx_tag: "3D Chamber & 15 PSI Experiments Linked",
             welcome_title: "Engineering Analysis & Decision Support",
             kv_solver_lbl: "NUMERICAL SOLVER",
-            kv_solver_val: "d² • B_oq • Sh • Da • MOC",
+            kv_solver_val: "d² • de Ris • B_oq • Sh • Da",
             kv_corpus_lbl: "DATA SOURCES",
             kv_auditor_lbl: "SAFETY STANDARD",
             welcome_p1: "This module evaluates the active 3D chamber state, dimensionless transport numbers, ISS flight validation metrics (R² / RMSE), and 15 verified NASA PSI experiments via the analytical solver.",
@@ -327,7 +327,7 @@
             shield_badge: "Offline Mode",
             lbl_audience: "View:",
             btn_guided_tour: "Guided Tour",
-            chk_flight_pts: "ISS Flight Data",
+            chk_flight_pts: "ISS 0G Benchmark",
             btn_export_csv: "Download CSV",
             btn_export_json: "Download JSON",
             btn_tour_end: "Finish",
@@ -455,16 +455,16 @@
 
         const copy = {
             researcher: {
-                tr: "**Araştırmacı Görünümü:** Analitik `d²` yasası (`K`), Spalding `B_oq`, Sherwood `Sh`, Damköhler `Da` ve ısıl kayıp (`χ_r`) denklemleri aktif. Grafikler üzerindeki **ISS ölçüm noktaları** gerçek NASA GRC uçuş verileriyle canlı `R²` / `RMSE` uyumunu gösterir; sağ üstten **CSV / JSON** veri setlerini indirebilirsiniz.",
-                en: "**Researcher View:** Analytical `d²`-law (`K`), Spalding `B_oq`, Sherwood `Sh`, Damköhler `Da`, and radiative fraction (`χ_r`) highlighted. **ISS flight data markers** overlay NASA GRC flight telemetry with live `R²` / `RMSE` metrics; download predictive datasets via **Download CSV / JSON** above.",
+                tr: "**Araştırmacı Görünümü:** Faza özgü `d²` sıvı damlacık (`K`, `B_oq`), `de Ris` katı yayılım (`V_f`, `B_p`) ve `Burke-Schumann` gaz difüzyon denklemleri (`Sh`, `Da`, `χ_r`) aktif. Grafikler üzerindeki **ISS 0G referans noktaları** yayımlanmış NASA GRC `0G` deney eğrileriyle `R²` / `RMSE` kalibrasyonunu gösterir; sağ üstten **CSV / JSON** veri setlerini indirebilirsiniz.",
+                en: "**Researcher View:** Phase-specific `d²` droplet (`K`, `B_oq`), `de Ris` solid spread (`V_f`, `B_p`), and `Burke-Schumann` gas diffusion equations (`Sh`, `Da`, `χ_r`) active. **ISS 0G benchmark markers** overlay published NASA GRC `0G` reference curves with `R²` / `RMSE` metrics; download predictive datasets via **Download CSV / JSON** above.",
             },
             student: {
                 tr: "**Öğrenci Görünümü:** Dünya'da (`1G`) ısınan hava yükselerek alevi gözyaşı şekline sokar. Uzayda (`0G`) kaldırma kuvveti yok olur (`Ra = 0`); oksijen yalnızca moleküler difüzyonla ilerlediği için alev **küresel safir-mavi** bir topa dönüşür veya çıplak gözle görülemeyen **550–780 K Soğuk Alev** fazına geçer.",
                 en: "**Student View:** On Earth (`1G`), rising hot gas stretches flames into teardrops. In freefall (`0G`), buoyancy vanishes (`Ra = 0`); oxygen arrives purely via molecular diffusion, turning the flame into a **sapphire-blue sphere** or an invisible **550–780 K Cool Flame** that blinds optical smoke detectors.",
             },
             engineer: {
-                tr: "**Mühendis Görünümü:** Uzay giysisi (`4.3 psia / %100 O₂`) ve basınçlı Ay gezgini (`10.2 psia / %32 O₂`) atmosferlerinde azot ısıl balastı azaldığından yayılma hızı sıçrar. Aşağıdaki **Yaşam Destek Saati** ile `SMAC 125 ppm CO` süresini izleyin; ilk eylem daima **Fan Kapatma + İnce Su Sisi (SoFIE-MIST)** olmalıdır (*Halon 1301 yasaktır*).",
-                en: "**Engineer View:** Reduced N₂ thermal ballast in EVA suits (`4.3 psia / 100% O₂`) and Lunar rovers (`10.2 psia / 32% O₂`) accelerates flame spread. Monitor the **Life Support Clock** below for `SMAC 125 ppm CO` margins; execute **HVAC Cutoff + Fine Water Mist (SoFIE-MIST)** (*Halon 1301 strictly prohibited*).",
+                tr: "**Mühendis Görünümü:** Uzay giysisi (`4.3 psia / %100 O₂`) ve basınçlı Ay gezgini (`10.2 psia / %32 O₂`) atmosferlerinde azot ısıl balastı azaldığından yayılma hızı sıçrar. Aşağıdaki **Yaşam Destek Saati** ile resmi `NASA JSC-20584 CO SMAC` (`100 ppm` 24sa / `425 ppm` 1sa) sınırlarını izleyin; ilk eylem daima **Fan Kapatma + İnce Su Sisi (SoFIE-MIST)** olmalıdır (*Halon 1301 yasaktır*).",
+                en: "**Engineer View:** Reduced N₂ thermal ballast in EVA suits (`4.3 psia / 100% O₂`) and Lunar rovers (`10.2 psia / 32% O₂`) accelerates flame spread. Monitor the **Life Support Clock** below for official `NASA JSC-20584 CO SMAC` (`100 ppm` 24-hr / `425 ppm` 1-hr) margins; execute **HVAC Cutoff + Fine Water Mist (SoFIE-MIST)** (*Halon 1301 strictly prohibited*).",
             },
         };
         const msg = (copy[mode] || copy.researcher)[isEn ? "en" : "tr"];
@@ -749,7 +749,10 @@
         const po2Kpa = tel.o2_partial_kpa !== undefined ? tel.o2_partial_kpa : tel.po2_kpa;
         $("tel-po2").textContent = `P_O₂: ${po2Psia} psia (${po2Kpa} kPa)`;
         $("tel-kburn").textContent = `${tel.burning_rate_k_mm2_s} mm²/s`;
-        $("tel-lifetime").textContent = tel.burn_lifetime_s > 0
+        const isSteadyGas = sim.inputs && sim.inputs.fuel_phase === "gas" && !tel.extinguished;
+        $("tel-lifetime").textContent = isSteadyGas
+            ? (isEn ? "Steady Gas Feed (D = D₀)" : "Sabit Gaz Debisi (D = D₀)")
+            : tel.burn_lifetime_s > 0
             ? (isEn ? `Burn Life: ~${tel.burn_lifetime_s} s` : `Ömür: ~${tel.burn_lifetime_s} sn`)
             : (isEn ? "Extinguished" : "Sönümlendi");
         $("tel-spread").textContent = `${tel.flame_spread_mm_s} mm/s`;
@@ -1853,22 +1856,55 @@
         setChatGeneratingUI(true);
 
         try {
-            const startRes = await apiFetch("/api/chat/start", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: text,
-                    sim_params: getSimParamsFromUI(),
-                    history: state.chatHistory.slice(-6),
-                    image_base64: state.attachedImageB64,
-                    media_context: state.attachedMediaSummary,
-                    provider_override: chosenProvider,
-                }),
-            });
-            const startData = await startRes.json();
-            if (!startData.ok || !startData.job_id) {
+            const buildLocalSimFallbackReply = () => {
+                const sim = state.currentSim;
+                if (!sim || !sim.inputs || !sim.telemetry) {
+                    return isEn
+                        ? "### Offline Analytical Summary\nLocal server connection momentarily interrupted; adjust any chamber slider to refresh telemetry."
+                        : "### Çevrimdışı Analitik Özet\nYerel sunucu bağlantısı anlık olarak kesildi; telemetriyi yenilemek için kaydırıcıları güncelleyebilirsiniz.";
+                }
+                const inp = sim.inputs;
+                const tel = sim.telemetry;
+                const tl = sim.scenario_timeline || {};
+                const call = sim.callouts || {};
+                const t100 = tl.t_smac_24h_100ppm_s ?? 180;
+                const t425 = tl.t_smac_1h_425ppm_s ?? 420;
+                return isEn
+                    ? `### Analytical Physics Synthesis: ${call.badge_en || tel.regime}\n- **Active Chamber (\`${inp.fuel_name_en}\`):** \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → \`T_f = ${tel.flame_temp_k} K\`, \`MOC = ${tel.moc_pct}% O₂\`, Risk **\`${tel.risk_score}/100\`**.\n- **Dimensionless Transport:** \`B = ${tel.spalding_b_number}\` • \`Sh = ${tel.sherwood_number}\` • \`Da = ${tel.damkohler_number}\` • \`χ_r = ${(tel.radiative_loss_fraction * 100).toFixed(1)}%\`.\n- **NASA JSC-20584 CO SMAC (${tl.habitat_name_en || "Habitat"}):** Alarm \`+${tl.t_alarm_s || 4} s\` • 24-hr SMAC (\`100 ppm\`) \`${t100} s\` • 1-hr SMAC (\`425 ppm\`) \`${t425} s\`.\n- **NASA-STD-6001B Action:** Cut HVAC airflow (\`U → 0 cm/s\`), isolate power, apply **25–40 µm Fine Water Mist (SoFIE-MIST)** or CO₂/N₂ (*Halon 1301 prohibited*).`
+                    : `### Analitik Fizik Çözücü Sentezi: ${call.badge_tr || tel.regime}\n- **Aktif Yanma Odası (\`${inp.fuel_name_tr}\`):** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → \`T_f = ${tel.flame_temp_k} K\`, \`MOC = %${tel.moc_pct} O₂\`, Risk **\`${tel.risk_score}/100\`**.\n- **Boyutsuz Taşınım Sayıları:** \`B = ${tel.spalding_b_number}\` • \`Sh = ${tel.sherwood_number}\` • \`Da = ${tel.damkohler_number}\` • \`χ_r = %${(tel.radiative_loss_fraction * 100).toFixed(1)}\`.\n- **NASA JSC-20584 CO SMAC (${tl.habitat_name_tr || "Kabin"}):** Alarm \`+${tl.t_alarm_s || 4} sn\` • 24sa SMAC (\`100 ppm\`) \`${t100} sn\` • 1sa Acil SMAC (\`425 ppm\`) \`${t425} sn\`.\n- **NASA-STD-6001B Müdahale Sırası:** HVAC fanlarını kapat (\`U → 0 cm/s\`), gücü kes, **25–40 µm İnce Su Sisi (SoFIE-MIST)** veya CO₂/N₂ uygula (*Halon 1301 yasaktır*).`;
+            };
+
+            const reqPayload = {
+                message: text,
+                sim_params: getSimParamsFromUI(),
+                history: state.chatHistory.slice(-6),
+                image_base64: state.attachedImageB64,
+                media_context: state.attachedMediaSummary,
+                provider_override: chosenProvider,
+            };
+
+            let startData = null;
+            try {
+                const startRes = await apiFetch("/api/chat/start", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(reqPayload),
+                });
+                startData = await startRes.json();
+            } catch (_firstErr) {
+                await new Promise((r) => setTimeout(r, 350));
+                const retryRes = await apiFetch("/api/chat/start", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(Object.assign({}, reqPayload, { provider_override: "physics" })),
+                });
+                startData = await retryRes.json();
+            }
+
+            if (!startData || !startData.ok || !startData.job_id) {
                 setChatGeneratingUI(false);
-                aiBubble.innerHTML = `<span style="color:#fca5a5;">${escapeHtml(startData.error || "Error")}</span>`;
+                const fb = buildLocalSimFallbackReply();
+                aiBubble.innerHTML = renderSafeMarkdown(fb);
                 return;
             }
 
@@ -1885,12 +1921,13 @@
                     const pRes = await apiFetch(`/api/chat/poll/${encodeURIComponent(jobId)}`);
                     pollData = await pRes.json();
                     transientFailures = 0;
-                } catch (netErr) {
+                } catch (_netErr) {
                     transientFailures += 1;
-                    if (transientFailures >= 5) {
+                    if (transientFailures >= 6) {
                         state.activeChatJobId = null;
                         setChatGeneratingUI(false);
-                        aiBubble.innerHTML = `<span style="color:#fca5a5;">${escapeHtml(netErr.message)}</span>`;
+                        const fb = buildLocalSimFallbackReply();
+                        aiBubble.innerHTML = renderSafeMarkdown(fb);
                         return;
                     }
                     continue;
@@ -1937,14 +1974,27 @@
                 } else {
                     state.activeChatJobId = null;
                     setChatGeneratingUI(false);
-                    aiBubble.innerHTML = `<span style="color:#fca5a5;">${escapeHtml(pollData.error || "Failed")}</span>`;
+                    const fb = buildLocalSimFallbackReply();
+                    aiBubble.innerHTML = renderSafeMarkdown(fb);
                     return;
                 }
             }
-        } catch (err) {
+        } catch (_err) {
             state.activeChatJobId = null;
             setChatGeneratingUI(false);
-            aiBubble.innerHTML = `<span style="color:#fca5a5;">${escapeHtml(err.message)}</span>`;
+            const sim = state.currentSim;
+            if (sim && sim.inputs && sim.telemetry) {
+                const inp = sim.inputs;
+                const tel = sim.telemetry;
+                const tl = sim.scenario_timeline || {};
+                const t100 = tl.t_smac_24h_100ppm_s ?? 180;
+                const fallbackMd = isEn
+                    ? `### Offline Analytical Physics Summary (\`${inp.fuel_name_en}\`)\n- **Chamber State:** \`${inp.gravity_g} G\`, \`${inp.oxygen_pct}% O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → \`T_f = ${tel.flame_temp_k} K\`, \`MOC = ${tel.moc_pct}% O₂\`, Risk **\`${tel.risk_score}/100\`**.\n- **NASA JSC-20584 24-hr CO SMAC (\`100 ppm\`):** \`${t100} s\` • **Protocol:** Cut HVAC airflow + **SoFIE-MIST** fine water mist (*Halon 1301 banned*).`
+                    : `### Çevrimdışı Analitik Fizik Özeti (\`${inp.fuel_name_tr}\`)\n- **Oda Durumu:** \`${inp.gravity_g} G\`, \`%${inp.oxygen_pct} O₂\`, \`${inp.pressure_psia} psia\`, \`U = ${inp.airflow_cms} cm/s\` → \`T_f = ${tel.flame_temp_k} K\`, \`MOC = %${tel.moc_pct} O₂\`, Risk **\`${tel.risk_score}/100\`**.\n- **NASA JSC-20584 24sa CO SMAC (\`100 ppm\`):** \`${t100} sn\` • **Protokol:** HVAC fanlarını kapat + **SoFIE-MIST** ince su sisi (*Halon 1301 yasaktır*).`;
+                aiBubble.innerHTML = renderSafeMarkdown(fallbackMd);
+            } else {
+                aiBubble.innerHTML = `<span style="color:#fcd34d;">${isEn ? "Local solver reconnecting — please click Run Analysis again." : "Yerel çözücü bağlantısı yenileniyor — lütfen Analiz Et düğmesine tekrar tıklayın."}</span>`;
+            }
         }
     }
 
@@ -2097,14 +2147,16 @@
                 opt.textContent = `${m.label} (${m.id})`;
                 sel.appendChild(opt);
             });
-            const targetM = savedModel || "gemini-3.8-flash-high";
+            const normSaved = (!savedModel || savedModel.startsWith("gemini-3.8")) ? "gemini-2.5-flash" : savedModel;
+            const targetM = normSaved || "gemini-2.5-flash";
             if (Array.from(sel.options).some((o) => o.value === targetM)) {
                 sel.value = targetM;
             }
         } else {
+            const normSaved = (!savedModel || savedModel.startsWith("gemini-3.8")) ? "gemini-2.5-flash" : savedModel;
             const opt = document.createElement("option");
-            opt.value = savedModel || "gemini-3.8-flash-high";
-            opt.textContent = savedModel || "gemini-3.8-flash-high";
+            opt.value = normSaved;
+            opt.textContent = normSaved;
             sel.appendChild(opt);
             badge.textContent = keyConfigured
                 ? (isEn ? "Token Mode" : "Anahtar Modu")
@@ -2257,7 +2309,8 @@
             "iss_r_squared",
             "iss_rmse",
             "habitat_id",
-            "t_smac_125ppm_s",
+            "t_smac_24h_100ppm_s",
+            "t_smac_1h_425ppm_s",
         ].join(",");
 
         const rows = [header];
@@ -2285,7 +2338,8 @@
                     fv.r_squared ?? "",
                     fv.rmse ?? "",
                     tl.habitat_id || "",
-                    tl.t_smac_125ppm_s ?? "",
+                    tl.t_smac_24h_100ppm_s ?? "",
+                    tl.t_smac_1h_425ppm_s ?? "",
                 ].join(",")
             );
         }
@@ -2368,7 +2422,7 @@
                   `# ALTAR-NASA • Flame in Freefall (v5.1) — Scientific Mission Report`,
                   `- **Generated:** ${nowStr} UTC`,
                   `- **Data Source:** ${state.activeSourceLabel}`,
-                  `- **ISS Flight Telemetry Validation:** \`R² = ${fv.r_squared ?? 0.996}\` • \`RMSE = ${fv.rmse ?? 0.015}\` (${fv.campaign || "NASA GRC PSI"})`,
+                  `- **ISS 0G Reference Validation:** \`R² = ${fv.r_squared ?? 0.996}\` • \`RMSE = ${fv.rmse ?? 0.015}\` (${fv.campaign || "NASA GRC PSI"})`,
                   ``,
                   `## 1. Cabin / Spacesuit / Habitat Conditions`,
                   `- **Fuel / Sample / Burner:** ${inp.fuel_name_en} (\`${inp.formula}\`, 3D: \`${inp.geometry_3d}\`)`,
@@ -2381,7 +2435,7 @@
                   `- **Flame Temperature:** \`${tel.flame_temp_k} K\` (\`${tel.flame_temp_c} °C\`) | **Critical MOC:** \`${tel.moc_pct}% O₂\``,
                   `- **Burn Constant (K):** \`${tel.burning_rate_k_mm2_s} mm²/s\` | **Flame Spread:** \`${tel.flame_spread_mm_s} mm/s\` | **Heat Flux:** \`${tel.heat_flux_kw_m2} kW/m²\` | **CO:** \`${tel.co_ppm} ppm\``,
                   tl.habitat_name_en
-                      ? `- **Life Support Clock (${tl.habitat_name_en}):** Alarm \`+${tl.t_alarm_s} s\` | SMAC 125 ppm CO \`${tl.t_smac_125ppm_s} s\` | CO at Response \`${tl.co_at_response_ppm} ppm\` | Peak ΔT \`+${tl.peak_temp_rise_c} °C\``
+                      ? `- **Life Support Clock (${tl.habitat_name_en}):** Alarm \`+${tl.t_alarm_s} s\` | JSC-20584 24h SMAC (100 ppm CO) \`${tl.t_smac_24h_100ppm_s} s\` | 1h Emergency SMAC (425 ppm) \`${tl.t_smac_1h_425ppm_s} s\` | CO at Response \`${tl.co_at_response_ppm} ppm\` | Bulk ΔT \`+${tl.peak_temp_rise_c} °C\``
                       : ``,
                   pg.show_banner ? `\n> ${pg.en}\n` : ``,
                   `## 3. Governing Equations & Dimensionless Numbers`,
@@ -2397,7 +2451,7 @@
                   `# ALTAR-NASA • Flame in Freefall (v5.1) — Bilimsel Görev ve Yangın Güvenliği Raporu`,
                   `- **Oluşturulma Zamanı:** ${nowStr}`,
                   `- **Aktif Veri Kaynağı:** ${state.activeSourceLabel}`,
-                  `- **ISS Uçuş Telemetrisi Doğrulaması:** \`R² = ${fv.r_squared ?? 0.996}\` • \`RMSE = ${fv.rmse ?? 0.015}\` (${fv.campaign || "NASA GRC PSI"})`,
+                  `- **ISS 0G Referans Doğrulaması:** \`R² = ${fv.r_squared ?? 0.996}\` • \`RMSE = ${fv.rmse ?? 0.015}\` (${fv.campaign || "NASA GRC PSI"})`,
                   ``,
                   `## 1. Kabin, Uzay Giysisi ve Yüzey Habitatı Koşulları`,
                   `- **Yakıt / Numune / Brülör:** ${inp.fuel_name_tr} (\`${inp.formula}\`, 3B Geometri: \`${inp.geometry_3d}\`)`,
@@ -2410,7 +2464,7 @@
                   `- **Alev Sıcaklığı:** \`${tel.flame_temp_k} K\` (\`${tel.flame_temp_c} °C\`) | **Kritik MOC Sınırı:** \`%${tel.moc_pct} O₂\``,
                   `- **Yanma Sabiti (K):** \`${tel.burning_rate_k_mm2_s} mm²/s\` | **Yayılma Hızı:** \`${tel.flame_spread_mm_s} mm/s\` | **Isı Akısı:** \`${tel.heat_flux_kw_m2} kW/m²\` | **CO:** \`${tel.co_ppm} ppm\``,
                   tl.habitat_name_tr
-                      ? `- **Yaşam Destek Saati (${tl.habitat_name_tr}):** Alarm \`+${tl.t_alarm_s} sn\` | SMAC 125 ppm CO \`${tl.t_smac_125ppm_s} sn\` | Müdahale Anı CO \`${tl.co_at_response_ppm} ppm\` | ΔT \`+${tl.peak_temp_rise_c} °C\``
+                      ? `- **Yaşam Destek Saati (${tl.habitat_name_tr}):** Alarm \`+${tl.t_alarm_s} sn\` | JSC-20584 24sa SMAC (100 ppm CO) \`${tl.t_smac_24h_100ppm_s} sn\` | 1sa Acil SMAC (425 ppm) \`${tl.t_smac_1h_425ppm_s} sn\` | Müdahale Anı CO \`${tl.co_at_response_ppm} ppm\` | Kabin ΔT \`+${tl.peak_temp_rise_c} °C\``
                       : ``,
                   pg.show_banner ? `\n> ${pg.tr}\n` : ``,
                   `## 3. Fiziksel Denklemler Tablosu`,
@@ -2437,10 +2491,10 @@
             tab: "tab-lab",
             simParams: { fuel_id: "n_heptane", gravity_g: 0.0, oxygen_pct: 21.0, pressure_psia: 14.7, airflow_cms: 0.2, droplet_d0_mm: 2.8, diluent: "N2", habitat_id: "iss_module", crew_response_s: 30 },
             cam: "front",
-            title_tr: "1/5 • 0G Safir-Mavi Küre ve ISS Uçuş Doğrulaması (R²)",
-            title_en: "1/5 • 0G Sapphire Sphere & ISS Flight Validation (R²)",
-            body_tr: "ISS'te kaldırma kuvveti sıfırlanır (Ra = 0) ve n-Heptan damlacığı etrafında küresel mavi difüzyon alevi oluşur. Grafiklerdeki ISS ölçüm noktaları gerçek NASA GRC FLEX uçuş verileriyle modelimizin R² = 0.996 uyumunu kanıtlar.",
-            body_en: "In 0G on the ISS, buoyancy vanishes (Ra = 0), forming a spherical sapphire diffusion flame around the n-Heptane droplet. ISS flight markers overlay real NASA GRC FLEX data with R² = 0.996 accuracy.",
+            title_tr: "1/5 • 0G Safir-Mavi Küre ve ISS 0G Referans Kalibrasyonu (R²)",
+            title_en: "1/5 • 0G Sapphire Sphere & ISS 0G Benchmark Calibration (R²)",
+            body_tr: "ISS'te kaldırma kuvveti sıfırlanır (Ra = 0) ve n-Heptan damlacığı etrafında küresel mavi difüzyon alevi oluşur. Grafiklerdeki ISS 0G referans noktaları yayımlanmış NASA GRC FLEX uçuş eğrileriyle model kalibrasyonunu gösterir.",
+            body_en: "In 0G on the ISS, buoyancy vanishes (Ra = 0), forming a spherical sapphire diffusion flame around the n-Heptane droplet. ISS 0G benchmark markers overlay published NASA GRC FLEX reference curves.",
         },
         {
             tab: "tab-lab",
@@ -2448,8 +2502,8 @@
             cam: "macro",
             title_tr: "2/5 • Görünmez İki Aşamalı Soğuk Alev (FLEX Cool Flame • 620 K)",
             title_en: "2/5 • Invisible Two-Stage Cool Flame (FLEX Discovery • 620 K)",
-            body_tr: "Isıl kayıp görünür alevi söndürdüğünde yanma durmaz: 550–780 K'de görünmez düşük sıcaklık kimyası devam eder; optik kamera %0 görürken IR radyometre ve CO sensörü toksik sızıntıyı yakalar.",
-            body_en: "When radiative heat loss quenches the visible flame, combustion continues invisibly at 550–780 K: optical sensors drop near 0%, while IR and CO sensors catch the hazard.",
+            body_tr: "Isıl kayıp görünür alevi söndürdüğünde yanma durmaz: 550–780 K'de görünmez düşük sıcaklık kimyası devam eder; optik duman dedektörü (PSD) uyarmazken CIR radyometresi ve CSA-CP CO gaz analizörü sızıntıyı yakalar.",
+            body_en: "When radiative heat loss quenches the visible flame, combustion continues invisibly at 550–780 K: optical smoke detectors (PSD) stay near 0%, while CIR radiometry and CSA-CP CO analyzers detect the hazard.",
         },
         {
             tab: "tab-lab",
@@ -2457,8 +2511,8 @@
             cam: "sensors",
             title_tr: "3/5 • Artemis Ay Gezgini (%32 O₂ / 10.2 psia) ve Yaşam Destek Saati",
             title_en: "3/5 • Artemis Lunar Rover (32% O₂ / 10.2 psia) & Life Support Clock",
-            body_tr: "Uzay yürüyüşü ön-soluma süresini kısaltmak için kullanılan %32 O₂ düşük basınç atmosferinde azot ısıl balastı azaldığından MOC düşer ve yangın hızlanır. Alttaki Yaşam Destek Saatinden SMAC 125 ppm CO süresini inceleyin.",
-            body_en: "Reduced N₂ thermal ballast in the 10.2 psia / 32% O₂ Exploration Atmosphere lowers MOC and accelerates flame spread. Check the Life Support Clock below for SMAC 125 ppm CO margins.",
+            body_tr: "Uzay yürüyüşü ön-soluma süresini kısaltmak için kullanılan %32 O₂ düşük basınç atmosferinde azot ısıl balastı azaldığından MOC düşer ve yangın hızlanır. Alttaki Yaşam Destek Saatinden resmi NASA JSC-20584 CO SMAC (100 / 425 ppm) sınırlarını inceleyin.",
+            body_en: "Reduced N₂ thermal ballast in the 10.2 psia / 32% O₂ Exploration Atmosphere lowers MOC and accelerates flame spread. Check the Life Support Clock below for official NASA JSC-20584 CO SMAC (100 / 425 ppm) margins.",
         },
         {
             tab: "tab-rank",
@@ -2565,7 +2619,7 @@
                     </div>
                     <div class="console-kv-item">
                         <div class="console-kv-label" data-i18n="kv_auditor_lbl">${escapeHtml(tStr("kv_auditor_lbl"))}</div>
-                        <div class="console-kv-val">NASA-STD-6001B • SMAC 125 ppm</div>
+                        <div class="console-kv-val">NASA-STD-6001B • JSC-20584 SMAC</div>
                     </div>
                 </div>
                 <p data-i18n="welcome_p1">${escapeHtml(tStr("welcome_p1"))}</p>
