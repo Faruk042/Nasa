@@ -1,0 +1,20 @@
+# ============================================================================
+# ALTAR-NASA v5.1 — Cross-Platform & GitHub ZIP Archive Line-Ending Rules
+# Guarantees Windows .bat/.cmd/.ps1 scripts always export with CRLF (\r\n)
+# ============================================================================
+* text=auto
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.py text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.ico binary
+*.png binary
+*.jpg binary
+*.xlsx binary
+*.zip binary
+*.pdf binary

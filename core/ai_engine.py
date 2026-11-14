@@ -12,6 +12,7 @@ Desteklenen Çıkarım Katmanları:
 from __future__ import annotations
 
 import asyncio
+import atexit
 import base64
 import json
 import os
@@ -24,7 +25,13 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from core.config_manager import ConfigManager, create_secure_http_session, get_resource_base_dir, get_user_data_dir
+from core.config_manager import (
+    ConfigManager,
+    create_secure_http_session,
+    get_app_host_dir,
+    get_resource_base_dir,
+    get_user_data_dir,
+)
 from core.data_vision_processor import analyze_flame_image_bytes
 from core.directives import build_system_prompt
 from core.nasa_live_fetcher import NasaLiveFetcher
@@ -62,6 +69,10 @@ class HybridNasaAIEngine:
         self._agy_cache_lock = threading.Lock()
         self._agy_cached_status: Optional[Dict[str, Any]] = None
         self._agy_cache_ts: float = 0.0
+        self._portable_ollama_lock = threading.Lock()
+        self._portable_ollama_proc: Optional[subprocess.Popen] = None
+        self._portable_ollama_attempt_ts: float = 0.0
+        atexit.register(self.shutdown_portable_ollama)
 
     @staticmethod
     def _detect_antigravity_sdk() -> bool:
@@ -143,29 +154,113 @@ class HybridNasaAIEngine:
         return dict(st)
 
     # =========================================================================
-    # OLLAMA DURUM VE MODEL YÖNETİMİ
+    # OLLAMA DURUM VE MODEL YÖNETİMİ (TAŞINABİLİR .runtime/ollama DESTEKLİ)
     # =========================================================================
+    @staticmethod
+    def _find_portable_ollama_bundle() -> Tuple[Optional[Path], Optional[Path]]:
+        """Yalnızca proje/exe klasörü içindeki izole .runtime/ollama kurulumunu arar."""
+        host_dir = get_app_host_dir()
+        for rt_dir in (host_dir / ".runtime", host_dir.parent / ".runtime"):
+            ollama_root = rt_dir / "ollama"
+            if not ollama_root.is_dir():
+                continue
+            for cand in (ollama_root / "ollama.exe", ollama_root / "bin" / "ollama.exe"):
+                if cand.is_file():
+                    models_dir = rt_dir / "ollama_models"
+                    models_dir.mkdir(parents=True, exist_ok=True)
+                    return cand, models_dir
+            for found in ollama_root.rglob("ollama.exe"):
+                if found.is_file():
+                    models_dir = rt_dir / "ollama_models"
+                    models_dir.mkdir(parents=True, exist_ok=True)
+                    return found, models_dir
+        return None, None
+
+    def _try_start_portable_ollama(self, host: str) -> bool:
+        """
+        Sistemde çalışan hiçbir Ollama yoksa ve klasör içinde taşınabilir .runtime/ollama mevcutsa
+        yalnızca alt-işlem belleğinde (sistem ayarlarına dokunmadan) arka planda başlatır.
+        """
+        if os.environ.get("ALTAR_NASA_SELF_TEST") == "1":
+            return False
+        if "127.0.0.1:11434" not in host and "localhost:11434" not in host:
+            return False
+        now = time.time()
+        with self._portable_ollama_lock:
+            if self._portable_ollama_proc is not None and self._portable_ollama_proc.poll() is None:
+                return True
+            if (now - self._portable_ollama_attempt_ts) < 45.0:
+                return False
+            self._portable_ollama_attempt_ts = now
+            ollama_exe, models_dir = self._find_portable_ollama_bundle()
+            if ollama_exe is None or models_dir is None:
+                return False
+            child_env = os.environ.copy()
+            child_env["OLLAMA_MODELS"] = str(models_dir)
+            child_env["OLLAMA_HOST"] = "127.0.0.1:11434"
+            try:
+                self._portable_ollama_proc = subprocess.Popen(
+                    [str(ollama_exe), "serve"],
+                    cwd=str(ollama_exe.parent),
+                    env=child_env,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+            except Exception:
+                self._portable_ollama_proc = None
+                return False
+
+        for _ in range(14):
+            time.sleep(0.4)
+            try:
+                chk = self.http.get(f"{host}/api/tags", timeout=1.5)
+                if chk.status_code == 200:
+                    return True
+            except Exception:
+                pass
+        return False
+
+    def shutdown_portable_ollama(self) -> None:
+        """Yalnızca bu uygulama tarafından başlatılmış taşınabilir .runtime/ollama alt işlemini kapatır; sistem Ollama'sına asla dokunmaz."""
+        with self._portable_ollama_lock:
+            proc = self._portable_ollama_proc
+            self._portable_ollama_proc = None
+        if proc is not None and proc.poll() is None:
+            try:
+                proc.terminate()
+                proc.wait(timeout=3)
+            except Exception:
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
+
     def get_ollama_status(self) -> Dict[str, Any]:
         cfg = self.config.get_all()
         host = (cfg.get("ollama_host") or "http://127.0.0.1:11434").rstrip("/")
-        try:
-            resp = self.http.get(f"{host}/api/tags", timeout=2.5)
-            if resp.status_code == 200:
-                raw_models = resp.json().get("models", [])
-                models: List[Dict[str, Any]] = []
-                for m in raw_models:
-                    name = str(m.get("name") or m.get("model") or "")
-                    size_gb = round(float(m.get("size", 0)) / (1024 ** 3), 2)
-                    models.append({"name": name, "size_gb": size_gb})
-                best_default = self._pick_best_ollama_model([m["name"] for m in models], cfg.get("language", "tr"))
-                return {
-                    "online": True,
-                    "host": host,
-                    "models": models,
-                    "recommended_active": best_default,
-                }
-        except Exception:
-            pass
+        for attempt in range(2):
+            try:
+                resp = self.http.get(f"{host}/api/tags", timeout=2.5)
+                if resp.status_code == 200:
+                    raw_models = resp.json().get("models", [])
+                    models: List[Dict[str, Any]] = []
+                    for m in raw_models:
+                        name = str(m.get("name") or m.get("model") or "")
+                        size_gb = round(float(m.get("size", 0)) / (1024 ** 3), 2)
+                        models.append({"name": name, "size_gb": size_gb})
+                    best_default = self._pick_best_ollama_model([m["name"] for m in models], cfg.get("language", "tr"))
+                    return {
+                        "online": True,
+                        "host": host,
+                        "models": models,
+                        "recommended_active": best_default,
+                    }
+            except Exception:
+                if attempt == 0 and self._try_start_portable_ollama(host):
+                    continue
+                break
         return {"online": False, "host": host, "models": [], "recommended_active": ""}
 
     @staticmethod
@@ -178,7 +273,9 @@ class HybridNasaAIEngine:
                 "qwen3.5-nasa-pro-en:4b-q4_k_m",
                 "qwen3.5-nasa-pro:4b-q8_0",
                 "qwen3.5-nasa-pro:4b-q4_k_m",
+                "qwen3.5-nasa-portable:4b",
                 "qwen3.5:4b",
+                "qwen2.5:3b",
             ]
         else:
             priorities = [
@@ -186,7 +283,9 @@ class HybridNasaAIEngine:
                 "qwen3.5-nasa-pro:4b-q4_k_m",
                 "qwen3.5-nasa-pro-en:4b-q8_0",
                 "qwen3.5-nasa-pro-en:4b-q4_k_m",
+                "qwen3.5-nasa-portable:4b",
                 "qwen3.5:4b",
+                "qwen2.5:3b",
             ]
         lower_map = {m.lower(): m for m in model_names}
         for p in priorities:

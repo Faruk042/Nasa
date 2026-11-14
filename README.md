@@ -100,7 +100,14 @@ Tüm denklemler [`core/physics_engine.py`](core/physics_engine.py) (ve tarayıc�
 Hiçbir dosya indirmeden doğrudan tarayıcınızda açabilirsiniz:  
 **[https://faruk042.github.io/Nasa/](https://faruk042.github.io/Nasa/)**
 
-### 2. Python Kaynak Kodundan Çalıştırma (Windows / macOS / Linux)
+### 2. Sıfır Kurulumlu Windows Bilgisayarda ZIP İndirip Tek Tıkla Kurulum ve `.exe` Üretimi
+
+Python, kütüphaneler veya Ollama yüklü olmayan temiz bir Windows 10/11 bilgisayarda depoyu GitHub üzerinden **Code -> Download ZIP** ile indirip ayıkladıktan sonra doğrudan klasör içindeki otomatik başlatıcıları kullanabilirsiniz (tüm eksik bileşenler sistem dizinlerini kirletmeden doğrudan `Nasa/.runtime/` alt klasörüne izole olarak kurulur):
+
+- **`Nasa_Hemen_Calistir.bat`:** Eksikse taşınabilir Python 3.12, proje kütüphaneleri ve yerel yapay zeka motorunu (`Ollama` + `qwen3.5:4b`) otomatik hazırlayıp masaüstü uygulamayı doğrudan açar.
+- **`Nasa_EXE_Olustur.bat`:** Tüm ortamı `Nasa/.runtime/` içine otomatik kurar, öz-doğrulama testlerini (`--self-test`) çalıştırır ve bağımsız tek dosya **`Nasa_4.exe`** paketini derleyip doğrudan proje kök dizinine yerleştirir.
+
+### 3. Python Kaynak Kodundan Manuel Çalıştırma (Windows / macOS / Linux)
 
 ```bash
 git clone https://github.com/Faruk042/Nasa.git
@@ -116,7 +123,7 @@ python main_nasa.py --self-test
 
 Uygulamadaki tüm 3B numune geometrilerini, taşınım denklemlerini, görünmez soğuk alev teşhisini, `SoFIE-MIST` su sisi bastırmasını ve `SAME/DAFT` duman-toz ayrımını tek seferde test etmek için `sample_data/ALTAR_NASA_Tam_Kapsamli_Deney_Verisi.csv` dosyasını veya `psi.nasa.gov` üzerinden indirilen herhangi bir `Experimental Table` (`.csv`, `.xlsx`, `.zip`) dosyasını **Mühendislik Analizi** ya da **Veri ve Görüntü** sekmesinden yükleyebilirsiniz.
 
-### 3. Tek Dosya Masaüstü Paketi (`.exe`) Derleme ve Statik Web Üretimi
+### 4. Komut Satırından `.exe` Derleme ve Statik Web Üretimi
 
 ```bash
 # PyInstaller ile bağımsız tek dosya Nasa_4.exe üretimi:
@@ -132,6 +139,11 @@ python build_serverless_web.py
 
 ```text
 Nasa/
+├── Nasa_Hemen_Calistir.bat      # Sıfır kurulumlu Windows için tek tıkla otomatik kurulum ve başlatıcı
+├── Nasa_EXE_Olustur.bat         # Sıfır kurulumlu Windows için otomatik kurulum ve tek dosya .exe derleyici
+├── scripts/
+│   ├── bootstrap_nasa.ps1       # Klasör-içi (.runtime/) taşınabilir Python + venv + Ollama kurulum motoru
+│   └── Modelfile.nasa-portable  # Taşınabilir yerel bilim modeli yapılandırması
 ├── main_nasa.py                 # Masaüstü başlatıcı ve yerel Flask uygulama giriş noktası
 ├── build_serverless_web.py      # İstemci-içi sunucusuz web paketi (web_serverless/) derleyicisi
 ├── Nasa_4.spec                  # Tek dosya Windows .exe (PyInstaller) yapılandırması

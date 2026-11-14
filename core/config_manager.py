@@ -61,8 +61,24 @@ def get_resource_base_dir() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def get_app_host_dir() -> Path:
+    """Çalıştırılan .exe dosyasının veya kaynak proje kökünün bulunduğu dizini döndürür."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent.parent
+
+
 def get_user_data_dir() -> Path:
-    """Kullanıcıya özel yapılandırma ve önbellek dizinini (%APPDATA%/AltarNasa) döndürür."""
+    """Klasör-içi taşınabilir kurulum (.runtime) varsa orayı, yoksa %APPDATA%/AltarNasa dizinini döndürür."""
+    host_dir = get_app_host_dir()
+    for cand_rt in (host_dir / ".runtime", host_dir.parent / ".runtime"):
+        if cand_rt.is_dir():
+            portable_cfg = cand_rt / "userdata"
+            try:
+                portable_cfg.mkdir(parents=True, exist_ok=True)
+                return portable_cfg
+            except Exception:
+                pass
     appdata = os.environ.get("APPDATA")
     if appdata:
         base = Path(appdata) / "AltarNasa"

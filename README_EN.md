@@ -100,7 +100,14 @@ All equations are solved in closed form in [`core/physics_engine.py`](core/physi
 Open directly in any browser:  
 **[https://faruk042.github.io/Nasa/](https://faruk042.github.io/Nasa/)**
 
-### 2. Run Locally from Python Source (Windows / macOS / Linux)
+### 2. One-Click Zero-Prerequisite Setup & `.exe` Builder (Clean Windows 10/11)
+
+On a brand-new Windows 10/11 PC with nothing pre-installed, download the repository via **Code -> Download ZIP**, extract the folder, and double-click either launcher (all runtimes install cleanly inside `Nasa/.runtime/` without polluting system directories):
+
+- **`Nasa_Hemen_Calistir.bat`:** Automatically provisions folder-local Python 3.12, virtual environment dependencies, and portable `Ollama` (`qwen3.5:4b`), then launches the desktop suite.
+- **`Nasa_EXE_Olustur.bat`:** Automatically provisions the full build toolchain inside `Nasa/.runtime/`, runs `--self-test`, and compiles the standalone single-file **`Nasa_4.exe`** directly into the project root.
+
+### 3. Run Manually from Python Source (Windows / macOS / Linux)
 
 ```bash
 git clone https://github.com/Faruk042/Nasa.git
@@ -116,7 +123,7 @@ python main_nasa.py --self-test
 
 To test all simulation geometries, governing equations, cool-flame diagnostics, `SoFIE-MIST` suppression, and `SAME/DAFT` aerosol discrimination in a single file upload, attach `sample_data/ALTAR_NASA_Tam_Kapsamli_Deney_Verisi.csv` or any official `Experimental Table` (`.csv`, `.xlsx`, `.zip`) downloaded from `psi.nasa.gov` inside the **Engineering Analysis** or **Data & Imagery** module.
 
-### 3. Build Standalone `.exe` & Serverless Static Web Bundle
+### 4. Manual CLI `.exe` Compilation & Serverless Static Web Bundle
 
 ```bash
 # Compile single-file Windows executable (dist/Nasa_4.exe):

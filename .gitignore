@@ -21,12 +21,14 @@ Nasa_3.spec
 verify_*.py
 capture_*.py
 
-# Python Önbellek ve Derleme Çıktıları
+# Python Önbellek, Klasör-İçi Taşınabilir Kurulum (.runtime) ve Derleme Çıktıları
 __pycache__/
 *.py[cod]
 *$py.class
 build/
 dist/
+.runtime/
+Nasa_4.exe
 *.egg-info/
 .venv/
 venv/

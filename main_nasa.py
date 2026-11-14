@@ -69,6 +69,7 @@ def create_nasa_web_app() -> Flask:
     ranking_eng = ExperimentRankingEngine(knowledge_idx)
     stream_mgr = ContinuousWebStreamManager(live_fetcher, knowledge_idx)
     ai_eng = HybridNasaAIEngine(config_mgr, live_fetcher, knowledge_idx, ranking_eng)
+    app.config["ALTAR_AI_ENGINE"] = ai_eng
 
     @app.before_request
     def enforce_zero_trust_isolation():
@@ -474,6 +475,7 @@ def _locate_serverless_web_dir() -> Path | None:
 class BackgroundServerThread(threading.Thread):
     def __init__(self, app: Flask, host: str, port: int) -> None:
         super().__init__(daemon=True)
+        self.app_ref = app
         # Güvenlik Kuralı: Yalnızca 127.0.0.1 yerel döngü arayüzüne bağlanılır
         safe_host = "127.0.0.1"
         self.server = make_server(safe_host, port, app, threaded=True)
@@ -496,7 +498,21 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
     - Pencerenin sağ üst 'X' tuşuna basıldığında sunucuyu öldürmez, görev çubuğuna küçültür (iconify).
     - Yalnızca '⏻ Sunucuyu Güvenle Durdur ve Kapat' butonuna basıldığında arka plan sunucusunu sonlandırır.
     """
-    import tkinter as tk
+    try:
+        import tkinter as tk
+    except ImportError:
+        open_in_app_window(url)
+        try:
+            while srv_thread.is_alive():
+                time.sleep(1.0)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            ai_obj = srv_thread.app_ref.config.get("ALTAR_AI_ENGINE") if hasattr(srv_thread, "app_ref") else None
+            if ai_obj is not None and hasattr(ai_obj, "shutdown_portable_ollama"):
+                ai_obj.shutdown_portable_ollama()
+            srv_thread.shutdown()
+        return
 
     root = tk.Tk()
     root.title("ALTAR-NASA v5.1 • Yerel Uygulama Başlatıcısı")
@@ -623,6 +639,9 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
         root.iconify()
 
     def _clean_exit() -> None:
+        ai_obj = srv_thread.app_ref.config.get("ALTAR_AI_ENGINE") if hasattr(srv_thread, "app_ref") else None
+        if ai_obj is not None and hasattr(ai_obj, "shutdown_portable_ollama"):
+            ai_obj.shutdown_portable_ollama()
         srv_thread.shutdown()
         root.destroy()
         sys.exit(0)
@@ -650,6 +669,7 @@ def launch_desktop_controller(url: str, srv_thread: BackgroundServerThread) -> N
 
 def run_self_test() -> int:
     """Tüm uç noktaları, Zero-Trust siber güvenlik kalkanlarını, 3B/formül/ISS R² doğrulamasını ve kabin zaman çizelgesini doğrular."""
+    os.environ["ALTAR_NASA_SELF_TEST"] = "1"
     from PIL import Image as _PILImage
 
     app = create_nasa_web_app()
