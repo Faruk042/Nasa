@@ -17,7 +17,7 @@
 
 The repository includes two complete runtime modes:
 
-1. **Offline Desktop & Local Python Edition (`main_nasa.py`, `core/`, and `Nasa_4.exe`):** Runs the closed-form analytical transport solver (`d²`, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, `MOC`), 15-experiment NASA PSI ranking engine, live `psi.nasa.gov` / `ntrs.nasa.gov` / `osdr.nasa.gov` telemetry stream, native NASA PSI `Experimental Table` (`.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, `.json`) unit normalizer, and RGB/HSV flame image analyzer locally without requiring cloud connectivity.
+1. **Offline Desktop & Local Python Edition (`main_nasa.py`, `core/`, and `Nasa_4.exe`):** Runs the phase-specific closed-form analytical transport solver (`d²` droplet, `de Ris` solid spread, `Burke-Schumann` steady gas burner, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, `MOC`), 15-experiment NASA PSI ranking engine, live `psi.nasa.gov` / `ntrs.nasa.gov` / `osdr.nasa.gov` telemetry stream, native NASA PSI `Experimental Table` (`.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, `.json`) unit normalizer, and RGB/HSV flame image analyzer locally without requiring cloud connectivity.
 2. **Browser-Native Serverless Web Edition (`web_serverless/`):** Runs directly inside any modern browser on GitHub Pages with zero backend servers or installation (`build_serverless_web.py`).
 
 ---
@@ -31,13 +31,13 @@ The interface is organized into **5 clear modules** with instant **TR / EN** bil
 ![Combustion Chamber — 3D Sapphire Spherical Flame & Live Measurements](docs/screenshots/01_3d_digital_twin_0g_sphere.png)
 
 - **Three.js 3D Combustion Chamber:** Dynamically renders 4 physical specimen geometries based on the selected material (liquid droplet on quartz fiber, solid PMMA rod, Nomex/Sibal fabric sheet, and porous spherical gas burner) across `0G` sapphire spherical diffusion flames, `600 K` invisible cool flames, and `1G` buoyant plumes.
-- **Real ISS Flight Data Validation:** Overlays empirical NASA Glenn Research Center flight data (FLEX, CFI, and BASS) directly onto the live charts and computes goodness-of-fit (`R² = 0.996`, `RMSE = 0.015`).
+- **Published ISS 0G Reference Validation:** Overlays published NASA Glenn Research Center `0G` benchmark curves (`FLEX`, `CFI`, `BASS`, and `ACME`) directly onto the live charts and computes goodness-of-fit (`R²`, `RMSE`).
 - **U-Shaped MOC Flammability Map & 0–30 s Multi-Sensor Chart:** Solves the micro-ventilation Minimum Oxygen Concentration (`MOC`) curve (`2–8 cm/s` danger trough) alongside optical, infrared (`IR`), and carbon monoxide (`CO`) sensor traces.
 - **Audience Views & Predictive Data Export:** Switch between **Researcher**, **Student**, and **Engineer** views, and download full time-series and validation metrics via **Download CSV**, **Download JSON**, and **Download Report**.
 
 ![Governing Equations, Life Support Clock & Guided Tour](docs/screenshots/02_formulas_eclss_clock_and_tour.png)
 
-- **Governing Equations & Life Support Clock:** Displays 6 dimensionless transport equations with plain-language regime labels and computes the exact countdown (in seconds) to the `NASA-STD-3001` `125 ppm CO` emergency limit across 4 spacecraft cabin volumes (ISS Module `65 m³`, Artemis Cabin `16 m³`, Pressurized Lunar Rover `11 m³`, and EVA Spacesuit `0.22 m³`).
+- **Governing Equations & ECLSS Life Support Clock:** Displays 6 phase-aware dimensionless transport equations and computes exact countdowns (in seconds) using the Ideal Gas Law and 1st Law (`Q = m_gas · c_p · ΔT`) for **ISS Photoelectric Smoke Detector (`PSD`) + `CSA-CP / ANITA-2`** alarm activation and official **`NASA JSC-20584` CO SMAC** limits (`25 ppm` mask / `100 ppm` 24-hr / `425 ppm` 1-hr) across 4 free-air cabin volumes (ISS Destiny Module `70 m³`, Orion / Gateway Cabin `19 m³`, Pressurized Lunar Rover `11 m³`, and EVA Spacesuit `0.18 m³`).
 - **Guided Tour:** Walks judges, students, and researchers through 5 interactive mission scenarios step by step.
 
 ---
@@ -46,7 +46,7 @@ The interface is organized into **5 clear modules** with instant **TR / EN** bil
 
 ![NASA Experiments — PSI Ranking & Orbital Hardware Filters](docs/screenshots/03_psi_ranking_and_hardware_racks.png)
 
-- **Mathematical Experiment Ranking:** Scores 15 verified NASA PSI investigations (FLEX, FLEX-2, CFI, CFI-G, ACME, BASS, BASS-II, SoFIE, SoFIE-MIST, Saffire I–VI, SPICE, SLISE, SAME, and DAFT) by combining normalized Euclidean parameter distance (`32%`), fire hazard weight (`24%`), and TF-IDF term similarity (`44%`).
+- **Mathematical Experiment Ranking:** Scores 15 verified NASA PSI investigations (FLEX, FLEX-2, CFI, CFI-G, ACME, BASS, BASS-II, SoFIE, SoFIE-MIST, Saffire I–VI, SPICE, SLICE, SAME, and DAFT) by combining normalized Euclidean parameter distance (`32%`), fire hazard weight (`24%`), and TF-IDF term similarity (`44%`).
 - **4 Orbital Hardware Filters & Two-Way Chamber Sync:** Filter by **ISS CIR Chamber**, **ISS MSG Flow Duct**, **Cygnus Large-Scale**, and **Smoke & Lunar Dust**; click **Load in 3D** on any row to apply that flight experiment's exact boundary conditions to the 3D chamber.
 - **Test Variations, Cross-Experiment Comparison & Earth Applications:** Inspect held-constant vs. varied parameters within individual ISS test runs, compare multiple investigations side by side, and explore 5 verified terrestrial spin-offs (PBI/Nomex firefighter gear, SoFIE-MIST water-mist suppression for EV batteries and data centers, multi-angle smoke detectors, HCCI engines, and hospital oxygen safety).
 
@@ -74,7 +74,7 @@ The interface is organized into **5 clear modules** with instant **TR / EN** bil
 
 ![Validation & Settings — Physical Rules & Solver Status](docs/screenshots/06_calibration_and_constraints.png)
 
-- **9 Physical Validation Rules (`CON-01` – `CON-09`):** Documents the enforced transport laws, including spherical diffusion (`Sh -> 2`), `d²` droplet kinetics, micro-ventilation `MOC` minimums, cool-flame (`550–780 K` NTC chemistry), Halon prohibition, and Lunar/Martian partial-gravity bounding prior to upcoming LUCI and FM2 missions.
+- **9 Physical Validation Rules (`CON-01` – `CON-09`):** Documents the enforced transport laws, including spherical diffusion (`Sh -> 2`), phase-specific `d²` / `de Ris` / `Burke-Schumann` kinetics, micro-ventilation `MOC` minimums, cool-flame (`550–780 K` NTC chemistry), Halon prohibition, and Lunar/Martian partial-gravity bounding prior to upcoming LUCI and FM2 missions.
 - **Standalone Solver & Optional Local Model Settings:** The Analytical Physics Solver operates completely standalone offline; optional local models or external gateways can also be configured from this tab.
 
 ---
@@ -85,8 +85,8 @@ All equations are solved in closed form in [`core/physics_engine.py`](core/physi
 
 | Physical Law / Dimensionless Group | Formulation | Engineering Role |
 | :--- | :--- | :--- |
-| **D² Droplet Law** | `d²(t) = d₀² - K · t` | Droplet surface-area regression rate (`K`, `mm²/s`) and total burn lifetime (`t_b`). |
-| **Spalding Transfer Number** | `B_oq = [Y_O2 · ΔH_c / ν_s + c_p(T_∞ - T_b)] / L_v` | Ratio of flame thermal feedback to latent heat of vaporization. |
+| **Phase-Specific Combustion Law (`d²` / `de Ris` / `Burke-Schumann`)** | Liquid: `d²(t) = d₀² - K·t` • Solid: `V_f ~ λ_g·(T_f - T_vap)/(ρ_s·c_s·δ_g·(T_vap - T_∞))` • Gas: `D_burner = D₀` | Droplet area regression (`K`), opposing-flow solid flame spread (`V_f`), and steady-feed porous/jet gas diffusion flames. |
+| **Spalding Mass / Phase Transfer Number** | Liquid/Solid: `B_oq = [Y_O2·ΔH_c/ν_s + c_p(T_∞ - T_b)] / L_v` • Gas: `B_g = ... / Δh_sens` | Ratio of flame thermal feedback to phase-change enthalpy (`L_v`) or gas sensible enthalpy (`Δh_sens`). |
 | **Sherwood & Ranz-Marshall** | `Sh = 2.0 + 0.6 · Re^(1/2) · Sc^(1/3)` | Convective-diffusive mass transfer converging to pure spherical diffusion (`Sh -> 2.0`) in quiescent `0G`. |
 | **Grashof, Rayleigh & Richardson** | `Gr = g·β·ΔT·L³ / ν²`, `Ra = Gr·Pr`, `Ri = Gr / Re²` | Collapse of buoyant convection (`Ra -> 0`) in freefall and buoyancy-to-ventilation ratio. |
 | **Damköhler & Radiative Loss** | `Da = τ_flow / τ_chem`, `χ_r` | High-airflow blowoff (`Da < 1`) vs. radiative quenching (`χ_r > 0.58`) into `600 K` cool flames. |
@@ -140,4 +140,4 @@ python build_serverless_web.py
 1. **NASA Physical Sciences Informatics (PSI) Combustion Repository:** [https://psi.nasa.gov/physci/repo/search?q=combustion](https://psi.nasa.gov/physci/repo/search?q=combustion) & [https://osdr.nasa.gov/bio/repo/](https://osdr.nasa.gov/bio/repo/)
 2. **NASA Technical Reports Server (NTRS):** [https://ntrs.nasa.gov/](https://ntrs.nasa.gov/) (FLEX, BASS-II, Saffire I–VI, SoFIE, SAME/DAFT reports)
 3. **NASA Glenn Research Center — Combustion Science:** *Combustion Integrated Rack (CIR), Microgravity Science Glovebox (MSG), Cool Flames Investigation (CFI) & ACME.*
-4. **NASA-STD-6001B & NASA-STD-3001:** *Flammability, Offgassing, and Compatibility Requirements* & *Spaceflight Human-System Standard (SMAC CO Limits).*
+4. **NASA-STD-6001B, NASA-STD-3001 & NASA JSC-20584:** *Flammability, Offgassing, and Compatibility Requirements*, *Spaceflight Human-System Standard* & *Spacecraft Maximum Allowable Concentrations (CO SMAC: 25 / 100 / 425 ppm).*

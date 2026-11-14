@@ -1068,7 +1068,7 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
             "sh": tel["sherwood_number"],
             "da": tel["damkohler_number"],
             "risk_score": tel["risk_score"],
-            "smac_s": tl["t_smac_125ppm_s"],
+            "smac_s": tl.get("t_smac_24h_100ppm_s", 999.0),
             "extinguished": bool(tel.get("extinguished")),
             "cool_flame": bool(tel.get("cool_flame_active") or explicit_cool),
         })
@@ -1122,10 +1122,10 @@ def _analyze_tabular_rows(rows: List[Dict[str, Any]], filename: str) -> Optional
         )
     if has_cool_flame_telemetry:
         diag_tr.append(
-            "- **Görünmez NTC Soğuk Alev ve Sensör Körlüğü (FLEX / CFI / CFI-G):** `550-750 K` bandında görünür optik şiddet `%1` altına düşerken `CO` ve `CH₂O` (formaldehit) hızla yükselmektedir; tek kanallı optik dedektör yerine `CO + Orta-IR + CH₂O` sensör füzyonu zorunludur."
+            "- **Görünmez NTC Soğuk Alev ve Optik Sensör Körlüğü (FLEX / CFI / CFI-G):** `550-750 K` bandında görünür optik şiddet `%1` altına düşerken `CO` ve `CH₂O` (formaldehit) hızla yükselmektedir; tek kanallı optik duman dedektörü (PSD) yerine `CSA-CP / ANITA-2 (CO/CH₂O) + Orta-IR` çok kanallı algılama zorunludur."
         )
         diag_en.append(
-            "- **Invisible NTC Cool Flame & Sensor Blindness (FLEX / CFI / CFI-G):** Below `800 K`, visible optical intensity drops under `1%` while `CO` and `CH₂O` surge; multi-channel `CO + Mid-IR + CH₂O` fusion is mandatory."
+            "- **Invisible NTC Cool Flame & Optical Sensor Blindness (FLEX / CFI / CFI-G):** Below `800 K`, visible optical intensity drops under `1%` while `CO` and `CH₂O` surge; multi-channel `CSA-CP / ANITA-2 (CO/CH₂O) + Mid-IR` detection is mandatory."
         )
     if has_water_mist_telemetry:
         diag_tr.append(

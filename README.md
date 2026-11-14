@@ -17,7 +17,7 @@
 
 Platform iki tamamlayıcı çalışma modu sunar:
 
-1. **Çevrimdışı Masaüstü ve Yerel Sürüm (`main_nasa.py`, `core/` ve `Nasa_4.exe`):** Kapalı-form analitik fizik çözücüsü (`d²`, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, `MOC`), 15 NASA PSI deney sıralama motoru, canlı `psi.nasa.gov` / `ntrs.nasa.gov` / `osdr.nasa.gov` veri akışı, NASA PSI `Experimental Table` (`.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, `.json`) birim dönüştürücüsü ve RGB/HSV alev piksel çözümleyicisiyle yerel bilgisayarda çalışır.
+1. **Çevrimdışı Masaüstü ve Yerel Sürüm (`main_nasa.py`, `core/` ve `Nasa_4.exe`):** Faz-duyarlı kapalı-form analitik fizik çözücüsü (`d²` damlacık, `de Ris` katı yayılımı, `Burke-Schumann` sabit debili gaz brülörü, `B_oq`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, `MOC`), 15 NASA PSI deney sıralama motoru, canlı `psi.nasa.gov` / `ntrs.nasa.gov` / `osdr.nasa.gov` veri akışı, NASA PSI `Experimental Table` (`.csv`, `.xlsx`, `.tsv`, `.zip`, `.pdf`, `.json`) birim dönüştürücüsü ve RGB/HSV alev piksel çözümleyicisiyle yerel bilgisayarda çalışır.
 2. **Tarayıcı İçi Kurulumsuz Web Sürümü (`web_serverless/`):** GitHub Pages üzerinde hiçbir arka plan sunucusu veya kurulum gerektirmeden doğrudan ziyaretçinin tarayıcısında çalışan istemci-içi sürümdür (`build_serverless_web.py` ile üretilir).
 
 ---
@@ -31,13 +31,13 @@ Uygulama üst çubuğunda her özelliği en sade haliyle anlatan **5 ana modül*
 ![Yanma Odası — 3B Safir Küresel Alev ve Anlık Ölçümler](docs/screenshots/01_3d_digital_twin_0g_sphere.png)
 
 - **Three.js 3B Yanma Odası:** Seçilen yakıt ve malzemeye göre 4 gerçek numune geometrisini (sıvı damlacık, katı PMMA çubuk, Nomex/Sibal kumaş plakası ve küresel gaz brülörü) gerçek zamanlı modeller; `0G` safir-mavi küresel difüzyon alevini, `600 K` görünmez soğuk alevi (Cool Flame) ve `1G` kaldırmalı sarı-turuncu alevi 360 derece etkileşimli sahnede gösterir.
-- **Gerçek ISS Uçuş Doğrulaması:** Grafiklerin üzerine doğrudan NASA Glenn Research Center (FLEX, CFI ve BASS) uçuş ölçüm noktalarını işler ve modelin deneysel uyumunu anlık hesaplar (`R² = 0.996`, `RMSE = 0.015`).
+- **Gerçek ISS 0G Referans Doğrulaması:** Grafiklerin üzerine doğrudan yayınlanmış NASA Glenn Research Center (`FLEX`, `CFI`, `BASS` ve `ACME`) `0G` referans eğrilerini işler ve modelin deneysel uyumunu anlık hesaplar (`R²`, `RMSE`).
 - **U-Eğrisi MOC Yanıcılık Haritası ve 0–30 sn Sensör Grafiği:** Mikro-havalandırma (`2–8 cm/s`) altındaki minimum oksijen sınırını (`MOC`) ve optik, kızılötesi (`IR`) ve karbonmonoksit (`CO`) sensörlerinin zamana bağlı tepkisini çizer.
 - **Görünüm Modları ve Veri İndirme:** Üst çubuktan **Araştırmacı**, **Öğrenci** veya **Mühendis** görünümü seçilebilir; tüm zaman serileri tek tıkla **CSV İndir**, **JSON İndir** ve **Rapor İndir** butonlarıyla dışa aktarılabilir.
 
 ![Fiziksel Denklemler, Yaşam Destek Saati ve Rehberli Tur](docs/screenshots/02_formulas_eclss_clock_and_tour.png)
 
-- **Fiziksel Denklemler ve Yaşam Destek Saati:** Alt bölümde 6 temel taşınım yasası sade mühendislik etiketleriyle çözülür; seçilen kabin hacmine (ISS Modülü `65 m³`, Artemis Kabini `16 m³`, Ay Gezgini `11 m³`, EVA Uzay Giysisi `0.22 m³`) göre `NASA-STD-3001` `125 ppm CO` acil sınırına kalan süre saniye bazında hesaplanır.
+- **Fiziksel Denklemler ve ECLSS Yaşam Destek Saati:** Alt bölümde yakıt fazına duyarlı 6 temel taşınım yasası çözülür; seçilen serbest hava kabin hacmine (ISS Destiny Modülü `70 m³`, Orion / Gateway Kabini `19 m³`, Basınçlı Ay Gezgini `11 m³`, EVA Uzay Giysisi `0.18 m³`) göre İdeal Gaz Yasası ve Termodinamiğin 1. Yasası (`Q = m_gaz · c_p · ΔT`) üzerinden **ISS Fotoelektrik Duman Dedektörü (`PSD`) + `CSA-CP / ANITA-2`** alarm zamanlaması ile resmi **`NASA JSC-20584` CO SMAC** sınırlarına (`25 ppm` maske / `100 ppm` 24-saat / `425 ppm` 1-saat) kalan süre saniye bazında hesaplanır.
 - **Rehberli Tur:** Kullanıcıyı 5 adımda `0G` küresel alev, görünmez soğuk alev, Ay gezgini atmosferi ve NASA PSI deney sıralamasında gezdirir.
 
 ---
@@ -46,7 +46,7 @@ Uygulama üst çubuğunda her özelliği en sade haliyle anlatan **5 ana modül*
 
 ![NASA Deneyleri — PSI Sıralaması ve Donanım Filtreleri](docs/screenshots/03_psi_ranking_and_hardware_racks.png)
 
-- **Matematiksel Deney Sıralaması:** 15 doğrulanmış NASA PSI yanma araştırmasını (FLEX, FLEX-2, CFI, CFI-G, ACME, BASS, BASS-II, SoFIE, SoFIE-MIST, Saffire I–VI, SPICE, SLISE, SAME ve DAFT) aktif yanma odası koşullarına olan normalize Öklid uzaklığı (`%32`), tehlike katsayısı (`%24`) ve TF-IDF terim uyumu (`%44`) ile puanlar.
+- **Matematiksel Deney Sıralaması:** 15 doğrulanmış NASA PSI yanma araştırmasını (FLEX, FLEX-2, CFI, CFI-G, ACME, BASS, BASS-II, SoFIE, SoFIE-MIST, Saffire I–VI, SPICE, SLICE, SAME ve DAFT) aktif yanma odası koşullarına olan normalize Öklid uzaklığı (`%32`), tehlike katsayısı (`%24`) ve TF-IDF terim uyumu (`%44`) ile puanlar.
 - **4 Yörünge Donanım Filtresi ve Çift Yönlü Yükleme:** **ISS CIR Yanma Odası**, **ISS MSG Akış Kanalı**, **Cygnus Büyük Ölçek** ve **Duman ve Ay Tozu** tesislerine göre filtreleme yapar; **Odaya Yükle** butonu seçilen deneyin koşullarını anında 3B Yanma Odasına uygular.
 - **Deney İçi Varyasyonlar, Yan Yana Kıyaslama ve Dünya Uygulamaları:** Alt koşumlarda sabit ve değişen değişkenleri listeler, seçilen deneyleri yan yana karşılaştırır ve uzay araştırmalarından doğan 5 yeryüzü uygulamasını (PBI/Nomex itfaiyeci giysileri, SoFIE-MIST ince su sisi, çok açılı duman dedektörleri, HCCI motorlar ve hastane oksijen güvenliği) sunar.
 
@@ -74,7 +74,7 @@ Uygulama üst çubuğunda her özelliği en sade haliyle anlatan **5 ana modül*
 
 ![Doğrulama ve Ayarlar — Fiziksel Kurallar ve Çözücü Durumu](docs/screenshots/06_calibration_and_constraints.png)
 
-- **9 Fiziksel Doğrulama Kuralı (`CON-01` – `CON-09`):** Küresel difüzyon (`Sh -> 2`), `d²` damlacık yasası, mikro-havalandırma `MOC` çukuru, soğuk alev (`550–780 K` NTC kimyası), Halon yasağı ve Ay/Mars kısmi yerçekimi sınırlandırma kurallarını şeffaf biçimde listeler.
+- **9 Fiziksel Doğrulama Kuralı (`CON-01` – `CON-09`):** Küresel difüzyon (`Sh -> 2`), faz-duyarlı `d²` / `de Ris` / `Burke-Schumann` taşınım yasaları, mikro-havalandırma `MOC` çukuru, soğuk alev (`550–780 K` NTC kimyası), Halon yasağı ve Ay/Mars kısmi yerçekimi sınırlandırma kurallarını şeffaf biçimde listeler.
 - **Çevrimdışı ve İsteğe Bağlı Yerel Model Desteği:** Analitik Fizik Çözücü hiçbir ek bileşen olmadan tek başına çalışır; arzu eden araştırmacılar çevrimdışı yerel modelleri veya harici servis bağlantılarını bu sekmeden yapılandırabilir.
 
 ---
@@ -85,8 +85,8 @@ Tüm denklemler [`core/physics_engine.py`](core/physics_engine.py) (ve tarayıc�
 
 | Fiziksel Yasa / Boyutsuz Sayı | Matematiksel İfade | Mühendislik Anlamı |
 | :--- | :--- | :--- |
-| **D² Damlacık Yanma Yasası** | `d²(t) = d₀² - K · t` | Sıvı damlacık çap karesinin zamana göre azalma hızı (`K`, `mm²/s`) ve yanma ömrü (`t_b`). |
-| **Spalding Kütle Transfer Sayısı** | `B_oq = [Y_O2 · ΔH_c / ν_s + c_p(T_∞ - T_b)] / L_v` | Alevden yakıt yüzeyine aktarılan ısının buharlaştırma enerjisine oranı. |
+| **Faz-Duyarlı Yanma Yasası (`d²` / `de Ris` / `Burke-Schumann`)** | Sıvı: `d²(t) = d₀² - K·t` • Katı: `V_f ~ λ_g·(T_f - T_vap)/(ρ_s·c_s·δ_g·(T_vap - T_∞))` • Gaz: `D_brülör = D₀` | Sıvı damlacıklarda yüzey alanı gerilemesi (`K`), katı polimer/kumaşlarda alev yayılım hızı (`V_f`) ve sinterlenmiş gaz brülörlerinde sabit debili difüzyon alevi. |
+| **Spalding Kütle / Faz Transfer Sayısı** | Sıvı/Katı: `B_oq = [Y_O2·ΔH_c/ν_s + c_p(T_∞ - T_b)] / L_v` • Gaz: `B_g = ... / Δh_sens` | Alevden yakıt sınırına aktarılan ısının faz değişimi (`L_v`) veya duyulur gaz entalpisine (`Δh_sens`) oranı. |
 | **Sherwood ve Ranz-Marshall** | `Sh = 2.0 + 0.6 · Re^(1/2) · Sc^(1/3)` | Durgun `0G` ortamında küresel difüzyon sınırına (`Sh -> 2.0`) yakınsayan kütle transferi. |
 | **Grashof, Rayleigh ve Richardson** | `Gr = g·β·ΔT·L³ / ν²`, `Ra = Gr·Pr`, `Ri = Gr / Re²` | Serbest düşüşte (`g -> 0`) doğal konveksiyonun (`Ra -> 0`) sönümlenmesi ve fan akışı dengesi. |
 | **Damköhler ve Işıma Kaybı** | `Da = τ_akış / τ_kimya`, `χ_r` | Yüksek fan hızında üfleme sönmesi (`Da < 1`) ve büyük damlacıklarda ışıma sönmesi (`χ_r > 0.58`) ile soğuk alev geçişi. |
@@ -167,7 +167,7 @@ Nasa/
 │       ├── css/mission_control.css
 │       └── js/
 │           ├── three_chamber_3d.js  # Three.js 3B yanma odası ve 4 numune geometrisi
-│           ├── charts_and_audio.js  # MOC haritası, sensör grafikleri ve alev seslendirme
+│           ├── charts_and_audio.js  # MOC haritası, sensör grafikleri ve telemetri seslendirme (sonifikasyon)
 │           └── app_controller.js    # İstemci durum yönetimi, TR/EN çeviri ve veri ihracı
 ├── web_serverless/              # GitHub Pages üzerinde doğrudan çalışan sunucusuz statik web paketi
 ├── sample_data/                 # 7 fazlı kapsamlı NASA PSI ve Artemis telemetri doğrulama veri seti (.csv)
@@ -181,4 +181,4 @@ Nasa/
 1. **NASA Physical Sciences Informatics (PSI) Yanma Arşivi:** [https://psi.nasa.gov/physci/repo/search?q=combustion](https://psi.nasa.gov/physci/repo/search?q=combustion) & [https://osdr.nasa.gov/bio/repo/](https://osdr.nasa.gov/bio/repo/)
 2. **NASA Technical Reports Server (NTRS):** [https://ntrs.nasa.gov/](https://ntrs.nasa.gov/) (FLEX, BASS-II, Saffire I–VI, SoFIE, SAME/DAFT raporları)
 3. **NASA Glenn Research Center — Combustion Science:** *Combustion Integrated Rack (CIR), Microgravity Science Glovebox (MSG), Cool Flames Investigation (CFI) & ACME.*
-4. **NASA-STD-6001B & NASA-STD-3001:** *Flammability, Offgassing, and Compatibility Requirements* & *Spaceflight Human-System Standard (SMAC CO Limits).*
+4. **NASA-STD-6001B, NASA-STD-3001 & NASA JSC-20584:** *Flammability, Offgassing, and Compatibility Requirements*, *Spaceflight Human-System Standard* & *Spacecraft Maximum Allowable Concentrations (CO SMAC: 25 / 100 / 425 ppm).*

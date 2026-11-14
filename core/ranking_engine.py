@@ -25,8 +25,8 @@ BILINGUAL_SCIENTIFIC_SYNONYMS: Dict[str, str] = {
     "serin alev": "cool flame cfi cfi-g ntc spherical burner propane heptane",
     "damlacık": "droplet spherical liquid heptane methanol decane flex cfi mdca",
     "damlacik": "droplet spherical liquid heptane methanol decane flex cfi mdca",
-    "havalandırma": "ventilation airflow forced flow fan bass spice slise moc",
-    "havalandirma": "ventilation airflow forced flow fan bass spice slise moc",
+    "havalandırma": "ventilation airflow forced flow fan bass spice slice moc",
+    "havalandirma": "ventilation airflow forced flow fan bass spice slice moc",
     "fan": "ventilation airflow low velocity opposed flow msg spice duct",
     "oksijen": "oxygen o2 moc concentration exploration atmosphere cfi-g",
     "uzay giysisi": "spacesuit eva 4.3 psia 100% o2 pure oxygen nomex pre-breathe",
@@ -46,7 +46,7 @@ BILINGUAL_SCIENTIFIC_SYNONYMS: Dict[str, str] = {
     "sondurme": "suppression extinguish quenching blowoff water mist",
     "kurum": "soot radiation yellow shell acme spice smoke point",
     "duman noktası": "smoke point co-flow spice soot msg",
-    "kalkış": "liftoff blowout triple flame slise msg",
+    "kalkış": "liftoff blowout triple flame slice msg",
     "elektrik": "electric field ionic wind e-field partial gravity acme",
     "büyük ölçek": "large scale cygnus spacecraft saffire",
     "duman": "smoke co carbon monoxide scrubber saffire-iv same daft",
@@ -339,7 +339,7 @@ class ExperimentRankingEngine:
         if cool_flame_exps:
             synthesis_tr += (
                 f"Ayrıca **{', '.join(cool_flame_exps)}** soruşturmalarında 550–750 K görünmez Soğuk Alev gözlemlendiğinden "
-                f"yalnızca optik kamera yerine UV/IR radyometre + CO/CH₂O ve DAFT/SAME toz-ayrımlı lazer sensör füzyonu zorunludur."
+                f"yalnızca optik kamera yerine CIR UV/IR radyometre, CSA-CP / ANITA-2 (CO/CH₂O) gaz analizi ve DAFT/SAME toz-ayrımlı lazer duman algılama zorunludur."
             )
         else:
             synthesis_tr += "Havalandırma fanlarının (HVAC) anında kapatılması ve ince su sisi (SoFIE-MIST) tüm seçili rejimlerde ortak birincil bastırma adımıdır."
@@ -351,7 +351,7 @@ class ExperimentRankingEngine:
         )
         if cool_flame_exps:
             synthesis_en += (
-                f"Invisible NTC Cool Flame persistence in **{', '.join(cool_flame_exps)}** mandates UV/IR + CO multi-sensor fusion alongside DAFT/SAME dust-immune smoke detection."
+                f"Invisible NTC Cool Flame persistence in **{', '.join(cool_flame_exps)}** mandates CIR UV/IR radiometry and CSA-CP/ANITA-2 CO/CH₂O gas monitoring alongside DAFT/SAME dust-immune smoke detection."
             )
         else:
             synthesis_en += "Immediate cabin HVAC shutoff and fine water mist (SoFIE-MIST) remain the universal non-Halon countermeasures."

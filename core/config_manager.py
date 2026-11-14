@@ -101,7 +101,7 @@ class ConfigManager:
         "openrouter_model": "google/gemini-2.0-flash-exp:free",
         "antigravity_api_key": "",
         "antigravity_mode": "cli_sdk_or_api",
-        "antigravity_model": "gemini-3.8-flash-high",
+        "antigravity_model": "gemini-2.5-flash",
         "custom_base_url": "",
         "custom_api_key": "",
         "custom_model": "",
@@ -159,6 +159,8 @@ class ConfigManager:
                                 merged[k] = v
                 except Exception:
                     pass
+            if merged.get("antigravity_model") == "gemini-3.8-flash-high":
+                merged["antigravity_model"] = "gemini-2.5-flash"
             self._data = merged
             return dict(self._data)
 

@@ -5,7 +5,7 @@ Kapsanan Resmi NASA PSI Programları (15 Soruşturma):
 - CIR / MDCA Sıvı Damlacık Serisi: FLEX, FLEX-2, CFI (Cool Flames Investigation)
 - CIR Modüler ACME Gaz Serisi: ACME (E-FIELD & Coflow), ACME-BRE, ACME CFI-G (%85 O₂ Küresel Brülör)
 - CIR Katı Yakıt Serisi: SoFIE (GEL & MIST İnce Su Sisi)
-- MSG Modüler Fan Akış Kanalı Serisi: BASS, BASS-II, SPICE, SLISE
+- MSG Modüler Fan Akış Kanalı Serisi: BASS, BASS-II, SPICE, SLICE
 - Cygnus Otonom Uzay Aracı Büyük Ölçekli Serisi: Saffire-I, Saffire-IV, Saffire-V (8.2 psia / %34 O₂)
 - Kabin Duman & Toz Algılama Serisi: DAFT & DAFT-2 / SAME (Duman Dedektörü vs. Kabin/Ay Tozu Ayrımı)
 
@@ -45,8 +45,8 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "cool_flame_observed": True,
         "ntrs_id": "20150023456",
         "ntrs_url": "https://ntrs.nasa.gov/citations/20150023456",
-        "psi_id": "PSI-105",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "psi_id": "PSI-69",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-69",
         "key_finding_tr": (
             "Büyük n-Heptan damlacıkları 0G'de radyatif ısı kaybıyla görünür sıcak alevini kaybettikten sonra "
             "550-750 K'de görünmez Soğuk Alev (Cool Flame) ile yanmaya devam ederek zehirli CO ve formaldehit üretti."
@@ -55,7 +55,7 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
             "Large n-heptane droplets in 0G transitioned after radiative hot-flame extinction into sustained "
             "quasi-steady low-temperature (550-750 K) invisible cool flames, generating CO and formaldehyde."
         ),
-        "safety_insight_tr": "Optik alev dedektörleri tek başına yetersizdir; kabinlerde IR radyometre ve CO/CH₂O çoklu sensör füzyonu zorunludur.",
+        "safety_insight_tr": "Optik alev kameraları tek başına yetersizdir; CIR'da UV/IR radyometre, mürettebat kabinlerinde ise CSA-CP / ANITA-2 (CO/CH₂O) çok kanallı gaz analizi zorunludur.",
         "safety_insight_en": "Optical flame detectors miss cool flames; multi-spectral IR + CO/CH₂O gas sensing is required in crewed modules.",
         "intra_runs": [
             {
@@ -111,8 +111,8 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "cool_flame_observed": False,
         "ntrs_id": "20090014812",
         "ntrs_url": "https://ntrs.nasa.gov/citations/20090014812",
-        "psi_id": "PSI-112",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "psi_id": "PSI-68",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-68",
         "key_finding_tr": (
             "Metanol 0G'de sıfır kurumla saf mavi küresel alev oluşturdu; yanma ürünü olan H₂O buharının sıvı damlacık "
             "içine geri difüze olması damlacığı kendiliğinden seyrelterek sönümlenme çapını belirledi."
@@ -175,10 +175,10 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 13.4,
         "burning_rate_or_spread": "Quasi-steady Cool Flame @ 610 K (K_cool = 0.16 mm²/s)",
         "cool_flame_observed": True,
-        "ntrs_id": "20180006321",
-        "ntrs_url": "https://ntrs.nasa.gov/search?q=Cool%20Flames%20Investigation%20MDCA",
-        "psi_id": "PSI-129",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20160000344",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20160000344",
+        "psi_id": "PSI-39",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-39",
         "key_finding_tr": (
             "CIR/MDCA içinde yürütülen CFI serisi, n-dekan ve n-dodekan gibi ağır yakıtların sıcak alev sonrası "
             "40 saniyeye varan kararlı 600 K soğuk alev fazında buharlaşıp yoğun sis bulutu (vapor cloud) oluşturduğunu kanıtladı."
@@ -241,10 +241,10 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 14.3,
         "burning_rate_or_spread": "Spread = 0.85 mm/s @ 4.5 cm/s",
         "cool_flame_observed": False,
-        "ntrs_id": "20160000593",
-        "ntrs_url": "https://ntrs.nasa.gov/citations/20160000593",
-        "psi_id": "PSI-118",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20140011099",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20140011099",
+        "psi_id": "PSI-26",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-26",
         "key_finding_tr": (
             "1G'de %16.8 O₂ altında sönen PMMA, 0G'de 3-8 cm/s hafif kabin havalandırması altında %14.3 O₂'ye kadar "
             "kararlı şekilde yanmaya devam etti (Havalandırma Paradoksu)."
@@ -309,8 +309,8 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "cool_flame_observed": False,
         "ntrs_id": "20210011385",
         "ntrs_url": "https://ntrs.nasa.gov/citations/20210011385",
-        "psi_id": "PSI-124",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "psi_id": "PSI-25",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-25",
         "key_finding_tr": (
             "Standart ISS havasında (%21 O₂) güvenli olan alev geciktirici kumaşlar, oksijen zenginleştirilmiş "
             "ortamlarda (>%22 O₂) ve düşük hızlı karşıt hava akışında kararlı mavi kenar aleviyle yayıldı."
@@ -373,16 +373,16 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 11.8,
         "burning_rate_or_spread": "0G Smoke-point flame length 2.1x shorter & wider soot wing",
         "cool_flame_observed": False,
-        "ntrs_id": "20110014585",
-        "ntrs_url": "https://ntrs.nasa.gov/search?q=Smoke%20Point%20In%20Co-flow%20Experiment%20SPICE",
-        "psi_id": "PSI-108",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20090014827",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20090014827",
+        "psi_id": "PSI-107",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-107",
         "key_finding_tr": (
-            "MSG için geliştirilen modüler fan akış kanalında (daha sonra BASS, BASS-II ve SLISE tarafından da kullanıldı), "
+            "MSG için geliştirilen modüler fan akış kanalında (daha sonra BASS, BASS-II ve SLICE tarafından da kullanıldı), "
             "0G'de gaz alevlerinin çok daha erken kurum (duman noktası) ürettiği ve kapalı alev ucunun açılarak duman saldığı keşfedildi."
         ),
         "key_finding_en": (
-            "Using the modular fan-driven MSG duct (later shared by BASS, BASS-II, and SLISE), SPICE showed 0G laminar jets "
+            "Using the modular fan-driven MSG duct (later shared by BASS, BASS-II, and SLICE), SPICE showed 0G laminar jets "
             "reach their soot/smoke point at lower fuel flows due to longer residence time and radiative tip cooling."
         ),
         "safety_insight_tr": "0G gaz sızıntısı yangınlarında Dünya'ya kıyasla çok daha yoğun siyah kurum ve büyük partikül oluşur; kabin duman dedektörleri buna göre kalibre edilmelidir.",
@@ -419,11 +419,11 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "tags": ["SPICE", "MSG", "smoke point", "soot", "co-flow", "gas jet", "propane"],
     },
     {
-        "exp_id": "PSI-SLISE-13",
-        "program": "SLISE",
+        "exp_id": "PSI-SLICE-13",
+        "program": "SLICE",
         "hardware_group": "MSG",
-        "title": "Structure and Liftoff In Combustion Experiment (SLISE) — Jet Flame Liftoff & Blowout in MSG",
-        "title_tr": "SLISE — MSG Akış Kanalında Gaz Jet Alevlerinde Kalkış (Liftoff) ve Üfleme Sönmesi",
+        "title": "Structure and Liftoff In Combustion Experiment (SLICE) — Jet Flame Liftoff & Blowout in MSG",
+        "title_tr": "SLICE — MSG Akış Kanalında Gaz Jet Alevlerinde Kalkış (Liftoff) ve Üfleme Sönmesi",
         "facility": "ISS Microgravity Science Glovebox (MSG) — SPICE Flow Duct",
         "year": 2012,
         "fuel_id": "hydrogen",
@@ -439,23 +439,23 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 9.2,
         "burning_rate_or_spread": "Triple-flame liftoff base stabilized @ Da ≈ 1.1",
         "cool_flame_observed": False,
-        "ntrs_id": "20130011240",
-        "ntrs_url": "https://ntrs.nasa.gov/search?q=SLISE%20microgravity%20liftoff%20flame",
-        "psi_id": "PSI-110",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20140017780",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20140017780",
+        "psi_id": "PSI-106",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-106",
         "key_finding_tr": (
-            "MSG akış kanalında yürütülen SLISE deneyi, 0G'de kaldırma kuvveti olmadığında brülörden kopan (liftoff) "
+            "MSG akış kanalında yürütülen SLICE deneyi, 0G'de kaldırma kuvveti olmadığında brülörden kopan (liftoff) "
             "üçlü alev (triple-flame) tabanının 1G'ye kıyasla çok daha yüksek akış hızlarına kadar sönmeden asılı kalabildiğini gösterdi."
         ),
         "key_finding_en": (
-            "In the MSG flow duct, SLISE showed lifted 0G triple-flames stabilize farther downstream and resist blowout "
+            "In the MSG flow duct, SLICE showed lifted 0G triple-flames stabilize farther downstream and resist blowout "
             "better than buoyancy-perturbed 1G jet flames."
         ),
         "safety_insight_tr": "Basınçlı gaz hatlarından sızan jet yangınları 0G'de brülör ağzından kopsa bile uzakta asılı kalarak yanmayı sürdürebilir; kaynağı kesmek şarttır.",
         "safety_insight_en": "Pressurized gas-leak flames in 0G can stabilize as lifted triple-flames away from the leak orifice until valve isolation.",
         "intra_runs": [
             {
-                "run_code": "SLISE-L02",
+                "run_code": "SLICE-L02",
                 "same_tr": "MSG SPICE kanalı, N₂ seyreltmeli yakıt jeti, 14.7 psia",
                 "same_en": "MSG SPICE duct, N₂-diluted fuel jet, 14.7 psia",
                 "diff_tr": "Düşük jet çıkış hızı (Re_jet = 180)",
@@ -464,7 +464,7 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
                 "result_en": "Flame base remained attached to the burner rim in laminar diffusion mode.",
             },
             {
-                "run_code": "SLISE-L09",
+                "run_code": "SLICE-L09",
                 "same_tr": "MSG SPICE kanalı, aynı yakıt bileşimi, 14.7 psia",
                 "same_en": "MSG SPICE duct, identical fuel dilution, 14.7 psia",
                 "diff_tr": "Orta-yüksek jet hızı (Re_jet = 620)",
@@ -473,7 +473,7 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
                 "result_en": "Flame lifted 14 mm downstream, stabilizing via a symmetric triple-flame propagation edge.",
             },
             {
-                "run_code": "SLISE-L15",
+                "run_code": "SLICE-L15",
                 "same_tr": "MSG SPICE kanalı, aynı nozul çapı, 14.7 psia",
                 "same_en": "MSG SPICE duct, identical nozzle diameter, 14.7 psia",
                 "diff_tr": "Kritik üfleme hızı aşımı (U_coflow = 35 cm/s, Da < 1)",
@@ -482,7 +482,7 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
                 "result_en": "Triple-flame propagation speed was exceeded, resulting in complete convective blowout.",
             },
         ],
-        "tags": ["SLISE", "MSG", "SPICE duct", "liftoff", "blowoff", "triple flame", "gas jet"],
+        "tags": ["SLICE", "MSG", "SPICE duct", "liftoff", "blowoff", "triple flame", "gas jet"],
     },
     {
         "exp_id": "PSI-SAFFIRE1-05",
@@ -507,8 +507,8 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "cool_flame_observed": False,
         "ntrs_id": "20170000230",
         "ntrs_url": "https://ntrs.nasa.gov/citations/20170000230",
-        "psi_id": "PSI-131",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "psi_id": "PSI-98",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-98",
         "key_finding_tr": (
             "Uzayda gerçekleştirilen ilk 1 metrelik büyük ölçekli yangında alev büyümesi beklentinin aksine kontrolden çıkmadı; "
             "ancak kapalı araç hacmindeki basınç ve sıcaklık artışı ile duman dağılımı kritik sınırları zorladı."
@@ -573,8 +573,8 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "cool_flame_observed": False,
         "ntrs_id": "20220002714",
         "ntrs_url": "https://ntrs.nasa.gov/citations/20220002714",
-        "psi_id": "PSI-142",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "psi_id": "PSI-98",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-98",
         "key_finding_tr": (
             "Oluklu/çıkıntılı (ribbed) PMMA yüzey geometrisi, düz yüzeye kıyasla alev yayılma hızını ve ısı geri beslemesini "
             "%45 artırdı; CO₂/CO scrubber ekipmanları yangın sonrası atmosfer temizliğini doğruladı."
@@ -637,10 +637,10 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 15.8,
         "burning_rate_or_spread": "Spread = 3.45 mm/s (2.6x ISS rate!)",
         "cool_flame_observed": False,
-        "ntrs_id": "20220002714",
-        "ntrs_url": "https://ntrs.nasa.gov/citations/20220002714",
-        "psi_id": "PSI-145",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20210017780",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20210017780",
+        "psi_id": "PSI-98",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-98",
         "key_finding_tr": (
             "Ay/Mars görevleri için planlanan 8.2 psia ve %34 O₂ keşif atmosferinde alev sıcaklığı, parlaklığı ve "
             "yayılma hızı standart ISS atmosferine göre 2.6 kat daha şiddetli gerçekleşti."
@@ -703,10 +703,10 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 14.9,
         "burning_rate_or_spread": "Spread = 2.10 mm/s • Extinguished via 30 µm Mist",
         "cool_flame_observed": False,
-        "ntrs_id": "20210011385",
-        "ntrs_url": "https://ntrs.nasa.gov/citations/20210011385",
-        "psi_id": "PSI-156",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20200000361",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20200000361",
+        "psi_id": "PSI-143",
+        "psi_url": "https://science.nasa.gov/mission/sofie/",
         "key_finding_tr": (
             "SoFIE-MIST deneyleri, Ay üssü/rover atmosferinde (10.2 psia, %28-%34 O₂) ince su sisinin (20-50 µm damlacık) "
             "alev cephesine akımla taşınarak Halon kullanmadan yüksek verimli söndürme sağladığını gösterdi."
@@ -769,10 +769,10 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 6.4,
         "burning_rate_or_spread": "Ionic wind emulates partial-G • Soot cut 70%",
         "cool_flame_observed": False,
-        "ntrs_id": "19990054024",
-        "ntrs_url": "https://ntrs.nasa.gov/citations/19990054024",
-        "psi_id": "PSI-149",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20210015913",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20210015913",
+        "psi_id": "PSI-22",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-22",
         "key_finding_tr": (
             "Elektrik alanının alevde doğal oluşan iyonlar (H₃O⁺, CHO⁺) üzerindeki kuvvetiyle (iyon rüzgarı) "
             "0G ortamında Ay/Mars kısmi yerçekimi konveksiyonu başarıyla taklit edildi; kurum %70 azaltıldı ve yüksek voltajda alev söndürüldü."
@@ -835,10 +835,10 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 14.6,
         "burning_rate_or_spread": "Steady hemispherical blue flame (>180 s)",
         "cool_flame_observed": False,
-        "ntrs_id": "20160000593",
-        "ntrs_url": "https://ntrs.nasa.gov/citations/20160000593",
-        "psi_id": "PSI-151",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20170009141",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20170009141",
+        "psi_id": "PSI-20",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-20",
         "key_finding_tr": (
             "Gaz yakıt (etilen/metan) debisi brülör yüzeyine gelen ısı akısına geri beslenerek hareketsiz (durgun) atmosferlerde "
             "katı malzemelerin buharlaşma ısısı (B-sayısı) taklit edildi; 3 dakikadan uzun süren sönme sınırları haritalandı."
@@ -901,10 +901,10 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 11.4,
         "burning_rate_or_spread": "Highest O₂ microgravity tests (up to 85% O₂ spherical flame)",
         "cool_flame_observed": True,
-        "ntrs_id": "20220004819",
-        "ntrs_url": "https://ntrs.nasa.gov/search?q=Cool%20Flames%20Investigation%20with%20Gases%20CFI-G",
-        "psi_id": "PSI-153",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20220015583",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20220015583",
+        "psi_id": "PSI-159",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-159",
         "key_finding_tr": (
             "En yüksek oksijen konsantrasyonuna sahip mikroçekim yanma testleri ACME CFI-G kapsamında gerçekleştirildi: "
             "Propan/azot dolu odaya küresel brülörden %85'e varan O₂ gönderilerek sıvı damlacık buharlaşması olmadan saf gaz fazı küresel soğuk ve sıcak alevler üretildi."
@@ -967,10 +967,10 @@ NASA_EXPERIMENTS_CATALOG: List[Dict[str, Any]] = [
         "moc_measured_pct": 13.5,
         "burning_rate_or_spread": "0G Smoke particle diameter 2-3x larger than 1G; dust discriminated",
         "cool_flame_observed": False,
-        "ntrs_id": "20120002875",
-        "ntrs_url": "https://ntrs.nasa.gov/search?q=Dust%20and%20Aerosol%20Measurement%20Feasibility%20Test%20DAFT",
-        "psi_id": "PSI-103",
-        "psi_url": "https://www.nasa.gov/PSI",
+        "ntrs_id": "20130000422",
+        "ntrs_url": "https://ntrs.nasa.gov/citations/20130000422",
+        "psi_id": "PSI-47",
+        "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-47",
         "key_finding_tr": (
             "SAME duman tespiti araştırmasında kullanılan lazer/partikül aletleri DAFT ve DAFT-2 çalışmalarında kabin tozunu ölçmek için kullanıldı; "
             "0G'de duman partiküllerinin daha uzun kalış süresiyle büyüdüğü ve çok dalga boylu saçılımla Ay/kabin tozundan ayırt edilebildiği kanıtlandı."
@@ -1148,7 +1148,7 @@ SPACE_TO_EARTH_TRANSFERS: List[Dict[str, str]] = [
     {
         "domain_tr": "Akıllı Duman Dedektörleri",
         "domain_en": "Smart Smoke Detectors",
-        "nasa_source": "SAME, DAFT & DAFT-2 (NTRS 20120002875)",
+        "nasa_source": "SAME, DAFT & DAFT-2 (NTRS 20130000422)",
         "insight_tr": "ISS'te duman partikülü boyut dağılımını inceleyen SAME ve aynı lazer cihazlarını kabin/Ay tozunu ayırt etmek için kullanan DAFT/DAFT-2 araştırmaları; evlerde, uçak kargo ambarlarında ve madenlerde su buharı/toz kaynaklı yanlış alarmları sıfırlayan çok açılı akıllı duman dedektörlerine dönüştü.",
         "insight_en": "Multi-wavelength aerosol scattering developed in NASA's SAME and DAFT/DAFT-2 investigations powers modern terrestrial smoke detectors that distinguish real sub-micron pyrolysis smoke from dust and steam.",
     },

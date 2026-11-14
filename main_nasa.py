@@ -793,6 +793,7 @@ def run_self_test() -> int:
     lunar_json = r_lunar.get_json()
     assert "LUCI" in lunar_json["partial_gravity_info"]["tr"], "LUCI transparency notice missing"
     assert "moc_lunar_016g_pct" in lunar_json["flammability_map"], "0.16G Lunar MOC curve missing"
+    assert lunar_json["telemetry"]["flame_spread_mm_s"] > 0.0, "Solid PMMA must have positive de Ris flame spread rate"
 
     # 4) ACME CFI-G (%85 O2 Küresel Gözenekli Brülör) testi
     r_cfig = client.post(
@@ -803,8 +804,13 @@ def run_self_test() -> int:
     assert r_cfig.status_code == 200
     cfig_json = r_cfig.get_json()
     assert cfig_json["inputs"]["geometry_3d"] == "porous_sphere", "Porous spherical burner 3D geometry failed"
+    assert cfig_json["telemetry"]["regime"] != "COOL_FLAME_NTC", "85% O2 CFI-G must burn hot, not forced cool flame"
+    assert 2400.0 <= cfig_json["telemetry"]["flame_temp_k"] <= 2850.0, f"Unexpected CFI-G 85% O2 temp: {cfig_json['telemetry']['flame_temp_k']}"
+    assert cfig_json["telemetry"]["flame_spread_mm_s"] == 0.0, "Stationary gas burner must have zero surface spread rate"
+    assert cfig_json["sensor_timeseries"]["d2_normalized"][-1] == 1.0, "Steady gas burner must maintain constant burner diameter"
+    assert "t_smac_24h_100ppm_s" in cfig_json["scenario_timeline"] and "t_smac_1h_425ppm_s" in cfig_json["scenario_timeline"], "JSC-20584 CO SMAC fields missing"
 
-    # 5) Donanım Rafı Filtresi (MSG: BASS, BASS-II, SPICE, SLISE) & Soruşturma-İçi Test Matrisi testi
+    # 5) Donanım Rafı Filtresi (MSG: BASS, BASS-II, SPICE, SLICE) & Soruşturma-İçi Test Matrisi testi
     r_rank = client.post(
         "/api/rank",
         json={"mission_params": {"gravity_g": 0.0, "oxygen_pct": 21.0}, "query": "", "hardware_filter": "MSG"},

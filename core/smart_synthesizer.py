@@ -138,7 +138,7 @@ def classify_user_intent(user_message: str, media_context: str = "") -> str:
         "flex",
         "bass",
         "spice",
-        "slise",
+        "slice",
         "daft",
         "luci",
         "fm2",
@@ -329,7 +329,7 @@ def classify_user_intent(user_message: str, media_context: str = "") -> str:
             "bass-ii",
             "bass ",
             "spice",
-            "slise",
+            "slice",
             "flex-2",
             "bre ",
             "burn rate emulator",
@@ -486,8 +486,8 @@ def synthesize_question_driven_report(
                 "| **Governing Equation Derivation** | Step-by-step substitution of `d²`-law `K`, Spalding `B_oq`, Sherwood `Sh`, `Ra/Gr/Ri`, Damköhler `Da`, and `MOC` | *\"How is Spalding B_oq and burning rate K calculated for my current droplet?\"* |\n"
                 "| **Counterfactual What-If Perturbations** | Multi-point sweeps across airflow (`0–30 cm/s`), gravity (`0G–1G`), `O₂%`, pressure, and diluent gases (`N₂/CO₂/He`) | *\"What happens if I increase cabin airflow from 0 to 20 cm/s?\"* |\n"
                 "| **Atmosphere & EVA Tradeoffs** | Quantitative matrix comparing ISS (`14.7 psia`), Lunar Rover (`10.2 psia / 32% O₂`), and EVA Suit (`4.3 psia / 100% O₂`) | *\"Compare EVA spacesuit and Lunar Rover flammability risks.\"* |\n"
-                "| **NASA PSI & Intra-Run Evidence** | Deep-dive into all 15 PSI investigations (`FLEX`, `CFI-G`, `BASS`, `SPICE`, `Saffire`, `SoFIE`, `DAFT`) & run variations | *\"Explain Saffire-V test variations and highest-O₂ CFI-G findings.\"* |\n"
-                "| **ECLSS Survival & Suppression** | `NASA-STD-6001B` non-Halon protocol, `SMAC 125 ppm CO` countdown, Cool Flame NTC & lunar dust sensing | *\"Why is Halon 1301 banned and how fast does CO hit SMAC limits?\"* |\n"
+                "| **NASA PSI & Intra-Run Evidence** | Deep-dive into all 15 PSI investigations (`FLEX`, `CFI-G`, `BASS`, `SPICE`, `SLICE`, `Saffire`, `SoFIE`, `DAFT`) & run variations | *\"Explain Saffire-V test variations and highest-O₂ CFI-G findings.\"* |\n"
+                "| **ECLSS Survival & Suppression** | `NASA-STD-6001B` non-Halon protocol, `JSC-20584 CO SMAC (100/425 ppm)` countdown, Cool Flame NTC & lunar dust sensing | *\"Why is Halon 1301 banned and how fast does CO hit SMAC limits?\"* |\n"
                 "| **File & Flame Analysis** | Pixel chemiluminescence/soot segmentation (`.png/.jpg`) and `.csv/.json/.pdf` parameter extraction | Upload a file on the left and ask: *\"Analyze my uploaded dataset.\"* |"
             )
         else:
@@ -499,8 +499,8 @@ def synthesize_question_driven_report(
                 "| **Adım Adım Denklem Çözümü** | Aktif kaydırıcı değerlerinizle `d²` yasası (`K`), Spalding `B_oq`, Sherwood `Sh`, `Ra/Gr/Ri`, Damköhler `Da` ve `MOC` hesabı | *\"Spalding B_oq ve yanma sabiti K şu anki değerlerimle nasıl hesaplanıyor?\"* |\n"
                 "| **'Ne Olur?' Duyarlılık Taraması** | Akış hızı (`0–30 cm/s`), yerçekimi (`0G / 0.16G / 0.38G / 1G`), `O₂%` veya seyreltici gaz (`N₂/CO₂/He`) değişim simülasyonu | *\"Havalandırma fan hızını artırırsam veya 0 cm/s yaparsam alev nasıl değişir?\"* |\n"
                 "| **Kabuk / Giysi Atmosfer Kıyaslaması** | ISS (`14.7 psia`), Ay Gezgini (`10.2 psia / %32 O₂`) ve EVA Uzay Giysisi (`4.3 psia / %100 O₂`) yanıcılık matrisi | *\"Uzay giysisi ile basınçlı Ay gezgini atmosferini sayısal kıyasla.\"* |\n"
-                "| **15 NASA PSI Deneyi & Raf Sorgusu** | `FLEX`, `CFI`, `ACME CFI-G`, `BASS`, `SPICE`, `SLISE`, `Saffire`, `SoFIE`, `DAFT` bulguları ve deney-içi varyasyonlar | *\"Saffire deneyinde neler sabit tutuldu, neler değiştirildi?\"* |\n"
-                "| **ECLSS Yaşam Saati & Söndürme** | `NASA-STD-6001B` Halon 1301 yasağı, `SoFIE-MIST` su sisi, `SMAC 125 ppm CO` süresi ve görünmez Soğuk Alev tespiti | *\"Uzay aracında Halon 1301 neden yasak ve yangına nasıl müdahale edilir?\"* |\n"
+                "| **15 NASA PSI Deneyi & Raf Sorgusu** | `FLEX`, `CFI`, `ACME CFI-G`, `BASS`, `SPICE`, `SLICE`, `Saffire`, `SoFIE`, `DAFT` bulguları ve deney-içi varyasyonlar | *\"Saffire deneyinde neler sabit tutuldu, neler değiştirildi?\"* |\n"
+                "| **ECLSS Yaşam Saati & Söndürme** | `NASA-STD-6001B` Halon 1301 yasağı, `SoFIE-MIST` su sisi, `JSC-20584 CO SMAC (100/425 ppm)` süresi ve görünmez Soğuk Alev tespiti | *\"Uzay aracında Halon 1301 neden yasak ve yangına nasıl müdahale edilir?\"* |\n"
                 "| **Görsel & Veri Dosyası Çözümleme** | Yüklenen alev fotoğrafından (`.png/.jpg`) mavi `CH*`/kurum analizi ve `.csv/.json/.pdf` tablolarından `K` eğimi çıkarımı | Sol panelden dosya/resim ekleyip *\"Yüklediğim veriyi analiz et\"* yazın |"
             )
         return (text, [])
@@ -517,7 +517,7 @@ def synthesize_question_driven_report(
                 "ALTAR-NASA is a physics-informed microgravity and partial-gravity combustion platform built around **5 integrated engineering modules**:\n\n"
                 "1. **`Combustion Chamber`:**\n"
                 f"   - Real-time 4-geometry 3D WebGL chamber (`Droplet`, `PMMA Rod`, `Fabric Slab`, `CFI-G Porous Sphere`) solving 8 coupled equations (`d²`-law `K`, `B_oq`, `R_f/R_d`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, U-shaped `MOC`).\n"
-                f"   - Calibrated against real ISS flight data with live **`R² = {r2_val}`** (`RMSE = {rmse_val}`), WebAudio flame sonification, and **ECLSS `SMAC 125 ppm CO` Life Support Clock**.\n"
+                f"   - Calibrated against real ISS 0G reference data with **`R² = {r2_val}`** (`RMSE = {rmse_val}`), WebAudio telemetry sonification, and **NASA JSC-20584 `CO SMAC (100/425 ppm)` Life Support Clock**.\n"
                 "2. **`NASA Experiments`:**\n"
                 "   - Physics + bilingual TF-IDF ranking across `ISS CIR/MDCA`, `MSG Flow Duct`, `Cygnus (Saffire I–VI)`, and `SAME/DAFT` smoke-vs-lunar-dust hardware, with clickable `ntrs.nasa.gov` citations and intra-experiment variable matrices.\n"
                 "3. **`Data & Imagery`:**\n"
@@ -533,7 +533,7 @@ def synthesize_question_driven_report(
                 "Platform, **5 entegre mühendislik modülünden** oluşan fizik-temelli bir mikroçekim ve kısmi yerçekimi yanma güvenliği sistemidir:\n\n"
                 "1. **`Yanma Odası`:**\n"
                 f"   - 4 farklı 3B numune/brülör geometrisini (`Sıvı Damlacık`, `PMMA Polimer Çubuk`, `Nomex/Sibal Kumaş`, `CFI-G Gözenekli Küre`) ve 8 temel denklemi (`d²` yasası `K`, `B_oq`, `R_f/R_d`, `Sh`, `Ra`, `Ri`, `Da`, `χ_r`, U-eğrili `MOC`) anlık çözer.\n"
-                f"   - Gerçek ISS uçuş ölçümleriyle **`R² = {r2_val}`** (`RMSE = {rmse_val}`) doğrulama katmanı, alev seslendirme ve **ECLSS `SMAC 125 ppm CO` Yaşam Destek Saati** içerir.\n"
+                f"   - Yayınlanmış ISS 0G referans verileriyle **`R² = {r2_val}`** (`RMSE = {rmse_val}`) kalibrasyon katmanı, telemetri seslendirme ve **NASA JSC-20584 `CO SMAC (100/425 ppm)` Yaşam Destek Saati** içerir.\n"
                 "2. **`NASA Deneyleri`:**\n"
                 "   - Termodinamik yakınlık + çift dilli TF-IDF motoruyla `CIR/MDCA`, `MSG Fan Kanalı`, `Cygnus (Saffire)` ve `DAFT/SAME` donanımlarını sıralar; aynı deney içinde neyin sabit tutulup neyin değiştirildiğini ve Dünya uygulamalarını listeler.\n"
                 "3. **`Veri ve Görüntü`:**\n"
@@ -576,7 +576,7 @@ def synthesize_question_driven_report(
                 "### Why Rocket Engines & Thrusters Are Excluded from NASA PSI Cabin Fire Scope (CON-08)\n"
                 "1. **Momentum-Dominated Regime (`Ri = Gr / Re² → 0`):** Inside liquid/solid rocket engines and orbital thrusters, injection and exhaust velocities reach `10²–10³ m/s`, producing extreme Reynolds numbers (`Re > 10⁵`). Because the Richardson number scales as `Ri = Gr / Re²`, buoyant forces (`Gr ∝ g`) are completely negligible (`Ri < 10⁻⁶`) whether the rocket is at `1G` on Earth or `0G` in orbit.\n"
                 f"2. **Contrast with Habitable Spacecraft Cabins (Your Active Chamber):** In your current 3D chamber, ventilation speed is only `U = {inp['airflow_cms']} cm/s` (`Re = {re_now}`, `Ri = {ri_now}`). At these gentle crew-comfort velocities (`0–20 cm/s`), removing gravity (`0G` / `0.16G` / `0.38G`) fundamentally alters flame geometry, soot residence time, radiative quenching (`χ_r`), and `MOC`.\n"
-                "3. **NASA PSI Focus Envelope:** Therefore, NASA's Physical Sciences Informatics (PSI) combustion portfolio (`FLEX`, `CFI`, `ACME`, `BASS`, `SPICE`, `SLISE`, `Saffire`, `SoFIE`, `DAFT`) exclusively targets **habitable spacecraft cabins, ISS racks, EVA spacesuits (`4.3 psia / 100% O₂`), and Lunar/Martian surface habitats & pressurized rovers**."
+                "3. **NASA PSI Focus Envelope:** Therefore, NASA's Physical Sciences Informatics (PSI) combustion portfolio (`FLEX`, `CFI`, `ACME`, `BASS`, `SPICE`, `SLICE`, `Saffire`, `SoFIE`, `DAFT`) exclusively targets **habitable spacecraft cabins, ISS racks, EVA spacesuits (`4.3 psia / 100% O₂`), and Lunar/Martian surface habitats & pressurized rovers**."
             )
         else:
             text = (
@@ -606,7 +606,7 @@ def synthesize_question_driven_report(
             po2 = st.get("o2_partial_psia", 0)
             rate_str = f"V_f={st['flame_spread_mm_s']} mm/s" if st["flame_spread_mm_s"] > 0 else f"K={st['burning_rate_k_mm2_s']} mm²/s"
             rows_md.append(
-                f"| **{en_lbl if is_en else tr_lbl}** | `{prm['pressure_psia']} psia` | `{prm['oxygen_pct']}%` | `{po2} psia` | `{st['moc_pct']}%` | `{st['flame_temp_k']} K` | `{rate_str}` | **`{st['risk_score']}/100`** (`SMAC {stl['t_smac_125ppm_s']} s`) |"
+                f"| **{en_lbl if is_en else tr_lbl}** | `{prm['pressure_psia']} psia` | `{prm['oxygen_pct']}%` | `{po2} psia` | `{st['moc_pct']}%` | `{st['flame_temp_k']} K` | `{rate_str}` | **`{st['risk_score']}/100`** (`100 ppm SMAC: {stl.get('t_smac_24h_100ppm_s', 999.0)} s`) |"
             )
 
         rel_exps = [e for e in NASA_EXPERIMENTS_CATALOG if e["exp_id"] in ("PSI-SAFFIRE5-07", "PSI-SOFIE-08", "PSI-ACME-CFIG-14")]
@@ -624,8 +624,8 @@ def synthesize_question_driven_report(
                 + "\n\n"
                 "### Key Thermo-Physical & Physiological Insights (CON-06)\n"
                 "- **Why `4.3 psia / 100% O₂` in EVA Suits?** Pressurizing a suit to `14.7 psia` makes joints rigid like a balloon. Operating at `4.3 psia` (`29.6 kPa`) maintains alveolar oxygen (`P_O2 = 4.3 psia` vs `3.09 psia` on ISS) with zero nitrogen (`N₂`), preventing decompression sickness (the bends). However, **removing `N₂` eliminates inert thermal heat-sink ballast**, causing even flame-resistant `Nomex` to burn rapidly if an ignition arc occurs.\n"
-                "- **Why `10.2 psia / 32% O₂` in Lunar Bases & Pressurized Rovers?** This NASA Exploration Atmosphere (>40% relative `O₂` enrichment over Earth's 21%) cuts EVA pre-breathe purge time from `>2 hours` down to `~15 minutes`, enabling frequent lunar sorties—validated in **Saffire-V (`NTRS #20220014358`)** and **SoFIE (`NTRS #20230006712`)**.\n"
-                "- **Highest-O₂ PSI Benchmark (`ACME CFI-G`):** Inside ISS `CIR`, **ACME CFI-G (`NTRS #20230014890`)** tested spherical inverse diffusion flames up to **`85% O₂`** flowing into a propane/N₂ chamber to bound high-oxygen soot and radiation limits."
+                "- **Why `10.2 psia / 32% O₂` in Lunar Bases & Pressurized Rovers?** This NASA Exploration Atmosphere (>40% relative `O₂` enrichment over Earth's 21%) cuts EVA pre-breathe purge time from `>2 hours` down to `~15 minutes`, enabling frequent lunar sorties—validated in **Saffire-V (`NTRS #20210017780`)** and **SoFIE (`NTRS #20200000361`)**.\n"
+                "- **Highest-O₂ PSI Benchmark (`ACME CFI-G`):** Inside ISS `CIR`, **ACME CFI-G (`NTRS #20220015583`)** tested spherical inverse diffusion flames up to **`85% O₂`** flowing into a propane/N₂ chamber to bound high-oxygen soot and radiation limits."
             )
         else:
             text = (
@@ -636,8 +636,8 @@ def synthesize_question_driven_report(
                 + "\n\n"
                 "### Termofiziksel ve Fizyolojik Mühendislik Analizi (CON-06)\n"
                 "- **EVA Giysilerinde Neden `4.3 psia / %100 Saf O₂` Kullanılır?** Giysi `14.7 psia` basınçta şişirilirse eklemler taşlaşır ve astronot parmaklarını bükemez. `4.3 psia` (`29.6 kPa`) saf `O₂` hem akciğer kısmi oksijen basıncını korur (`P_O2 = 4.30 psia` > ISS `3.09 psia`) hem de kanda azot (`N₂`) bırakmayarak **vurgun (dekompresyon) riskini sıfırlar**. Ancak **ısıyı emen `N₂` ısıl balastı tamamen kalktığı için** adyabatik alev sıcaklığı sıçrar ve Dünya'da yanmayan `Nomex` kumaş bile hızla yayılan aleve maruz kalır.\n"
-                "- **Ay Üssü ve Basınçlı Gezginlerde Neden `≤10.2 psia / ≥%32 O₂` Seçilir?** Dünya'daki `%21 O₂`'ye kıyasla `>%40` bağıl oksijen artışı sağlayan bu atmosfer, astronotların EVA yürüyüşü öncesi saatler süren ön-soluma (`pre-breathe`) süresini `~15 dakikaya` indirir (**Saffire-V `NTRS #20220014358`** ve **SoFIE `NTRS #20230006712`** ile test edilmiştir).\n"
-                "- **PSI En Yüksek Oksijen Rekoru (`ACME CFI-G`):** ISS `CIR` rafındaki **ACME CFI-G (`NTRS #20230014890`)** küresel gözenekli brülör deneyleri, **`%85 O₂`** konsantrasyonuna kadar çıkarak yüksek oksijenli kurum ve radyasyon sınırlarını haritalamıştır."
+                "- **Ay Üssü ve Basınçlı Gezginlerde Neden `≤10.2 psia / ≥%32 O₂` Seçilir?** Dünya'daki `%21 O₂`'ye kıyasla `>%40` bağıl oksijen artışı sağlayan bu atmosfer, astronotların EVA yürüyüşü öncesi saatler süren ön-soluma (`pre-breathe`) süresini `~15 dakikaya` indirir (**Saffire-V `NTRS #20210017780`** ve **SoFIE `NTRS #20200000361`** ile test edilmiştir).\n"
+                "- **PSI En Yüksek Oksijen Rekoru (`ACME CFI-G`):** ISS `CIR` rafındaki **ACME CFI-G (`NTRS #20220015583`)** küresel gözenekli brülör deneyleri, **`%85 O₂`** konsantrasyonuna kadar çıkarak yüksek oksijenli kurum ve radyasyon sınırlarını haritalamıştır."
             )
         return (text, cits)
 
@@ -679,7 +679,7 @@ def synthesize_question_driven_report(
                 "### NASA PSI Data Gap, LUCI/FM2 & ACME E-FIELD Emulation (CON-07)\n"
                 "1. **Current PSI Partial-G Gap (`LUCI` & `FM2`):** NASA's PSI archive currently holds `0G` orbital data (ISS/Cygnus) and `1G` ground baselines, with **no direct lunar-surface combustion dataset yet**. Upcoming **LUCI (*Lunar-g Combustion Investigation*)** and **FM2 (*Flammability of Materials on the Moon*)** payloads are specifically designed to close this gap.\n"
                 "2. **Why `0.16G` Can Be Worse Than `1G` (Buoyant Ventilation Paradox):** Lunar buoyancy induces gentle upward slip (`u_b ∝ √g ≈ 8.8 cm/s`) that steadily feeds fresh `O₂` (`Da > 1`) without the strong convective strain/cooling of `1G` Earth plumes—often lowering `MOC` below `1G` limits! Bounding between `0G` ventilated (`BASS`/`SoFIE`) and `1G` envelopes safely brackets intermediate flammability.\n"
-                "3. **ACME E-FIELD Ionic-Wind Emulation (`NTRS #19990054024`):** In `0G` inside ISS `CIR`, applying a high-voltage electric field drives natural flame chemi-ions (`H₃O⁺`, `CHO⁺`), creating a controllable Lorentz/Coulomb body force (ionic wind) that emulates `0.16G` Lunar and `0.38G` Martian buoyancy on orbit."
+                "3. **ACME E-FIELD Ionic-Wind Emulation (`NTRS #20210015913`):** In `0G` inside ISS `CIR`, applying a high-voltage electric field drives natural flame chemi-ions (`H₃O⁺`, `CHO⁺`), creating a controllable Lorentz/Coulomb body force (ionic wind) that emulates `0.16G` Lunar and `0.38G` Martian buoyancy on orbit."
             )
         else:
             text = (
@@ -692,7 +692,7 @@ def synthesize_question_driven_report(
                 "### NASA PSI Veri Boşluğu, LUCI/FM2 Görevleri ve ACME E-FIELD Taklidi (CON-07)\n"
                 "1. **Mevcut PSI Kısmi Yerçekimi Veri Boşluğu (`LUCI` & `FM2`):** NASA PSI arşivinde şu an doğrudan Ay veya Mars kısmi yerçekiminde kaydedilmiş yanma verisi bulunmamaktadır; bu boşluğun gelecekteki **LUCI (*Lunar-g Combustion Investigation*)** ve **FM2 (*Flammability of Materials on the Moon*)** Ay yüzey deneyleriyle doldurulması hedeflenmektedir.\n"
                 "2. **Ay'da (`0.16G`) Yangın Neden Dünya'dan (`1G`) Daha Tehlikeli Olabilir?** `0.16G` kısmi yerçekimi `u_b ∝ √g ≈ 8.8 cm/s` düzeyinde tatlı bir doğal kaldırma akışı yaratarak aleve taze `O₂` taşır (`Da > 1`), ancak `1G`'deki güçlü soğutucu/gerdirici konveksiyonu oluşturamaz. Bu nedenle `0.16G` kritik `MOC` sınırı `1G` Dünya sınırının **altına** iner ve `0G–1G` zarfıyla sınırlandırılır (*bounding*).\n"
-                "3. **ACME E-FIELD İyon Rüzgarı Taklidi (`NTRS #19990054024`):** ISS `CIR` odasında `0G` ortamında alev içindeki doğal iyonlara (`H₃O⁺`, `CHO⁺`) elektrik alanı uygulanarak oluşturulan **iyon rüzgarı**, kısmi yerçekimi konveksiyonunu yörüngede başarıyla taklit etmiş ve kurumu `%70` azaltmıştır."
+                "3. **ACME E-FIELD İyon Rüzgarı Taklidi (`NTRS #20210015913`):** ISS `CIR` odasında `0G` ortamında alev içindeki doğal iyonlara (`H₃O⁺`, `CHO⁺`) elektrik alanı uygulanarak oluşturulan **iyon rüzgarı**, kısmi yerçekimi konveksiyonunu yörüngede başarıyla taklit etmiş ve kurumu `%70` azaltmıştır."
             )
         return (text, cits)
 
@@ -704,7 +704,7 @@ def synthesize_question_driven_report(
             {"fuel_id": "n_heptane", "gravity_g": 0.0, "oxygen_pct": 15.5, "pressure_psia": inp["pressure_psia"], "airflow_cms": 0.1, "droplet_d0_mm": 3.8, "diluent": inp["diluent"]}
         )
         cft = cf_sim["telemetry"]
-        rel_exps = [e for e in NASA_EXPERIMENTS_CATALOG if e["exp_id"] in ("PSI-FLEX-01", "PSI-CFI-11", "PSI-SAME-10", "PSI-ACME-CFIG-14")]
+        rel_exps = [e for e in NASA_EXPERIMENTS_CATALOG if e["exp_id"] in ("PSI-FLEX-01", "PSI-CFI-11", "PSI-DAFT-15", "PSI-ACME-CFIG-14")]
         cits = [
             {"id": e["exp_id"], "program": e["program"], "ntrs_id": e["ntrs_id"], "title": e["title"] if is_en else e["title_tr"], "url": e["ntrs_url"], "priority_score": 96.0}
             for e in rel_exps
@@ -712,7 +712,7 @@ def synthesize_question_driven_report(
 
         if is_en:
             text = (
-                "### Two-Stage Radiative Extinction, Invisible Cool Flames (NTC) & DAFT Sensor Fusion (CON-04)\n"
+                "### Two-Stage Radiative Extinction, Invisible Cool Flames (NTC) & Multi-Channel Detection (CON-04)\n"
                 f"- **Your Current Chamber vs. Cool-Flame Threshold:** Active radiative loss is `χ_r = {tel['radiative_loss_fraction'] * 100:.1f}%` (`T_f = {tel['flame_temp_k']} K`, regime `{tel['regime']}`). For a `3.8 mm` `n-Heptane` droplet at `0G / 15.5% O₂`, `χ_r` reaches `{cft['radiative_loss_fraction'] * 100:.1f}%`, triggering **`{cft['regime']}`** at `{cft['flame_temp_k']} K`.\n"
                 "- **Physical Mechanism (`FLEX`, `CFI`, `ACME CFI-G`):** In `0G`, hot combustion products (`CO₂`, `H₂O`, soot) form a thick stagnant spherical shell (`R_f/R_d ≈ 5–8`). Because radiative heat loss scales with flame volume (`Q_rad ∝ R_f³·σ·(T_f⁴ - T_∞⁴)`), when `χ_r > 0.45` the `1500+ K` hot flame quenches. Instead of stopping, heavy alkanes (`n-Heptane`, `n-Decane`, `Propane`) drop into the **Negative Temperature Coefficient (`NTC`, `550–780 K`)** branch (`R + O₂ ⇌ RO₂ ⇌ QOOH`), burning **invisibly** while generating toxic **`CO`** and **`CH₂O` (formaldehyde)** that can spontaneously re-ignite!\n\n"
                 "| Detection Channel | Hot Sooty Flame (`1G/0G`) | Invisible Cool Flame (`550–780 K`) | Lunar Regolith / Cabin Dust |\n"
@@ -746,7 +746,7 @@ def synthesize_question_driven_report(
         zt = zero_sim["telemetry"]
         include_spinoff = _has_any(nq, ("itfaiye", "firefighter", "dunya", "earth", "giysi", "tank", "spinoff", "transfer"))
 
-        rel_exps = [e for e in NASA_EXPERIMENTS_CATALOG if e["exp_id"] in ("PSI-SOFIE-MIST-15", "PSI-BASS-03", "PSI-SAME-10")]
+        rel_exps = [e for e in NASA_EXPERIMENTS_CATALOG if e["exp_id"] in ("PSI-SOFIE-08", "PSI-BASS-03", "PSI-DAFT-15")]
         cits = [
             {"id": e["exp_id"], "program": e["program"], "ntrs_id": e["ntrs_id"], "title": e["title"] if is_en else e["title_tr"], "url": e["ntrs_url"], "priority_score": 97.0}
             for e in rel_exps
@@ -764,12 +764,12 @@ def synthesize_question_driven_report(
             text = (
                 "### Why Halon 1301 Is Strictly Prohibited & Mandatory NASA-STD-6001B Suppression Sequence (CON-05)\n"
                 "1. **Why Halon 1301 (`CF₃Br`) Is Banned in Crewed Spacecraft:** In a sealed recirculating cabin (`ISS`, `Orion`, `Gateway`, `Lunar Rover`), Halon 1301 thermally decomposes on `>750 K` flames into **hydrogen fluoride (`HF`)** and **hydrogen bromide (`HBr`)** acid gases—lethal to crew lungs within minutes and **irreversibly poisoning ECLSS `LiOH` / amine `CO₂` scrubbers and trace-contaminant catalytic beds**.\n"
-                f"2. **Live ECLSS Crew Survival Clock (`{tl.get('habitat_name_en', 'ISS Module')}`):** Sensor alarm at `+{tl.get('t_alarm_s', 6)} s` | Critical 1-hr **`SMAC 125 ppm CO`** reached at **`{tl.get('t_smac_125ppm_s', 180)} s`** | Cabin CO at crew response: `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
+                f"2. **Live ECLSS Crew Survival Clock (`{tl.get('habitat_name_en', 'ISS Module')}`):** C&W alarm at `+{tl.get('t_alarm_s', 6)} s` | **NASA JSC-20584 24-hr `SMAC 100 ppm CO`** in **`{tl.get('t_smac_24h_100ppm_s', 180)} s`** (1-hr Emergency `425 ppm`: `{tl.get('t_smac_1h_425ppm_s', 420)} s`) | Cabin CO at crew response: `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
                 "3. **Mandatory 4-Step Non-Halon Countermeasure Sequence:**\n"
                 f"   - **Step 1 — Immediate HVAC Ventilation Cutoff (`{inp['airflow_cms']} cm/s → 0 cm/s`):** Live solver check on `{inp['fuel_name_en']}` shows cutting airflow drops risk from **`{tel['risk_score']}/100` → `{zt['risk_score']}/100`** (regime `{zt['regime']}`), starving the flame inside its own `CO₂` shell.\n"
                 "   - **Step 2 — Electrical Bus Isolation:** De-energize rack power to stop Joule heating and arc re-ignition.\n"
-                "   - **Step 3 — `25–40 µm` Fine Water Mist (`ISS PFE / SoFIE-MIST`, `NTRS #20230008415`) or `CO₂ / N₂`:** Sub-40 µm droplets have high volumetric heat capacity (`L_v = 2257 kJ/kg`), evaporate in the reaction zone to expand `1700×` as inert steam, and leave zero toxic acid residue.\n"
-                "   - **Step 4 — Controlled Cabin Depressurization & Post-Fire ECLSS Scrubbing:** Used only as a last resort (`Saffire` protocol), keeping `IR + CO` watch active before re-starting fans."
+                "   - **Step 3 — `25–40 µm` Fine Water Mist (`ISS PFE / SoFIE-MIST`, `NTRS #20200000361`) or `CO₂ / N₂`:** Sub-40 µm droplets have high volumetric heat capacity (`L_v = 2257 kJ/kg`), evaporate in the reaction zone to expand `1700×` as inert steam, and leave zero toxic acid residue.\n"
+                "   - **Step 4 — Controlled Cabin Depressurization & Post-Fire ECLSS Scrubbing:** Used only as a last resort (`Saffire` protocol), keeping `CSA-CP / ANITA-2 CO` watch active before re-starting fans."
                 + spinoff_sec
             )
         else:
@@ -784,12 +784,12 @@ def synthesize_question_driven_report(
             text = (
                 "### İnsanlı Uzay Araçlarında Halon 1301 Neden Kesinlikle Yasaktır? — NASA-STD-6001B Protokolü (CON-05)\n"
                 "1. **Halon 1301 (`CF₃Br`) Yasağının Bilimsel Nedeni:** Kapalı devre yaşam destek (`ECLSS`) kullanan uzay araçlarında (`ISS USOS`, `Orion`, `Lunar Gateway`, `Basınçlı Ay Gezgini`), Halon 1301 gazı `>750 K` alev çekirdeğinde parçalanarak aşırı korozif ve öldürücü **hidrojen florür (`HF`)** ile **hidrojen bromür (`HBr`)** asit gazları üretir. Bu gazlar hem mürettebat akciğerlerinde akut hasar yaratır hem de **ECLSS karbondioksit tutucu yatakları ve katalitik filtreleri kalıcı olarak zehirleyip devre dışı bırakır**.\n"
-                f"2. **Aktif ECLSS Yaşam Destek Saati (`{tl.get('habitat_name_tr', 'ISS Modülü')}`):** Sensör alarmı `+{tl.get('t_alarm_s', 6)} sn` | Kritik **`SMAC 125 ppm CO`** sınırı **`{tl.get('t_smac_125ppm_s', 180)} sn`** | Müdahale anı CO birikimi: `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
+                f"2. **Aktif ECLSS Yaşam Destek Saati (`{tl.get('habitat_name_tr', 'ISS Modülü')}`):** C&W alarmı `+{tl.get('t_alarm_s', 6)} sn` | **NASA JSC-20584 24sa `SMAC 100 ppm CO`** sınırı **`{tl.get('t_smac_24h_100ppm_s', 180)} sn`** (1sa Acil `425 ppm`: `{tl.get('t_smac_1h_425ppm_s', 420)} sn`) | Müdahale anı CO: `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
                 "3. **Zorunlu 4 Adımlı Müdahale Protokolü:**\n"
                 f"   - **Adım 1 — HVAC Havalandırma Fanlarını Anında Kapat (`{inp['airflow_cms']} cm/s → 0 cm/s`):** Aktif `{inp['fuel_name_tr']}` simülasyonunuzda akışı sıfırlamak yangın riskini **`{tel['risk_score']}/100` → `{zt['risk_score']}/100`** düzeyine indirir (`{zt['regime']}`) ve alevi kendi `CO₂` kabuğu içinde boğar.\n"
                 "   - **Adım 2 — Raf/Bölme Elektrik Gücünü Kes:** Ark ve ohmik ısınma kaynaklı yeniden tutuşmayı engeller.\n"
-                "   - **Adım 3 — `25–40 µm` İnce Su Sisi (`ISS Water Mist PFE / SoFIE-MIST`, `NTRS #20230008415`) veya `CO₂ / N₂`:** `40 µm` altı saf su damlacıkları alev cephesinde buharlaşarak (`L_v = 2257 kJ/kg`) yüksek gizli ısı çeker, hacimce `~1700` kat su buharına genleşip oksijeni seyreltir ve elektroniklere/ECLSS'e toksik kalıntı bırakmaz.\n"
-                "   - **Adım 4 — Kontrollü Kabin Basınç Düşürme & Yeniden Havalandırma Denetimi:** Yalnızca son çare olarak uygulanır; fanlar tekrar açılmadan önce `IR + CO` sensörleriyle gizli Soğuk Alev kalmadığı doğrulanır."
+                "   - **Adım 3 — `25–40 µm` İnce Su Sisi (`ISS Water Mist PFE / SoFIE-MIST`, `NTRS #20200000361`) veya `CO₂ / N₂`:** `40 µm` altı saf su damlacıkları alev cephesinde buharlaşarak (`L_v = 2257 kJ/kg`) yüksek gizli ısı çeker, hacimce `~1700` kat su buharına genleşip oksijeni seyreltir ve elektroniklere/ECLSS'e toksik kalıntı bırakmaz.\n"
+                "   - **Adım 4 — Kontrollü Kabin Basınç Düşürme & Yeniden Havalandırma Denetimi:** Yalnızca son çare olarak uygulanır; fanlar tekrar açılmadan önce `CSA-CP / ANITA-2 CO` ölçümleriyle gizli Soğuk Alev kalmadığı doğrulanır."
                 + spinoff_sec_tr
             )
         return (text, cits)
@@ -809,17 +809,17 @@ def synthesize_question_driven_report(
                 ("flex", "PSI-FLEX-01"),
                 ("cfi", "PSI-CFI-11"),
                 ("e-field", "PSI-ACME-09"),
-                ("bre", "PSI-BRE-05"),
-                ("sofie-mist", "PSI-SOFIE-MIST-15"),
+                ("bre", "PSI-ACME-BRE-10"),
+                ("sofie-mist", "PSI-SOFIE-08"),
                 ("sofie", "PSI-SOFIE-08"),
                 ("saffire", "PSI-SAFFIRE5-07"),
                 ("saffire-iv", "PSI-SAFFIRE4-06"),
                 ("bass-ii", "PSI-BASS2-04"),
                 ("bass", "PSI-BASS-03"),
                 ("spice", "PSI-SPICE-12"),
-                ("slise", "PSI-SLISE-13"),
-                ("same", "PSI-SAME-10"),
-                ("daft", "PSI-SAME-10"),
+                ("slice", "PSI-SLICE-13"),
+                ("same", "PSI-DAFT-15"),
+                ("daft", "PSI-DAFT-15"),
             ]
             for kw, eid in prog_map:
                 if kw in nq:
@@ -909,16 +909,38 @@ def synthesize_question_driven_report(
         ]
         # Spesifik odak açıklaması
         focus_note = ""
-        if _has_any(nq, ("spalding", "b_oq", "boq", "d2", "d²", "yanma sabiti", "burning constant", "standoff", "durma")):
-            focus_note = (
-                f"### Step-by-Step Droplet `d²`-Law & Spalding `B_oq` Derivation\n"
-                f"1. **Spalding Mass-Transfer Number (`B_oq = {tel.get('spalding_b_number', 0)}`):** Measures exothermic oxidation enthalpy released per unit mass of oxidizer (`Y_O2·ΔH_c / ν_s`) plus ambient sensible enthalpy divided by latent heat of vaporization (`L_v`). Higher `O₂` (`{inp['oxygen_pct']}%`) raises `B_oq` logarithmically via `ln(1 + B_oq)`.\n"
-                f"2. **Effective Burning Rate Constant (`K = {tel['burning_rate_k_mm2_s']} mm²/s`):** Computed from `K = [8·λ_g / (ρ_l·c_p)] · ln(1 + B_oq) · (Sh / 2) · (1 - χ_r)`. With `D₀ = {inp['droplet_d0_mm']} mm`, total burn lifetime is `t_burn = D₀² / K = {tel['burn_lifetime_s']} s`, and dimensionless standoff ratio is **`R_f / R_d = {tel.get('standoff_ratio_rf_rd', 0)}`** (`R_f = {tel['flame_radius_mm']} mm`).\n\n"
-                if is_en
-                else f"### Adım Adım `d²` Damlacık Yasası ve Spalding `B_oq` Türetimi\n"
-                f"1. **Spalding Kütle/Isı Aktarım Sayısı (`B_oq = {tel.get('spalding_b_number', 0)}`):** Oksijen kütle kesriyle (`%{inp['oxygen_pct']} O₂`) açığa çıkan yanma entalpisinin (`Y_O2·ΔH_c / ν_s`) yakıtın gizli buharlaşma ısısına (`L_v`) oranıdır; damlacık yüzeyindeki buharlaşma sürücü kuvvetini belirler.\n"
-                f"2. **Efektif Yanma Hızı Sabiti (`K = {tel['burning_rate_k_mm2_s']} mm²/s`):** `K = [8·λ_g / (ρ_l·c_p)] · ln(1 + B_oq) · (Sh / 2) · (1 - χ_r)` bağıntısıyla hesaplanır. Başlangıç çapı `D₀ = {inp['droplet_d0_mm']} mm` için tam yanma ömrü `t_burn = D₀² / K = {tel['burn_lifetime_s']} sn` ve boyutsuz alev durma mesafesi **`R_f / R_d = {tel.get('standoff_ratio_rf_rd', 0)}`** (`R_f = {tel['flame_radius_mm']} mm`) bulunur.\n\n"
-            )
+        if _has_any(nq, ("spalding", "b_oq", "boq", "d2", "d²", "yanma sabiti", "burning constant", "standoff", "durma", "burke", "de ris")):
+            f_phase = str(inp.get("fuel_phase", "liquid"))
+            if f_phase == "gas":
+                focus_note = (
+                    f"### Steady Gas-Burner Burke-Schumann Diffusion Scaling (`D_burner = {inp['droplet_d0_mm']} mm` Constant)\n"
+                    f"1. **No Liquid Evaporation (`d²`-Law Inactive):** Sintered porous stainless-steel gas spheres (`ACME CFI-G` / `BRE`) and jet nozzles (`SPICE` / `SLICE`) maintain constant geometry (`D_burner = D₀`); `B_g = {tel.get('spalding_b_number', 0)}` represents gas-phase stoichiometric enthalpy scaling (`Y_O2·ΔH_c / (ν_s·c_p·ΔT_ig)`).\n"
+                    f"2. **Burke-Schumann Standoff Ratio (`R_f / R_b = {tel.get('standoff_ratio_rf_rd', 0)}`):** Stoichiometric flame sheet sits at `R_f = {tel['flame_radius_mm']} mm` where outward fuel mass flow balances inward oxidizer diffusion (`Sh = {tel['sherwood_number']}`).\n\n"
+                    if is_en
+                    else f"### Sürekli Gaz Brülörü Burke-Schumann Difüzyon Ölçeklemesi (`D_brülör = {inp['droplet_d0_mm']} mm` Sabit)\n"
+                    f"1. **Sıvı Buharlaşması Yoktur (`d²` Yasası Pasif):** Sinterlenmiş paslanmaz çelik gözenekli küre (`ACME CFI-G` / `BRE`) ve nozul (`SPICE` / `SLICE`) brülörlerde çap sabittir (`D_brülör = D₀`); `B_g = {tel.get('spalding_b_number', 0)}` gaz fazı stokiyometrik entalpi ölçeğini (`Y_O2·ΔH_c / (ν_s·c_p·ΔT_ig)`) gösterir.\n"
+                    f"2. **Burke-Schumann Alev Durma Oranı (`R_f / R_b = {tel.get('standoff_ratio_rf_rd', 0)}`):** Stokiyometrik reaksiyon cephesi, sabit debiyle beslenen gaz akısının içe difüze olan oksijenle (`Sh = {tel['sherwood_number']}`) dengelendiği `R_f = {tel['flame_radius_mm']} mm` yarıçapında kararlı durur.\n\n"
+                )
+            elif f_phase == "solid":
+                focus_note = (
+                    f"### Solid Surface Flame Spread (de Ris Law `V_f`) & Pyrolysis Mass-Transfer `B_p`\n"
+                    f"1. **Pyrolysis Mass-Transfer Number (`B_p = {tel.get('spalding_b_number', 0)}`):** Ratio of gas-phase oxidation enthalpy (`Y_O2·ΔH_c / ν_s`) to solid gasification enthalpy (`L_p`) for `{inp['fuel_name_en']}`.\n"
+                    f"2. **de Ris Opposed/Concurrent Spread (`V_f = {tel['flame_spread_mm_s']} mm/s`):** Controlled by gas-phase forward heat conduction vs. solid thermal inertia `(k·ρ·c)_s` and boundary-layer `O₂` transport (`Sh = {tel['sherwood_number']}`, `Da = {tel.get('damkohler_number', 0)}`).\n\n"
+                    if is_en
+                    else f"### Katı Yüzey Alev Yayılımı (de Ris Yasası `V_f`) ve Piroliz Sayısı `B_p`\n"
+                    f"1. **Piroliz Kütle Aktarım Sayısı (`B_p = {tel.get('spalding_b_number', 0)}`):** `{inp['fuel_name_tr']}` yüzeyinde gaz fazı yanma ısısının katı gazlaşma/piroliz entalpisine (`L_p`) oranıdır.\n"
+                    f"2. **de Ris Yüzey Yayılım Hızı (`V_f = {tel['flame_spread_mm_s']} mm/s`):** Alev önündeki gaz fazı ısı iletimi ile katı ısıl ataleti `(k·ρ·c)_s` ve sınır tabaka `O₂` taşınımı (`Sh = {tel['sherwood_number']}`, `Da = {tel.get('damkohler_number', 0)}`) tarafından belirlenir.\n\n"
+                )
+            else:
+                focus_note = (
+                    f"### Step-by-Step Droplet `d²`-Law & Godsave-Spalding `B_oq` Derivation\n"
+                    f"1. **Spalding Mass-Transfer Number (`B_oq = {tel.get('spalding_b_number', 0)}`):** Measures exothermic oxidation enthalpy released per unit mass of oxidizer (`Y_O2·ΔH_c / ν_s`) minus sensible heating divided by latent heat of vaporization (`L_v`). Higher `O₂` (`{inp['oxygen_pct']}%`) raises `B_oq` logarithmically via `ln(1 + B_oq)`.\n"
+                    f"2. **Effective Burning Rate Constant (`K = {tel['burning_rate_k_mm2_s']} mm²/s`):** Computed from `K = [8·λ_g / (ρ_l·c_p)] · ln(1 + B_oq) · (Sh / 2) · (1 - χ_r)`. With `D₀ = {inp['droplet_d0_mm']} mm`, total burn lifetime is `t_burn = D₀² / K = {tel['burn_lifetime_s']} s`, and dimensionless standoff ratio is **`R_f / R_d = {tel.get('standoff_ratio_rf_rd', 0)}`** (`R_f = {tel['flame_radius_mm']} mm`).\n\n"
+                    if is_en
+                    else f"### Adım Adım `d²` Sıvı Damlacık Yasası ve Godsave-Spalding `B_oq` Türetimi\n"
+                    f"1. **Spalding Kütle/Isı Aktarım Sayısı (`B_oq = {tel.get('spalding_b_number', 0)}`):** Oksijen kütle kesriyle (`%{inp['oxygen_pct']} O₂`) açığa çıkan yanma entalpisinin (`Y_O2·ΔH_c / ν_s`) sıvı yakıtın gizli buharlaşma ısısına (`L_v`) oranıdır; damlacık yüzeyindeki buharlaşma sürücü kuvvetini belirler.\n"
+                    f"2. **Efektif Buharlaşma Hızı Sabiti (`K = {tel['burning_rate_k_mm2_s']} mm²/s`):** `K = [8·λ_g / (ρ_l·c_p)] · ln(1 + B_oq) · (Sh / 2) · (1 - χ_r)` bağıntısıyla hesaplanır. Başlangıç çapı `D₀ = {inp['droplet_d0_mm']} mm` için tam yanma ömrü `t_burn = D₀² / K = {tel['burn_lifetime_s']} sn` ve boyutsuz alev durma mesafesi **`R_f / R_d = {tel.get('standoff_ratio_rf_rd', 0)}`** (`R_f = {tel['flame_radius_mm']} mm`) bulunur.\n\n"
+                )
         elif _has_any(nq, ("sherwood", "reynolds", "rayleigh", "grashof", "richardson")):
             focus_note = (
                 f"### Convective vs. Buoyant Transport Scaling (`Re`, `Sh`, `Gr`, `Ra`, `Ri`)\n"
@@ -984,7 +1006,7 @@ def synthesize_question_driven_report(
                 "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n"
                 + "\n".join(rows_sw)
                 + "\n\n"
-                "- **Physical Takeaway (CON-03 Ventilation Paradox):** Notice the non-monotonic **U-shaped `MOC` curve**: at `U = 0 cm/s`, radiative/diffusive self-blanketing weakens or quenches the flame; at gentle `2–8 cm/s` spacecraft ventilation, fresh `O₂` transport (`Sh > 2`, `Da > 1`) **maximizes flammability hazard (lowest `MOC`)**; at high velocity (`>25 cm/s`), residence time drops (`Da → 1`) toward convective blowoff (**BASS / SPICE / SLISE**)."
+                "- **Physical Takeaway (CON-03 Ventilation Paradox):** Notice the non-monotonic **U-shaped `MOC` curve**: at `U = 0 cm/s`, radiative/diffusive self-blanketing weakens or quenches the flame; at gentle `2–8 cm/s` spacecraft ventilation, fresh `O₂` transport (`Sh > 2`, `Da > 1`) **maximizes flammability hazard (lowest `MOC`)**; at high velocity (`>25 cm/s`), residence time drops (`Da → 1`) toward convective blowoff (**BASS / SPICE / SLICE**)."
             )
         else:
             text = (
@@ -993,7 +1015,7 @@ def synthesize_question_driven_report(
                 "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n"
                 + "\n".join(rows_sw)
                 + "\n\n"
-                "- **Fiziksel Yorum (CON-03 Havalandırma Paradoksu):** Tabloda **U-biçimli `MOC` davranışı** açıkça görülür: tam durgun ortamda (`U = 0 cm/s`) alev kendi `CO₂` kabuğu ve radyatif kayıpla (`χ_r`) boğulurken; `2–8 cm/s` hafif ISS fan esintisi taze `O₂` besleyerek (`Sh > 2`, `Da > 1`) **kritik `MOC` sınırını en tehlikeli minimuma çeker**; çok yüksek fan hızlarında (`>25 cm/s`) ise kalış süresi kısalır (`Da → 1`) ve üfleyerek sönme (*blowoff*) başlar (**BASS / SPICE / SLISE**)."
+                "- **Fiziksel Yorum (CON-03 Havalandırma Paradoksu):** Tabloda **U-biçimli `MOC` davranışı** açıkça görülür: tam durgun ortamda (`U = 0 cm/s`) alev kendi `CO₂` kabuğu ve radyatif kayıpla (`χ_r`) boğulurken; `2–8 cm/s` hafif ISS fan esintisi taze `O₂` besleyerek (`Sh > 2`, `Da > 1`) **kritik `MOC` sınırını en tehlikeli minimuma çeker**; çok yüksek fan hızlarında (`>25 cm/s`) ise kalış süresi kısalır (`Da → 1`) ve üfleyerek sönme (*blowoff*) başlar (**BASS / SPICE / SLICE**)."
             )
         return (text, default_citations[:2])
 
@@ -1037,7 +1059,7 @@ def synthesize_question_driven_report(
                 f"{pg_note}\n"
                 f"### 3. Ranked NASA PSI Investigations Across Orbital Hardware\n{exp_lines}\n\n"
                 "### 4. Life Support Clock (ECLSS), Non-Halon Suppression & Earth Applications\n"
-                f"- **Life Support Clock (`{tl.get('habitat_name_en', 'ISS Module')}`):** Alarm `+{tl.get('t_alarm_s', 6)} s` | `SMAC 125 ppm CO` limit in **`{tl.get('t_smac_125ppm_s', 180)} s`** | Crew response CO `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
+                f"- **Life Support Clock (`{tl.get('habitat_name_en', 'ISS Module')}`):** Alarm `+{tl.get('t_alarm_s', 6)} s` | `JSC-20584 24h SMAC (100 ppm CO)` limit in **`{tl.get('t_smac_24h_100ppm_s', 180)} s`** | Crew response CO `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
                 f"- **NASA-STD-6001B Protocol:** **(1)** Cut HVAC ventilation (`{inp['airflow_cms']} -> 0 cm/s`), **(2)** Isolate power bus, **(3)** Discharge **25-40 µm Fine Water Mist (SoFIE-MIST)** or CO₂/N₂ (*Halon 1301 prohibited due to toxic HF/HBr*).\n"
                 "- **Terrestrial Transfers:** Sub-50 µm clean water-mist extinguishers, **SAME/DAFT** dust-immune smoke sensors, **PBI/Nomex** firefighter gear & composite **SCBA** cylinders, and low-emission **HCCI** engine kinetics."
             )
@@ -1053,7 +1075,7 @@ def synthesize_question_driven_report(
                 f"{pg_note_tr}\n"
                 f"### 3. Eşleşen NASA PSI Deneyleri ve Donanım Kıyaslaması\n{exp_lines}\n\n"
                 "### 4. Yaşam Destek Saati (ECLSS), Su Sisi Söndürme ve Dünya Uygulamaları\n"
-                f"- **Yaşam Destek Saati (`{tl.get('habitat_name_tr', 'ISS Modülü')}`):** Sensör alarmı `+{tl.get('t_alarm_s', 6)} sn` | Kritik `SMAC 125 ppm CO` süresi **`{tl.get('t_smac_125ppm_s', 180)} sn`** | Müdahale anı CO `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
+                f"- **Yaşam Destek Saati (`{tl.get('habitat_name_tr', 'ISS Modülü')}`):** C&W alarmı `+{tl.get('t_alarm_s', 6)} sn` | `JSC-20584 24sa SMAC (100 ppm CO)` süresi **`{tl.get('t_smac_24h_100ppm_s', 180)} sn`** | Müdahale anı CO `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
                 f"- **NASA-STD-6001B Müdahale Sırası:** **(1)** Havalandırma fanlarını kapat (`{inp['airflow_cms']} -> 0 cm/s`), **(2)** Elektrik hattını izole et, **(3)** **25-40 µm İnce Su Sisi (SoFIE-MIST)** veya CO₂/N₂ uygula (*Halon 1301 toksik HF/HBr üretimi nedeniyle yasaktır*).\n"
                 "- **Dünya Uygulamaları:** **SoFIE-MIST** temiz su sisli yangın söndürme, **SAME/DAFT** toz-bağışıklı lazer duman dedektörleri, **PBI/Nomex** itfaiyeci koruyucu giysileri, hafif **SCBA** kompozit solunum tüpleri ve düşük emisyonlu **HCCI** motor kinetiği."
             )
@@ -1080,7 +1102,7 @@ def synthesize_question_driven_report(
                 + (f"- **Attached Context:** {media_context}\n" if media_context else "")
                 + f"\n### 2. Ranked NASA PSI Investigations & NTRS Evidence\n{exp_lines}\n\n"
                 f"### 3. ECLSS Survival Clock & Non-Halon Fire Safety Protocol (NASA-STD-6001B)\n"
-                f"- **Survival Clock (`{tl.get('habitat_name_en', 'ISS Module')}`):** Alarm `+{tl.get('t_alarm_s', 6)} s` | `SMAC 125 ppm CO` in **`{tl.get('t_smac_125ppm_s', 180)} s`** | Response CO `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
+                f"- **Survival Clock (`{tl.get('habitat_name_en', 'ISS Module')}`):** Alarm `+{tl.get('t_alarm_s', 6)} s` | `JSC-20584 24h SMAC (100 ppm CO)` in **`{tl.get('t_smac_24h_100ppm_s', 180)} s`** | Response CO `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
                 f"- **Countermeasure Sequence:** **(1)** Cut HVAC airflow (`{inp['airflow_cms']} → 0 cm/s`), **(2)** Isolate bus power, **(3)** Discharge **25–40 µm Fine Water Mist (SoFIE-MIST PFE)** or CO₂/N₂ (*Halon 1301 strictly banned*).\n\n"
                 f"### 4. Space-to-Earth Fire Safety Transfer\n"
                 f"- Sub-50 µm **SoFIE-MIST** clean-agent water mist, **SAME/DAFT** dust-immune multi-angle smoke detectors, **PBI/Nomex** firefighter turnout gear & composite **SCBA** air tanks, and clean **HCCI** engine kinetics."
@@ -1100,7 +1122,7 @@ def synthesize_question_driven_report(
                 + (f"- **Ekli Dosya / Görsel Bağlamı:** {media_context}\n" if media_context else "")
                 + f"\n### 2. Termodinamik & TF-IDF Sıralı NASA PSI Soruşturmaları\n{exp_lines_tr}\n\n"
                 f"### 3. ECLSS Yaşam Destek Saati ve Müdahale Protokolü (NASA-STD-6001B)\n"
-                f"- **Yaşam Destek Saati (`{tl.get('habitat_name_tr', 'ISS Modülü')}`):** Sensör alarmı `+{tl.get('t_alarm_s', 6)} sn` | Kritik `SMAC 125 ppm CO` eşiği **`{tl.get('t_smac_125ppm_s', 180)} sn`** | Müdahale CO `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
+                f"- **Yaşam Destek Saati (`{tl.get('habitat_name_tr', 'ISS Modülü')}`):** C&W alarmı `+{tl.get('t_alarm_s', 6)} sn` | `JSC-20584 24sa SMAC (100 ppm CO)` eşiği **`{tl.get('t_smac_24h_100ppm_s', 180)} sn`** | Müdahale CO `{tl.get('co_at_response_ppm', 40)} ppm`.\n"
                 f"- **Zorunlu Müdahale Sırası:** **(1)** HVAC fanlarını kapat (`{inp['airflow_cms']} → 0 cm/s`), **(2)** Elektrik beslemesini izole et, **(3)** **25–40 µm İnce Su Sisi (SoFIE-MIST PFE)** veya CO₂/N₂ uygula (*Halon 1301 toksik HF/HBr nedeniyle yasaktır*).\n\n"
                 f"### 4. Uzaydan Dünya'ya Yangın Güvenliği Teknoloji Transferi\n"
                 f"- **25–40 µm SoFIE-MIST** su sisli söndürücüler, **SAME/DAFT** toz-bağışıklı lazer duman dedektörleri, **PBI/Nomex** itfaiyeci koruyucu giysileri & hafif **SCBA** kompozit hava tankları ve temiz **HCCI** motor kinetiği."
@@ -1202,7 +1224,7 @@ def synthesize_question_driven_report(
                 f"| **Atmosphere (`O₂` & Pressure)** | `{inp['oxygen_pct']}% O₂` • `{inp['pressure_psia']} psia` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`) | Critical `MOC = {tel['moc_pct']}% O₂` |\n"
                 f"| **Flame Temp & Burn Rate** | `T_f = {tel['flame_temp_k']} K` • `K = {tel['burning_rate_k_mm2_s']} mm²/s` | Spread `{tel['flame_spread_mm_s']} mm/s` • `B_oq = {tel.get('spalding_b_number', 0)}` |\n"
                 f"| **Transport & Residence (`Sh`, `Da`)** | `Sh = {tel['sherwood_number']}` • `Da = {tel.get('damkohler_number', 0)}` • `Ra = {tel.get('rayleigh_number', 0)}` | Airflow `U = {inp['airflow_cms']} cm/s` (`χ_r = {tel['radiative_loss_fraction'] * 100:.1f}%`) |\n"
-                f"| **Fire Risk & ECLSS SMAC** | **Risk `{tel['risk_score']}/100`** • `{tel['co_ppm']} ppm CO` | **{reg_badge}** (`125 ppm SMAC`: `{tl.get('t_smac_125ppm_s', 180)} s`) |\n\n"
+                f"| **Fire Risk & ECLSS SMAC** | **Risk `{tel['risk_score']}/100`** • `{tel['co_ppm']} ppm CO` | **{reg_badge}** (`100 ppm SMAC`: `{tl.get('t_smac_24h_100ppm_s', 180)} s`) |\n\n"
             )
         else:
             live_table_block = (
@@ -1212,7 +1234,7 @@ def synthesize_question_driven_report(
                 f"| **Atmosfer (`O₂` ve Basınç)** | `%{inp['oxygen_pct']} O₂` • `{inp['pressure_psia']} psia` (`P_O2 = {tel.get('o2_partial_psia', 0)} psia`) | Kritik Tutuşma Sınırı `MOC = %{tel['moc_pct']} O₂` |\n"
                 f"| **Alev Sıcaklığı ve Yanma Hızı** | `T_f = {tel['flame_temp_k']} K` • `K = {tel['burning_rate_k_mm2_s']} mm²/s` | Yayılma `{tel['flame_spread_mm_s']} mm/s` • `B_oq = {tel.get('spalding_b_number', 0)}` |\n"
                 f"| **Taşınım ve Kalış (`Sh`, `Da`, `Ra`)** | `Sh = {tel['sherwood_number']}` • `Da = {tel.get('damkohler_number', 0)}` • `Ra = {tel.get('rayleigh_number', 0)}` | Akış Hızı `U = {inp['airflow_cms']} cm/s` (`χ_r = %{tel['radiative_loss_fraction'] * 100:.1f}`) |\n"
-                f"| **Yangın Riski ve ECLSS SMAC** | **Risk `{tel['risk_score']}/100`** • `{tel['co_ppm']} ppm CO` | **{reg_badge}** (`125 ppm SMAC`: `{tl.get('t_smac_125ppm_s', 180)} sn`) |\n\n"
+                f"| **Yangın Riski ve ECLSS SMAC** | **Risk `{tel['risk_score']}/100`** • `{tel['co_ppm']} ppm CO` | **{reg_badge}** (`100 ppm SMAC`: `{tl.get('t_smac_24h_100ppm_s', 180)} sn`) |\n\n"
             )
 
     clean_q_disp = _truncate_clean_title(user_message, 96)

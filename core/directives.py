@@ -65,11 +65,11 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "rule_tr": (
             "Büyük damlacıklarda küresel alev hacmiyle artan radyatif kayıp kesri χ_r ∝ R_f³·σ·(T_f⁴ - T_∞⁴) > 0.45 olduğunda "
             "1300-1900 K sıcak alev söner; n-Heptan/n-Dekan (FLEX/CFI) ve Propan (ACME CFI-G) Negatif Sıcaklık Katsayısı (NTC peroksi RO₂/QOOH) "
-            "kimyasıyla 550-800 K görünmez Soğuk Aleve geçer. Tespiti için UV/IR radyometre + CO/CH₂O gaz sensörü füzyonu şarttır."
+            "kimyasıyla 550-800 K görünmez Soğuk Aleve geçer. Tespiti için CIR'da UV/IR radyometre, kabinde CSA-CP / ANITA-2 (CO/CH₂O) çok kanallı gaz analizi şarttır."
         ),
         "rule_en": (
             "When spherical radiative loss fraction χ_r exceeds critical quenching (~0.45), alkanes (FLEX/CFI droplets & ACME CFI-G gases) "
-            "transition via NTC peroxy chemistry into invisible 550-800 K Cool Flames producing CO and CH₂O, requiring UV/IR + CO sensor fusion."
+            "transition via NTC peroxy chemistry into invisible 550-800 K Cool Flames producing CO and CH₂O, requiring UV/IR + CSA-CP/ANITA-2 CO/CH₂O multi-channel sensing."
         ),
         "severity": "HIGH",
     },
@@ -128,12 +128,12 @@ CORE_DIRECTIVES_LIST: List[Dict[str, str]] = [
         "title_en": "PSI Hardware Racks (CIR/MDCA • MSG/SPICE • Cygnus • DAFT) & Rocket Exclusion",
         "rule_tr": (
             "Donanım eşleşmesini doğru kur: CIR/MDCA sıvı damlacıkları (FLEX, FLEX-2, CFI), CIR ACME modüler gaz seti (ACME, BRE, CFI-G), "
-            "MSG modüler fan kanalı (SPICE, SLISE, BASS, BASS-II), Cygnus büyük ölçek (Saffire I-VI) ve duman/toz ayrımı (SAME, DAFT & DAFT-2). "
+            "MSG modüler fan kanalı (SPICE, SLICE, BASS, BASS-II), Cygnus büyük ölçek (Saffire I-VI) ve duman/toz ayrımı (SAME, DAFT & DAFT-2). "
             "NOT: Roket motorları ve iticilerdeki yüksek gaz hızları yanmayı yerçekiminden bağımsız kıldığından PSI kabin yangın güvenliği kapsamı dışındadır."
         ),
         "rule_en": (
             "Maintain exact PSI hardware provenance: CIR/MDCA droplets (FLEX, FLEX-2, CFI), CIR ACME gas suite (E-FIELD, BRE, CFI-G), "
-            "MSG fan duct (SPICE, SLISE, BASS, BASS-II), Cygnus (Saffire), and SAME/DAFT dust-vs-smoke sensing. High-speed rocket propulsion is outside PSI scope."
+            "MSG fan duct (SPICE, SLICE, BASS, BASS-II), Cygnus (Saffire), and SAME/DAFT dust-vs-smoke sensing. High-speed rocket propulsion is outside PSI scope."
         ),
         "severity": "HIGH",
     },
@@ -215,7 +215,7 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "", compa
             "You are the ALTAR-NASA Evidence Synthesis & Spacecraft Fire Safety Decision Support Kernel (v5.1), "
             "built for the 2026 NASA International Space Apps Challenge ('Flame in Freefall').\n\n"
             "=== PLATFORM MODULES & CAPABILITIES ===\n"
-            "- Combustion Chamber: 3D WebGL CIR/MSG simulation (Droplet, PMMA Rod, Fabric Slab, CFI-G Sphere), 8 governing equations, ISS R²/RMSE validation, flame audio, and ECLSS SMAC 125 ppm CO survival clock.\n"
+            "- Combustion Chamber: 3D WebGL CIR/MSG simulation (Droplet, PMMA Rod, Fabric Slab, CFI-G Sphere), phase-specific governing equations, ISS R²/RMSE calibration, telemetry sonification, and NASA JSC-20584 CO SMAC (24h: 100 ppm / 1h: 425 ppm) survival clock.\n"
             "- NASA Experiments: 15 verified NASA PSI investigations, orbital rack filters (CIR, MSG, Cygnus, DAFT), intra-run variation matrices, and Space-to-Earth spinoffs.\n"
             "- Data & Imagery: Live NASA NTRS & OSDR/PSI telemetry stream + local pixel-level flame image analysis and CSV/JSON/PDF parameter extractor.\n"
             "- Engineering Analysis & Validation: 6-stage NASA-STD-6001B audited engineering console + offline deep-space autonomy + .CSV/.JSON/.MD scientific export.\n\n"
@@ -241,7 +241,7 @@ def build_system_prompt(lang: str = "tr", extra_user_directives: str = "", compa
             "Sen 2026 NASA International Space Apps Challenge ('Flame in Freefall') için geliştirilen ALTAR-NASA v5.1 "
             "Kanıt Sentezi ve Uzay Aracı Yangın Güvenliği Karar Destek Çekirdeğisin.\n\n"
             "=== PLATFORM MODÜLLERİ VE YETENEKLERİ ===\n"
-            "- Yanma Odası: 3B WebGL CIR/MSG simülasyonu (Damlacık, PMMA Çubuk, Kumaş Plaka, CFI-G Küre), 8 temel denklem, ISS R²/RMSE doğrulaması, alev seslendirme ve ECLSS SMAC 125 ppm CO Yaşam Destek Saati.\n"
+            "- Yanma Odası: 3B WebGL CIR/MSG simülasyonu (Damlacık, PMMA Çubuk, Kumaş Plaka, CFI-G Küre), faz-uyumlu temel denklemler, ISS R²/RMSE kalibrasyonu, telemetri seslendirme ve NASA JSC-20584 CO SMAC (24sa: 100 ppm / 1sa: 425 ppm) Yaşam Destek Saati.\n"
             "- NASA Deneyleri: 15 doğrulanmış NASA PSI soruşturması, donanım raf filtreleri (CIR, MSG, Cygnus, DAFT), deney-içi varyasyon matrisleri ve Dünya uygulamaları.\n"
             "- Veri ve Görüntü: Canlı NASA NTRS & OSDR/PSI akışı + alev fotoğrafı piksel analizi ve CSV/JSON/PDF parametre çıkarıcı.\n"
             "- Mühendislik Analizi ve Doğrulama: NASA-STD-6001B denetimli mühendislik analizi + çevrimdışı derin uzay modu + .CSV/.JSON/.MD veri çıktısı.\n\n"

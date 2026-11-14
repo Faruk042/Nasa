@@ -78,7 +78,7 @@ _TR_TO_EN_COMBUSTION_MAP = [
     ("flex", "FLEX droplet combustion"),
     ("bass", "BASS microgravity burning"),
     ("spice", "SPICE smoke point coflow microgravity"),
-    ("slise", "SLISE flame liftoff microgravity"),
+    ("slice", "SLICE flame liftoff microgravity"),
     ("sofie", "SoFIE solid fuel ignition"),
     ("cfi-g", "ACME Cool Flames Investigation Gases"),
     ("bre", "ACME Burning Rate Emulator"),
@@ -1017,7 +1017,7 @@ class ContinuousWebStreamManager:
         "SoFIE solid fuel ignition exploration atmosphere 34% oxygen",
         "ACME CFI-G spherical burner cool flame oxygen",
         "lunar partial gravity material flammability spacesuit",
-        "SPICE SLISE microgravity smoke point glovebox",
+        "SPICE SLICE microgravity smoke point glovebox",
         "DAFT SAME spacecraft smoke aerosol detection",
     ]
 

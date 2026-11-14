@@ -146,7 +146,7 @@ class HybridNasaAIEngine:
             "sdk_installed": self._antigravity_sdk_available,
             "api_key_ready": bool(cfg.get("antigravity_api_key")),
             "models": models,
-            "active_model": cfg.get("antigravity_model") or "gemini-3.8-flash-high",
+            "active_model": cfg.get("antigravity_model") or "gemini-2.5-flash",
         }
         with self._agy_cache_lock:
             self._agy_cached_status = st
@@ -604,7 +604,7 @@ class HybridNasaAIEngine:
             ntrs_query_seed = user_message
             if combined_media_ctx:
                 ctx_head = combined_media_ctx[:400]
-                ctx_prog = re.findall(r"\b(?:ACME\s*CFI-G|CFI-G|FLEX-2|FLEX|CFI|Saffire|BASS-II|BASS|SoFIE|SPICE|SLISE|DAFT|SAME|BRE|E-FIELD)\b", ctx_head, flags=re.IGNORECASE)
+                ctx_prog = re.findall(r"\b(?:ACME\s*CFI-G|CFI-G|FLEX-2|FLEX|CFI|Saffire|BASS-II|BASS|SoFIE|SPICE|SLICE|DAFT|SAME|BRE|E-FIELD)\b", ctx_head, flags=re.IGNORECASE)
                 if ctx_prog:
                     ntrs_query_seed = f"{' '.join(dict.fromkeys(ctx_prog))} {active_sim['inputs'].get('fuel_id', '')} {user_message}"
                 else:
@@ -1040,9 +1040,9 @@ class HybridNasaAIEngine:
                 agy_ws.mkdir(parents=True, exist_ok=True)
 
                 avail_ids = [m["id"] for m in agy_st.get("models", [])]
-                chosen_model = str(cfg.get("antigravity_model") or "gemini-3.8-flash-high").strip()
+                chosen_model = str(cfg.get("antigravity_model") or "gemini-2.5-flash").strip()
                 if chosen_model == "auto" or (avail_ids and chosen_model not in avail_ids):
-                    chosen_model = "gemini-3.8-flash-high" if "gemini-3.8-flash-high" in avail_ids else (avail_ids[0] if avail_ids else "gemini-3.8-flash-high")
+                    chosen_model = "gemini-2.5-flash" if "gemini-2.5-flash" in avail_ids else (avail_ids[0] if avail_ids else "gemini-2.5-flash")
 
                 hist_snippet = ""
                 if history:
@@ -1302,6 +1302,17 @@ class HybridNasaAIEngine:
         call = active_sim["callouts"]
         pg_info = active_sim.get("partial_gravity_info") or {}
 
+        fuel_phase = str(tel.get("fuel_phase") or "liquid")
+        if fuel_phase == "gas":
+            kin_line_en = f"Steady Gas-Burner Regime (`D_burner = {inp.get('droplet_d0_mm', 4.2)} mm`, Burke-Schumann Mass-Transfer Rate `K_eff = {tel['burning_rate_k_mm2_s']} mm²/s`)"
+            kin_line_tr = f"Sabit Debili Gaz Brülörü Rejimi (`D_brülör = {inp.get('droplet_d0_mm', 4.2)} mm`, Burke-Schumann Kütle Aktarım Hızı `K_eff = {tel['burning_rate_k_mm2_s']} mm²/s`)"
+        elif fuel_phase == "solid":
+            kin_line_en = f"de Ris Solid Flame Spread `V_f = {tel['flame_spread_mm_s']} mm/s` (Pyrolysis Rate `K_p = {tel['burning_rate_k_mm2_s']} mm²/s`)"
+            kin_line_tr = f"de Ris Katı Yüzey Yayılım Hızı `V_f = {tel['flame_spread_mm_s']} mm/s` (Piroliz Regresyonu `K_p = {tel['burning_rate_k_mm2_s']} mm²/s`)"
+        else:
+            kin_line_en = f"d²-Law Constant `K = {tel['burning_rate_k_mm2_s']} mm²/s` (`D²(t) = D₀² - K·t`, Lifetime `{tel['burn_lifetime_s']} s`)"
+            kin_line_tr = f"d² Buharlaşma Sabiti `K = {tel['burning_rate_k_mm2_s']} mm²/s` (`D²(t) = D₀² - K·t`, Ömür `{tel['burn_lifetime_s']} sn`)"
+
         if lang == "en":
             exp_lines = "\n".join(
                 f"{e['rank']}. **{e['program']} ({e['exp_id']} • {e.get('hardware_group', 'CIR')} • NTRS `{e['ntrs_id']}`)** — Priority `{e['priority_score']}/100` (MOC `{e['moc_measured_pct']}%`): {e['key_finding_en']} *(Safety Action: {e['safety_insight_en']})*"
@@ -1316,16 +1327,16 @@ class HybridNasaAIEngine:
                 )
             return (
                 f"### 1. Physical Regime & Governing Equation Diagnosis: {call['badge_en']}\n"
-                f"- **Thermodynamic & Transport State:** Temp `{tel['flame_temp_k']} K` | d²-Law Constant `K = {tel['burning_rate_k_mm2_s']} mm²/s` | Spalding `B_oq = {tel.get('spalding_b_number', 0)}` | Standoff `R_f/R_d = {tel.get('standoff_ratio_rf_rd', 0)}`\n"
+                f"- **Thermodynamic & Transport State:** Temp `{tel['flame_temp_k']} K` | {kin_line_en} | Spalding `B_oq = {tel.get('spalding_b_number', 0)}` | Standoff `R_f/R_d = {tel.get('standoff_ratio_rf_rd', 0)}`\n"
                 f"- **Dimensionless Scaling:** `Re = {tel.get('reynolds_number', 0)}` | `Sh = {tel['sherwood_number']}` | `Ra = {tel.get('rayleigh_number', 0)}` | `Ri = {tel.get('richardson_number', 0)}` | `Da = {tel.get('damkohler_number', 0)}` | Radiative Loss `χ_r = {tel['radiative_loss_fraction']}`\n"
                 f"- **Flammability Margin:** Partial Pressure `P_O2 = {tel.get('o2_partial_psia', 0)} psia` vs. Critical `MOC = {tel['moc_pct']}% O₂` -> **Risk Score `{tel['risk_score']}/100`**.\n"
                 f"{pg_block_en}"
                 f"- **Interpretation:** {call['summary_en']}\n\n"
                 f"### 2. Ranked NASA Microgravity Evidence & Comparison (PSI & NTRS)\n{exp_lines}\n\n"
-                f"### 3. Spacecraft, EVA Suit & Rover Fire Safety Protocol (CON-05 / NASA-STD-6001B)\n"
+                f"### 3. Spacecraft, EVA Suit & Rover Fire Safety Protocol (CON-05 / NASA-STD-6001B & JSC-20584)\n"
                 f"- **Step 1 (Ventilation Isolation):** Cut HVAC cabin airflow (`{inp['airflow_cms']} cm/s -> 0 cm/s`) to force diffusive CO₂ self-quenching.\n"
                 f"- **Step 2 (Clean Suppression):** Deploy **25–40 µm Fine Water Mist (ISS PFE / SoFIE-MIST)** or localized **CO₂** (Halon 1301 is strictly prohibited).\n"
-                f"- **Step 3 (Multi-Sensor Watch):** Fuse optical cameras with IR radiometry (`{tel['heat_flux_kw_m2']} kW/m²`), CO sensing (`{tel['co_ppm']} ppm`), and **DAFT/SAME** dust-immune laser smoke detectors against invisible Cool Flames.\n\n"
+                f"- **Step 3 (Multi-Channel Cabin & Rack Diagnostics):** Cross-check **ISS Photoelectric Smoke Detectors (`PSD`)** with **CSA-CP / ANITA-2** CO gas analyzers (`{tel['co_ppm']} ppm`), **CIR UV/IR** radiometers (`{tel['heat_flux_kw_m2']} kW/m²`), and **SAME / DAFT** multi-angle dust-immune laser sensors against invisible Cool Flames.\n\n"
                 f"### 4. Space-to-Earth Fire Safety Transfer\n"
                 f"- Sub-50 µm water-mist extinguishers (SoFIE-MIST), **DAFT/SAME** smart dust-immune smoke detectors, **PBI/Nomex** firefighter turnout gear & lightweight **SCBA** composite air tanks, and NTC cool-flame clean HCCI engine kinetics directly enhance terrestrial fire protection."
                 f"{ntrs_extra_en}"
@@ -1344,16 +1355,16 @@ class HybridNasaAIEngine:
             )
         return (
             f"### 1. Fiziksel Rejim ve Formülsel Taşınım Analizi: {call['badge_tr']}\n"
-            f"- **Termodinamik & D² Yasası Durumu:** Sıcaklık `{tel['flame_temp_k']} K` | Yanma Sabiti `K = {tel['burning_rate_k_mm2_s']} mm²/s` (`D²(t) = D₀² - K·t`, Ömür `{tel['burn_lifetime_s']} sn`) | Spalding Sayısı `B_oq = {tel.get('spalding_b_number', 0)}` | Alev Durma Oranı `R_f/R_d = {tel.get('standoff_ratio_rf_rd', 0)}`\n"
+            f"- **Termodinamik & Faz-Duyarlı Yanma Durumu:** Sıcaklık `{tel['flame_temp_k']} K` | {kin_line_tr} | Spalding Sayısı `B_oq = {tel.get('spalding_b_number', 0)}` | Alev Durma Oranı `R_f/R_d = {tel.get('standoff_ratio_rf_rd', 0)}`\n"
             f"- **Boyutsuz Taşınım Sayıları:** `Re = {tel.get('reynolds_number', 0)}` | Sherwood `Sh = {tel['sherwood_number']}` | Rayleigh `Ra = {tel.get('rayleigh_number', 0)}` | Richardson `Ri = {tel.get('richardson_number', 0)}` | Damköhler `Da = {tel.get('damkohler_number', 0)}` | Radyatif Kayıp `χ_r = %{tel['radiative_loss_fraction'] * 100:.1f}`\n"
             f"- **Tutuşabilirlik Sınırı:** Kısmi Oksijen Basıncı `P_O2 = {tel.get('o2_partial_psia', 0)} psia ({tel.get('o2_partial_kpa', 0)} kPa)` | Kritik `MOC = %{tel['moc_pct']} O₂` | **Yangın Risk Skoru: `{tel['risk_score']}/100`**\n"
             f"{pg_block_tr}"
             f"- **Fiziksel Yorum:** {call['summary_tr']}\n\n"
             f"### 2. NASA Deneysel Kanıt Sıralaması ve Kıyaslama (PSI & NTRS)\n{exp_lines_tr}\n\n"
-            f"### 3. Uzay Aracı, Uzay Giysisi & Gezgin Yangın Güvenliği Protokolü (CON-05 / NASA-STD-6001B)\n"
+            f"### 3. Uzay Aracı, Uzay Giysisi & Gezgin Yangın Güvenliği Protokolü (CON-05 / NASA-STD-6001B & JSC-20584)\n"
             f"- **Adım 1 (Havalandırma Kesme):** Kabin HVAC fanlarını (`{inp['airflow_cms']} cm/s -> 0 cm/s`) derhal kapatarak alevi kendi CO₂ kabuğu içinde difüzif boğulmaya zorlayın.\n"
             f"- **Adım 2 (Aktif Söndürme):** CON-05 / NASA-STD-6001B kuralı uyarınca Halon 1301 kesinlikle yasaktır; **İnce Su Sisi (ISS Water Mist PFE / SoFIE-MIST, 25–40 µm)** veya **CO₂** seyreltmesi uygulayın.\n"
-            f"- **Adım 3 (Çoklu Sensör Füzyonu):** Görünmez Soğuk Alev (550–750 K) ve Ay tozu yanlış alarmlarına karşı optik kamerayı IR radyometre (`{tel['heat_flux_kw_m2']} kW/m²`), CO sensörü (`{tel['co_ppm']} ppm`) ve **DAFT/SAME** çok kanallı duman dedektörüyle çapraz doğrulayın.\n\n"
+            f"- **Adım 3 (Çok Kanallı Kabin & Bilim Rafı Teşhisi):** Görünmez Soğuk Alev (550–750 K) ve Ay tozu yanlış alarmlarına karşı **ISS Fotoelektrik Duman Dedektörü (`PSD`)** verisini **CSA-CP / ANITA-2** CO gaz analizörü (`{tel['co_ppm']} ppm`), **CIR UV/IR** radyometre (`{tel['heat_flux_kw_m2']} kW/m²`) ve **SAME / DAFT** çok açılı lazer aerosol dedektörüyle çapraz doğrulayın.\n\n"
             f"### 4. Uzaydan Dünya'ya (Space-to-Earth) Güvenlik Uygulamaları\n"
             f"- NASA mikroçekim bulgularından türetilen **25–40 µm ince su sisli söndürücüler** (SoFIE-MIST), **DAFT/SAME toz-bağışıklı karasal duman algılama**, **PBI/Nomex itfaiyeci koruyucu giysileri ve kompozit SCBA hava tankları** ile NTC soğuk alev temiz motor kinetiği Dünya'daki yangın güvenliğini doğrudan güçlendirmektedir."
             f"{ntrs_extra}"

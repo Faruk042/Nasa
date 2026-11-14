@@ -59,7 +59,7 @@
         <div class="subbar-group">
             <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:#e2e8f0; font-weight:600;">
                 <input type="checkbox" id="chk-flight-overlay" checked />
-                <span data-i18n="chk_flight_pts">ISS Ölçümleri</span>
+                <span data-i18n="chk_flight_pts">ISS 0G Referansı</span>
             </label>
             <span class="validation-pill" id="flight-val-badge">ISS R² = 0.996 • RMSE = 0.015</span>
             <button class="btn-secondary" id="btn-export-csv" style="padding:4px 9px; font-size:11.5px;" data-i18n="btn_export_csv">CSV İndir</button>
@@ -109,7 +109,7 @@
                             <option value="sibal" data-tr="Sibal Kumaş Plaka (Saffire)" data-en="Sibal Cloth Slab (Saffire)">Sibal Kumaş Plaka (Saffire)</option>
                             <option value="nomex" data-tr="Nomex HT90-40 (Uzay Giysisi Kumaşı)" data-en="Nomex HT90-40 (EVA Suit Fabric)">Nomex HT90-40 (Uzay Giysisi Kumaşı)</option>
                             <option value="propane_cfig" data-tr="Propan Küresel Brülör (ACME CFI-G)" data-en="Propane Spherical Burner (ACME CFI-G)">Propan Küresel Brülör (ACME CFI-G)</option>
-                            <option value="hydrogen" data-tr="Hidrojen Gaz Jeti (ACME / SLISE)" data-en="Hydrogen Gas Jet (ACME / SLISE)">Hidrojen Gaz Jeti (ACME / SLISE)</option>
+                            <option value="hydrogen" data-tr="Hidrojen Gaz Jeti (ACME / SLICE)" data-en="Hydrogen Gas Jet (ACME / SLICE)">Hidrojen Gaz Jeti (ACME / SLICE)</option>
                         </select>
                     </div>
 
@@ -162,13 +162,13 @@
                         </select>
                     </div>
 
-                    <!-- ALEV SESLENDİRME PANELİ -->
+                    <!-- TELEMETRİ SESLENDİRME (VERİ İŞİTSELLEŞTİRME) PANELİ -->
                     <div class="panel-header" style="margin-top: 14px;">
-                        <span class="panel-title" data-i18n="audio_title">Alev Seslendirme</span>
+                        <span class="panel-title" data-i18n="audio_title">Telemetri Seslendirme</span>
                         <button class="btn-secondary" id="btn-audio-toggle" style="padding: 4px 10px; font-size: 11.5px;" data-i18n="audio_start">Sesi Aç</button>
                     </div>
                     <p style="font-size: 11.5px; color: var(--text-muted);" data-i18n="audio_desc">
-                        Sıcaklık ve görünmez Soğuk Alev titreşimlerini gerçek zamanlı ses frekansına dönüştürür.
+                        Sıcaklık, ısı akısı ve görünmez Soğuk Alev telemetrisini göz-serbest izleme için ses frekansına dönüştürür (veri işitselleştirme).
                     </p>
                     <canvas class="audio-scope" id="audio-scope-canvas"></canvas>
                 </div>
@@ -332,10 +332,10 @@
                     <span class="panel-title" data-i18n="cabin_clock_title">Yaşam Destek Saati</span>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <select class="nasa-select" id="sel-habitat-volume" style="width:auto; padding:5px 9px; font-size:12px;">
-                            <option value="iss_module" data-tr="ISS Kabini (120 m³)" data-en="ISS Cabin (120 m³)">ISS Kabini (120 m³)</option>
-                            <option value="lunar_hab" data-tr="Ay Üssü (45 m³)" data-en="Lunar Base (45 m³)">Ay Üssü (45 m³)</option>
-                            <option value="lunar_rover" data-tr="Ay Gezgini (14 m³)" data-en="Lunar Rover (14 m³)">Ay Gezgini (14 m³)</option>
-                            <option value="eva_suit" data-tr="Uzay Giysisi (0.18 m³)" data-en="EVA Suit (0.18 m³)">Uzay Giysisi (0.18 m³)</option>
+                            <option value="iss_module" data-tr="ISS Destiny Serbest Hava (70 m³)" data-en="ISS Destiny Free Air (70 m³)">ISS Destiny Serbest Hava (70 m³)</option>
+                            <option value="lunar_hab" data-tr="Orion / Gateway Kabini (19 m³)" data-en="Orion / Gateway Cabin (19 m³)">Orion / Gateway Kabini (19 m³)</option>
+                            <option value="lunar_rover" data-tr="Basınçlı Ay Gezgini (11 m³)" data-en="Pressurized Lunar Rover (11 m³)">Basınçlı Ay Gezgini (11 m³)</option>
+                            <option value="eva_suit" data-tr="EVA Uzay Giysisi (0.18 m³)" data-en="EVA Spacesuit (0.18 m³)">EVA Uzay Giysisi (0.18 m³)</option>
                         </select>
                         <select class="nasa-select" id="sel-crew-response" style="width:auto; padding:5px 9px; font-size:12px;">
                             <option value="10" data-tr="+10 sn Hızlı Müdahale" data-en="+10 s Rapid Action">+10 sn Hızlı Müdahale</option>
@@ -626,7 +626,7 @@
                             <div class="console-readiness-grid">
                                 <div class="console-kv-item">
                                     <div class="console-kv-label" data-i18n="kv_solver_lbl">SAYISAL ÇÖZÜCÜ</div>
-                                    <div class="console-kv-val" data-i18n="kv_solver_val">d² • B_oq • Sh • Da • MOC</div>
+                                    <div class="console-kv-val" data-i18n="kv_solver_val">d² • de Ris • B_oq • Sh • Da</div>
                                 </div>
                                 <div class="console-kv-item">
                                     <div class="console-kv-label" data-i18n="kv_corpus_lbl">VERİ KAYNAKLARI</div>
@@ -634,7 +634,7 @@
                                 </div>
                                 <div class="console-kv-item">
                                     <div class="console-kv-label" data-i18n="kv_auditor_lbl">GÜVENLİK STANDARDI</div>
-                                    <div class="console-kv-val">NASA-STD-6001B • SMAC 125 ppm</div>
+                                    <div class="console-kv-val">NASA-STD-6001B • JSC-20584 SMAC</div>
                                 </div>
                             </div>
                             <p data-i18n="welcome_p1">
@@ -684,7 +684,7 @@
                     <div class="solver-spec-grid">
                         <div class="solver-spec-card">
                             <div class="spec-k" data-i18n="spec_k1">TAŞINIM ÇÖZÜCÜ</div>
-                            <div class="spec-v">d² • B_oq • Sh • Da • χ_r</div>
+                            <div class="spec-v">d² • de Ris • B_oq • Sh • Da</div>
                         </div>
                         <div class="solver-spec-card">
                             <div class="spec-k" data-i18n="spec_k2">ISS DOĞRULAMASI</div>
@@ -696,7 +696,7 @@
                         </div>
                         <div class="solver-spec-card">
                             <div class="spec-k" data-i18n="spec_k4">GÜVENLİK STANDARDI</div>
-                            <div class="spec-v">NASA-STD-6001B • SMAC 125 ppm</div>
+                            <div class="spec-v">NASA-STD-6001B • JSC-20584 SMAC</div>
                         </div>
                     </div>
 
@@ -719,7 +719,7 @@
                             <span class="control-val" id="agy-cli-badge">Hazırlanıyor</span>
                         </div>
                         <select class="nasa-select" id="cfg-agy-model">
-                            <option value="gemini-3.8-flash-high">Gemini 3.8 Flash (High) — Bilimsel Sentez</option>
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash — Bilimsel Sentez</option>
                         </select>
                     </div>
                 </div>
